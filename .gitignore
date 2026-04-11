@@ -1,0 +1,33 @@
+# App
+app/node_modules/
+app/.expo/
+app/dist/
+app/web-build/
+
+# Backend
+backend/vendor/
+backend/storage/logs/
+backend/storage/framework/cache/
+backend/storage/framework/sessions/
+backend/storage/framework/views/
+backend/bootstrap/cache/*.php
+
+# Environment
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Keys
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision

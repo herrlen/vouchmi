@@ -1,0 +1,172 @@
+<?php
+
+// app/Services/LinkPreviewService.php
+// Zieht Bild, Titel, Preis aus jeder URL – wie WhatsApp, nur mit Affiliate-Tag
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+
+class LinkPreviewService
+{
+    /**
+     * Affiliate-Tags pro Netzwerk.
+     * Trage hier deine IDs ein sobald du bei den Programmen angemeldet bist.
+     */
+    private array $affiliateTags = [
+        'amazon.de'      => ['tag' => 'truscart-21', 'param' => 'tag'],
+        'amazon.com'     => ['tag' => 'truscart-20', 'param' => 'tag'],
+        'zalando.de'     => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
+        'otto.de'        => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
+        'aboutyou.de'    => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
+        'mediamarkt.de'  => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
+    ];
+
+    /**
+     * Generiert eine Link-Preview mit OG-Tags + Affiliate-Link
+     */
+    public function getPreview(string $url): ?array
+    {
+        $cacheKey = 'link_preview_' . md5($url);
+
+        return Cache::remember($cacheKey, 3600, function () use ($url) {
+            try {
+                $response = Http::timeout(8)
+                    ->withHeaders(['User-Agent' => 'TrusCart Bot/1.0'])
+                    ->get($url);
+
+                if (!$response->successful()) return null;
+
+                $html = $response->body();
+                $data = $this->extractMetaTags($html, $url);
+                $data['original_url'] = $url;
+                $data['affiliate_url'] = $this->addAffiliateTag($url);
+                $data['domain'] = parse_url($url, PHP_URL_HOST);
+
+                return $data;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Extrahiert Open Graph & Schema.org Daten aus HTML
+     */
+    private function extractMetaTags(string $html, string $url): array
+    {
+        $data = [
+            'title' => null,
+            'description' => null,
+            'image' => null,
+            'price' => null,
+            'currency' => 'EUR',
+            'site_name' => null,
+        ];
+
+        // Open Graph Tags
+        $ogPatterns = [
+            'title'       => '/<meta\s+property=["\']og:title["\']\s+content=["\']([^"\']+)["\']/i',
+            'description' => '/<meta\s+property=["\']og:description["\']\s+content=["\']([^"\']+)["\']/i',
+            'image'       => '/<meta\s+property=["\']og:image["\']\s+content=["\']([^"\']+)["\']/i',
+            'site_name'   => '/<meta\s+property=["\']og:site_name["\']\s+content=["\']([^"\']+)["\']/i',
+        ];
+
+        foreach ($ogPatterns as $key => $pattern) {
+            if (preg_match($pattern, $html, $match)) {
+                $data[$key] = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
+            }
+        }
+
+        // Auch umgekehrte Reihenfolge (content vor property)
+        $ogPatternsAlt = [
+            'title'       => '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']og:title["\']/i',
+            'description' => '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']og:description["\']/i',
+            'image'       => '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']og:image["\']/i',
+        ];
+
+        foreach ($ogPatternsAlt as $key => $pattern) {
+            if (!$data[$key] && preg_match($pattern, $html, $match)) {
+                $data[$key] = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
+            }
+        }
+
+        // Preis aus product:price oder Schema.org
+        $pricePatterns = [
+            '/<meta\s+property=["\']product:price:amount["\']\s+content=["\']([^"\']+)["\']/i',
+            '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']product:price:amount["\']/i',
+            '/"price"\s*:\s*"?([\d.,]+)"?/i',
+            '/itemprop=["\']price["\']\s+content=["\']([^"\']+)["\']/i',
+        ];
+
+        foreach ($pricePatterns as $pattern) {
+            if (preg_match($pattern, $html, $match)) {
+                $price = str_replace(',', '.', $match[1]);
+                $data['price'] = (float) $price;
+                break;
+            }
+        }
+
+        // Fallback: <title> Tag
+        if (!$data['title'] && preg_match('/<title>([^<]+)<\/title>/i', $html, $match)) {
+            $data['title'] = trim(html_entity_decode($match[1], ENT_QUOTES, 'UTF-8'));
+        }
+
+        // Relative Bild-URLs zu absoluten machen
+        if ($data['image'] && !str_starts_with($data['image'], 'http')) {
+            $parsed = parse_url($url);
+            $base = $parsed['scheme'] . '://' . $parsed['host'];
+            $data['image'] = $base . '/' . ltrim($data['image'], '/');
+        }
+
+        return $data;
+    }
+
+    /**
+     * Fügt Affiliate-Tag zur URL hinzu
+     */
+    public function addAffiliateTag(string $url): string
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        $host = preg_replace('/^www\./', '', $host);
+
+        foreach ($this->affiliateTags as $domain => $config) {
+            if (str_contains($host, $domain)) {
+                if (isset($config['network']) && $config['network'] === 'awin') {
+                    // Awin Deep Link
+                    $encodedUrl = urlencode($url);
+                    return "https://www.awin1.com/cread.php?awinmid=0&awinaffid={$config['publisher_id']}&ued={$encodedUrl}";
+                }
+
+                if (isset($config['param'])) {
+                    // Direkter Tag (Amazon)
+                    $separator = str_contains($url, '?') ? '&' : '?';
+                    return $url . $separator . $config['param'] . '=' . $config['tag'];
+                }
+            }
+        }
+
+        // Kein Affiliate-Programm bekannt — originale URL
+        return $url;
+    }
+
+    /**
+     * Prüft ob eine URL von einem bekannten Shop stammt
+     */
+    public function isShopLink(string $url): bool
+    {
+        $shopDomains = [
+            'amazon.', 'ebay.', 'zalando.', 'otto.', 'aboutyou.',
+            'mediamarkt.', 'saturn.', 'idealo.', 'kaufland.',
+            'etsy.com', 'aliexpress.', 'shopify.com', 'myshopify.com',
+            'asos.', 'hm.com', 'ikea.', 'douglas.',
+        ];
+
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        foreach ($shopDomains as $domain) {
+            if (str_contains($host, $domain)) return true;
+        }
+        return false;
+    }
+}
