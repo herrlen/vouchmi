@@ -10,16 +10,25 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: "./assets/icon.png",
   scheme: "truscart",
   userInterfaceStyle: "dark",
-  splash: { backgroundColor: "#0A0E1A" },
+  splash: { backgroundColor: "#111B21" },
   plugins: ["expo-router", "expo-secure-store", "expo-asset"],
   experiments: { typedRoutes: true },
   ios: {
     bundleIdentifier: "com.truscart.app",
     supportsTablet: true,
+    privacyManifests: {
+      NSPrivacyAccessedAPITypes: [
+        { NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults", NSPrivacyAccessedAPITypeReasons: ["CA92.1"] },
+        { NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryDiskSpace", NSPrivacyAccessedAPITypeReasons: ["E174.1"] },
+      ],
+    },
   },
   android: {
     package: "com.truscart.app",
-    adaptiveIcon: { backgroundColor: "#0A0E1A" },
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#111B21",
+    },
   },
   extra: {
     API_URL: process.env.EXPO_PUBLIC_API_URL ?? "https://app.truscart.com/api",

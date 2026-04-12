@@ -34,8 +34,14 @@ export const api = {
   del: <T>(p: string) => req<T>("DELETE", p),
 };
 
+export const users = {
+  profile: (userId: string) => api.get<{ profile: User & { bio: string | null; link: string | null }; stats: { posts_count: number; followers_count: number; following_count: number }; is_following: boolean }>(`/users/${userId}/profile`),
+  follow: (userId: string) => api.post<{ following: boolean; followers_count: number }>(`/users/${userId}/follow`),
+  unfollow: (userId: string) => api.del<{ following: boolean; followers_count: number }>(`/users/${userId}/follow`),
+};
+
 export const profile = {
-  get: () => api.get<{ profile: User & { bio: string | null; link: string | null }; stats: { communities_count: number; posts_count: number } }>("/user/profile"),
+  get: () => api.get<{ profile: User & { bio: string | null; link: string | null }; stats: { communities_count: number; posts_count: number; followers_count: number; following_count: number } }>("/user/profile"),
   update: (d: { display_name?: string; bio?: string; link?: string }) =>
     api.put<{ profile: User }>("/user/profile", d),
   uploadAvatar: async (uri: string) => {
@@ -61,9 +67,36 @@ export const communities = {
   discover: () => api.get<{ communities: Community[] }>("/communities/discover"),
   get: (id: string) => api.get<{ community: Community }>(`/communities/${id}`),
   create: (d: { name: string; description?: string; category?: string }) => api.post<{ community: Community }>("/communities", d),
+  update: (id: string, d: { description?: string; category?: string; tags?: string[] }) =>
+    api.put<{ community: Community }>(`/communities/${id}`, d),
+  uploadImage: async (id: string, uri: string) => {
+    const form = new FormData();
+    const filename = uri.split("/").pop() || "community.jpg";
+    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
+    const type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+    // @ts-expect-error RN FormData file
+    form.append("image", { uri, name: filename, type });
+    return req<{ image_url: string }>("POST", `/communities/${id}/image`, form);
+  },
+  destroy: (id: string) => req<{ message: string }>("DELETE", `/communities/${id}`),
   join: (id: string) => api.post(`/communities/${id}/join`),
   leave: (id: string) => api.post(`/communities/${id}/leave`),
   invite: (id: string) => api.post<{ invite_code: string; invite_link: string }>(`/communities/${id}/invite`),
+  members: (id: string) => api.get<{ members: CommunityMember[] }>(`/communities/${id}/members`),
+  setRole: (id: string, userId: string, role: "member" | "moderator") =>
+    api.put<{ message: string }>(`/communities/${id}/members/${userId}/role`, { role }),
+  muteUser: (id: string, userId: string, duration: "24h" | "7d" | "permanent") =>
+    api.post<{ message: string; muted_until: string }>(`/communities/${id}/members/${userId}/mute`, { duration }),
+  unmuteUser: (id: string, userId: string) =>
+    api.del<{ message: string }>(`/communities/${id}/members/${userId}/mute`),
+  kickUser: (id: string, userId: string) =>
+    api.del<{ message: string }>(`/communities/${id}/members/${userId}`),
+  hidePost: (id: string, postId: string) =>
+    api.post<{ message: string }>(`/communities/${id}/posts/${postId}/hide`),
+  deletePost: (id: string, postId: string) =>
+    req<{ message: string }>("DELETE", `/communities/${id}/posts/${postId}`),
+  muteStatus: (id: string) =>
+    api.get<{ muted: boolean; muted_until: string | null }>(`/communities/${id}/mute-status`),
 };
 
 export const feed = {
@@ -103,6 +136,26 @@ export const brand = {
   public: (slug: string) => api.get<{ brand: Brand }>(`/brands/${slug}`),
 };
 
+export type Story = { id: string; community_id: string; media_url: string; media_type: "image" | "video"; duration: number | null; caption: string | null; view_count: number; expires_at: string | null; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
+
+export const stories = {
+  feed: () => api.get<{ stories: Story[] }>("/stories"),
+  mine: (page = 1) => api.get<{ data: Story[] }>(`/user/stories?page=${page}`),
+  list: (cid: string) => api.get<{ data: Story[] }>(`/communities/${cid}/stories`),
+  create: async (cid: string, uri: string, mediaType: "image" | "video", caption?: string, duration?: number) => {
+    const form = new FormData();
+    const filename = uri.split("/").pop() || (mediaType === "video" ? "story.mp4" : "story.jpg");
+    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
+    const type = mediaType === "video" ? (ext === "mov" ? "video/quicktime" : "video/mp4") : (ext === "png" ? "image/png" : "image/jpeg");
+    // @ts-expect-error RN FormData file
+    form.append("media", { uri, name: filename, type });
+    if (caption) form.append("caption", caption);
+    if (duration) form.append("duration", String(Math.round(duration)));
+    return req<{ story: Story }>("POST", `/communities/${cid}/stories`, form);
+  },
+  destroy: (id: string) => req<{ message: string }>("DELETE", `/stories/${id}`),
+};
+
 export const moderation = {
   report: (d: { target_type: "post" | "comment" | "user" | "community"; target_id: string; reason: "spam" | "abuse" | "illegal" | "sexual" | "other"; details?: string }) =>
     api.post<{ message: string }>("/reports", d),
@@ -119,7 +172,8 @@ export const drops = {
 
 // Types
 export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string };
-export type Community = { id: string; name: string; slug: string; description: string | null; image_url: string | null; category: string | null; member_count: number; is_private: boolean; role?: string; is_member?: boolean; my_role?: string };
+export type Community = { id: string; name: string; slug: string; description: string | null; image_url: string | null; category: string | null; tags?: string[] | null; member_count: number; is_private: boolean; role?: string; is_member?: boolean; my_role?: string; owner_id?: string };
+export type CommunityMember = { id: string; username: string; display_name: string | null; avatar_url: string | null; role: string; muted_until?: string | null };
 export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; click_count: number; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
 export type Comment = { id: string; content: string; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
 export type Msg = { id: string; content: string; link_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; created_at: string; sender: { id: string; username: string; display_name: string; avatar_url: string | null } };

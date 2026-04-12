@@ -24,13 +24,17 @@ export default function Layout() {
         <Stack.Screen name="auth" options={{ title: "Einloggen", headerShown: false }} />
         <Stack.Screen name="create-community" options={{ title: "Neue Community", presentation: "modal" }} />
         <Stack.Screen name="create-post" options={{ headerShown: false, presentation: "modal" }} />
+        <Stack.Screen name="create-story" options={{ headerShown: false, presentation: "modal" }} />
         <Stack.Screen name="discover" options={{ title: "Entdecken" }} />
-        <Stack.Screen name="community/[id]" options={{ title: "" }} />
+        <Stack.Screen name="community/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="community-settings" options={{ headerShown: false }} />
         <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="profile-edit" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="blocked-users" options={{ headerShown: false }} />
         <Stack.Screen name="brand" options={{ headerShown: false }} />
+        <Stack.Screen name="invite" options={{ headerShown: false }} />
+        <Stack.Screen name="user/[id]" options={{ headerShown: false }} />
       </Stack>
     </>
   );

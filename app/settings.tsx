@@ -53,6 +53,11 @@ export default function SettingsScreen() {
         </View>
 
         <View style={s.section}>
+          <Text style={s.sectionTitle}>Social</Text>
+          <Button label="Freunde einladen" onPress={() => router.push("/invite")} />
+        </View>
+
+        <View style={s.section}>
           <Text style={s.sectionTitle}>Sicherheit & Moderation</Text>
           <Button label="Blockierte Nutzer" onPress={() => router.push("/blocked-users")} />
         </View>

@@ -1,26 +1,31 @@
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, Alert, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, Stack } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { X, Link as LinkIcon, RefreshCw } from "lucide-react-native";
 import { colors } from "../src/constants/theme";
 import { links, feed as feedApi, communities as communitiesApi, type LinkPreview, type Community } from "../src/lib/api";
 
 export default function CreatePostScreen() {
+  const { cid: preselectedCid } = useLocalSearchParams<{ cid?: string }>();
   const [url, setUrl] = useState("");
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [preview, setPreview] = useState<LinkPreview | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [communities, setCommunities] = useState<Community[]>([]);
-  const [selectedCid, setSelectedCid] = useState<string | null>(null);
+  const [selectedCid, setSelectedCid] = useState<string | null>(preselectedCid ?? null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     communitiesApi.mine()
       .then((r) => {
         setCommunities(r.communities);
-        if (r.communities.length === 1) setSelectedCid(r.communities[0].id);
+        if (preselectedCid && r.communities.some((c) => c.id === preselectedCid)) {
+          setSelectedCid(preselectedCid);
+        } else if (r.communities.length === 1) {
+          setSelectedCid(r.communities[0].id);
+        }
       })
       .catch(() => {});
   }, []);

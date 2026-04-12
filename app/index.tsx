@@ -28,7 +28,7 @@ export default function Gate() {
   }
   if (needsOnboarding) return <Redirect href="/onboarding" />;
   if (!user) return <Redirect href="/auth" />;
-  return <Redirect href="/feed" />;
+  return <Redirect href="/reco" />;
 }
 
 const s = StyleSheet.create({

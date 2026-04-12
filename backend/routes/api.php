@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LinkPreviewController;
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\SponsoredDropController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\ModerationController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/profile', [UserController::class, 'profile']);
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
     Route::post('/user/avatar', [UserController::class, 'uploadAvatar']);
+    Route::get('/users/{userId}/profile', [UserController::class, 'publicProfile']);
+    Route::post('/users/{userId}/follow', [UserController::class, 'follow']);
+    Route::delete('/users/{userId}/follow', [UserController::class, 'unfollow']);
 
     // Communities (jeder kann erstellen!)
     Route::get('/communities', [CommunityController::class, 'index']);
@@ -40,11 +44,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities', [CommunityController::class, 'store']);
     Route::get('/communities/{id}', [CommunityController::class, 'show']);
     Route::put('/communities/{id}', [CommunityController::class, 'update']);
+    Route::post('/communities/{id}/image', [CommunityController::class, 'uploadImage']);
+    Route::delete('/communities/{id}', [CommunityController::class, 'destroy']);
     Route::post('/communities/{id}/join', [CommunityController::class, 'join']);
     Route::post('/communities/{id}/leave', [CommunityController::class, 'leave']);
     Route::get('/communities/{id}/members', [CommunityController::class, 'members']);
     Route::post('/communities/{id}/invite', [CommunityController::class, 'invite']);
     Route::post('/communities/join-by-code/{code}', [CommunityController::class, 'joinByCode']);
+
+    // Community Moderation
+    Route::put('/communities/{id}/members/{userId}/role', [CommunityController::class, 'setRole']);
+    Route::post('/communities/{id}/members/{userId}/mute', [CommunityController::class, 'muteUser']);
+    Route::delete('/communities/{id}/members/{userId}/mute', [CommunityController::class, 'unmuteUser']);
+    Route::delete('/communities/{id}/members/{userId}', [CommunityController::class, 'kickUser']);
+    Route::post('/communities/{id}/posts/{postId}/hide', [CommunityController::class, 'hidePost']);
+    Route::delete('/communities/{id}/posts/{postId}', [CommunityController::class, 'deletePost']);
+    Route::get('/communities/{id}/mute-status', [CommunityController::class, 'myMuteStatus']);
+
+    // Stories
+    Route::get('/stories', [StoryController::class, 'feed']);
+    Route::get('/user/stories', [StoryController::class, 'mine']);
+    Route::get('/communities/{id}/stories', [StoryController::class, 'index']);
+    Route::post('/communities/{id}/stories', [StoryController::class, 'store']);
+    Route::delete('/stories/{storyId}', [StoryController::class, 'destroy']);
 
     // Feed (Posts mit Produkt-Links)
     Route::get('/feed', [FeedController::class, 'allMyFeed']);

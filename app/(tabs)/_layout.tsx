@@ -1,9 +1,13 @@
-import { Tabs, router } from "expo-router";
-import { Home, Search, Users, User, Plus } from "lucide-react-native";
+import { useState } from "react";
+import { Tabs } from "expo-router";
+import { Compass, Search, Users, User, Plus } from "lucide-react-native";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { colors } from "../../src/constants/theme";
+import CreateSheet from "../../src/components/CreateSheet";
 
 export default function TabsLayout() {
+  const [sheetOpen, setSheetOpen] = useState(false);
+
   return (
     <View style={{ flex: 1 }}>
       <Tabs
@@ -23,57 +27,35 @@ export default function TabsLayout() {
           tabBarItemStyle: { paddingVertical: 4 },
         }}
       >
-        <Tabs.Screen
-          name="search"
-          options={{
-            title: "Suche",
-            tabBarIcon: ({ color, size }) => <Search color={color} size={size} strokeWidth={2} />,
-          }}
-        />
-        <Tabs.Screen
-          name="communities"
-          options={{
-            title: "Community",
-            tabBarIcon: ({ color, size }) => <Users color={color} size={size} strokeWidth={2} />,
-          }}
-        />
-        <Tabs.Screen
-          name="feed"
-          options={{
-            title: "Feed",
-            tabBarIcon: ({ color, size }) => <Home color={color} size={size} strokeWidth={2} />,
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: "Profil",
-            tabBarIcon: ({ color, size }) => <User color={color} size={size} strokeWidth={2} />,
-          }}
-        />
+        <Tabs.Screen name="search" options={{ title: "Suche", tabBarIcon: ({ color, size }) => <Search color={color} size={size} strokeWidth={1.8} /> }} />
+        <Tabs.Screen name="communities" options={{ title: "Community", tabBarIcon: ({ color, size }) => <Users color={color} size={size} strokeWidth={1.8} /> }} />
+        <Tabs.Screen name="reco" options={{ title: "Reco", tabBarIcon: ({ color, size }) => <Compass color={color} size={size} strokeWidth={1.8} /> }} />
+        <Tabs.Screen name="profile" options={{ title: "Profil", tabBarIcon: ({ color, size }) => <User color={color} size={size} strokeWidth={1.8} /> }} />
       </Tabs>
 
       <Pressable
-        style={({ pressed }) => [s.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }]}
-        onPress={() => router.push("/create-post")}
-        hitSlop={10}
-        accessibilityLabel="Produkt teilen"
-        accessibilityRole="button"
+        style={({ pressed }) => [s.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.94 }] }]}
+        onPress={() => setSheetOpen(true)}
+        accessibilityLabel="Neuen Beitrag erstellen"
       >
-        <Plus color={colors.bg} size={28} strokeWidth={2.8} />
+        <Plus color="#fff" size={30} strokeWidth={2.6} />
       </Pressable>
+
+      <CreateSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} />
     </View>
   );
 }
 
+const TAB_H = Platform.OS === "ios" ? 84 : 64;
+
 const s = StyleSheet.create({
   fab: {
     position: "absolute",
-    right: 18,
-    bottom: Platform.OS === "ios" ? 100 : 80,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    alignSelf: "center",
+    bottom: TAB_H - 20,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: colors.accent,
     justifyContent: "center",
     alignItems: "center",
@@ -82,5 +64,6 @@ const s = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 10,
   },
 });

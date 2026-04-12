@@ -26,6 +26,7 @@ class FeedController extends Controller
             ->pluck('blocked_id');
 
         $posts = Post::where('community_id', $communityId)
+            ->where('is_hidden', false)
             ->whereNotIn('author_id', $blockedIds)
             ->with('author:id,username,display_name,avatar_url')
             ->latest()
@@ -46,6 +47,7 @@ class FeedController extends Controller
             ->pluck('community_id');
 
         $posts = Post::whereIn('community_id', $communityIds)
+            ->where('is_hidden', false)
             ->whereNotIn('author_id', $blockedIds)
             ->with('author:id,username,display_name,avatar_url')
             ->with('community:id,name,slug')
@@ -68,6 +70,17 @@ class FeedController extends Controller
 
     public function store(string $communityId, Request $request): JsonResponse
     {
+        $member = DB::table('community_members')
+            ->where('community_id', $communityId)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if ($member && $member->muted_until && now()->lt($member->muted_until)) {
+            return response()->json([
+                'message' => 'Du bist stumm geschaltet bis ' . \Carbon\Carbon::parse($member->muted_until)->format('d.m.Y H:i') . '.',
+            ], 403);
+        }
+
         $data = $request->validate([
             'content' => 'nullable|string|max:500',
             'link_url' => 'required|url',

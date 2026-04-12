@@ -129,7 +129,7 @@ class CommunityController extends Controller
         $members = $community->members()
             ->select('users.id', 'username', 'display_name', 'avatar_url')
             ->get()
-            ->map(fn($m) => [...$m->only('id', 'username', 'display_name', 'avatar_url'), 'role' => $m->pivot->role]);
+            ->map(fn($m) => [...$m->only('id', 'username', 'display_name', 'avatar_url'), 'role' => $m->pivot->role, 'muted_until' => $m->pivot->muted_until]);
 
         return response()->json(['members' => $members]);
     }
@@ -155,6 +155,208 @@ class CommunityController extends Controller
         return response()->json([
             'invite_code' => $invite->code,
             'invite_link' => config('app.frontend_url') . '/join/' . $invite->code,
+        ]);
+    }
+
+    private function isModOrOwner(Community $community, string $userId): bool
+    {
+        if ($community->owner_id === $userId) return true;
+        $member = $community->members()->where('user_id', $userId)->first();
+        return $member && in_array($member->pivot->role, ['owner', 'moderator']);
+    }
+
+    public function update(string $id, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if (!$this->isModOrOwner($community, $request->user()->id)) {
+            return response()->json(['message' => 'Nur Ersteller und Moderatoren können die Community bearbeiten.'], 403);
+        }
+
+        $data = $request->validate([
+            'description' => 'nullable|string|max:500',
+            'category' => 'nullable|string|max:50',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:30',
+        ]);
+
+        $community->update($data);
+
+        return response()->json(['community' => $community->fresh()]);
+    }
+
+    public function uploadImage(string $id, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if (!$this->isModOrOwner($community, $request->user()->id)) {
+            return response()->json(['message' => 'Keine Berechtigung'], 403);
+        }
+
+        $request->validate(['image' => 'required|image|mimes:jpeg,png,jpg,webp|max:4096']);
+
+        $path = $request->file('image')->store('communities', 'public');
+        $url = asset('storage/' . $path);
+        $community->update(['image_url' => $url]);
+
+        return response()->json(['image_url' => $url]);
+    }
+
+    public function destroy(string $id, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if ($community->owner_id !== $request->user()->id) {
+            return response()->json(['message' => 'Nur der Ersteller kann die Community löschen.'], 403);
+        }
+
+        \DB::transaction(function () use ($community) {
+            \DB::table('posts')->where('community_id', $community->id)->delete();
+            \DB::table('messages')->where('community_id', $community->id)->delete();
+            \DB::table('community_members')->where('community_id', $community->id)->delete();
+            $community->delete();
+        });
+
+        return response()->json(['message' => 'Community gelöscht']);
+    }
+
+    public function setRole(string $id, string $userId, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if ($community->owner_id !== $request->user()->id) {
+            return response()->json(['message' => 'Nur der Ersteller kann Rollen vergeben.'], 403);
+        }
+
+        if ($userId === $community->owner_id) {
+            return response()->json(['message' => 'Der Ersteller-Status kann nicht geändert werden.'], 400);
+        }
+
+        $data = $request->validate(['role' => 'required|in:member,moderator']);
+
+        $member = $community->members()->where('user_id', $userId)->first();
+        if (!$member) {
+            return response()->json(['message' => 'Nutzer ist kein Mitglied.'], 404);
+        }
+
+        $community->members()->updateExistingPivot($userId, ['role' => $data['role']]);
+
+        return response()->json(['message' => $data['role'] === 'moderator' ? 'Zum Moderator ernannt.' : 'Rolle auf Mitglied gesetzt.']);
+    }
+
+    public function muteUser(string $id, string $userId, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if (!$this->isModOrOwner($community, $request->user()->id)) {
+            return response()->json(['message' => 'Keine Berechtigung'], 403);
+        }
+
+        if ($userId === $community->owner_id) {
+            return response()->json(['message' => 'Der Ersteller kann nicht stumm geschaltet werden.'], 400);
+        }
+
+        $data = $request->validate(['duration' => 'required|in:24h,7d,permanent']);
+
+        $until = match ($data['duration']) {
+            '24h' => now()->addHours(24),
+            '7d' => now()->addDays(7),
+            'permanent' => now()->addYears(100),
+        };
+
+        $community->members()->updateExistingPivot($userId, [
+            'muted_until' => $until,
+            'muted_by' => $request->user()->id,
+        ]);
+
+        return response()->json(['message' => 'Nutzer stumm geschaltet.', 'muted_until' => $until->toISOString()]);
+    }
+
+    public function unmuteUser(string $id, string $userId, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if (!$this->isModOrOwner($community, $request->user()->id)) {
+            return response()->json(['message' => 'Keine Berechtigung'], 403);
+        }
+
+        $community->members()->updateExistingPivot($userId, ['muted_until' => null, 'muted_by' => null]);
+
+        return response()->json(['message' => 'Stummschaltung aufgehoben.']);
+    }
+
+    public function kickUser(string $id, string $userId, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if (!$this->isModOrOwner($community, $request->user()->id)) {
+            return response()->json(['message' => 'Keine Berechtigung'], 403);
+        }
+
+        if ($userId === $community->owner_id) {
+            return response()->json(['message' => 'Der Ersteller kann nicht entfernt werden.'], 400);
+        }
+
+        $targetMember = $community->members()->where('user_id', $userId)->first();
+        if (!$targetMember) {
+            return response()->json(['message' => 'Nutzer ist kein Mitglied.'], 404);
+        }
+
+        if ($targetMember->pivot->role === 'moderator' && $community->owner_id !== $request->user()->id) {
+            return response()->json(['message' => 'Nur der Ersteller kann Moderatoren entfernen.'], 403);
+        }
+
+        $community->members()->detach($userId);
+        $community->decrement('member_count');
+
+        return response()->json(['message' => 'Nutzer aus Community entfernt.']);
+    }
+
+    public function hidePost(string $id, string $postId, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if (!$this->isModOrOwner($community, $request->user()->id)) {
+            return response()->json(['message' => 'Keine Berechtigung'], 403);
+        }
+
+        $post = \App\Models\Post::where('id', $postId)->where('community_id', $id)->firstOrFail();
+        $post->update(['is_hidden' => true, 'hidden_by' => $request->user()->id]);
+
+        return response()->json(['message' => 'Beitrag ausgeblendet.']);
+    }
+
+    public function deletePost(string $id, string $postId, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+
+        if (!$this->isModOrOwner($community, $request->user()->id)) {
+            return response()->json(['message' => 'Keine Berechtigung'], 403);
+        }
+
+        $post = \App\Models\Post::where('id', $postId)->where('community_id', $id)->firstOrFail();
+        \DB::table('comments')->where('post_id', $post->id)->delete();
+        \DB::table('likes')->where('post_id', $post->id)->delete();
+        $post->delete();
+
+        return response()->json(['message' => 'Beitrag gelöscht.']);
+    }
+
+    public function myMuteStatus(string $id, Request $request): JsonResponse
+    {
+        $community = Community::findOrFail($id);
+        $member = $community->members()->where('user_id', $request->user()->id)->first();
+
+        if (!$member) {
+            return response()->json(['muted' => false]);
+        }
+
+        $mutedUntil = $member->pivot->muted_until;
+        $isMuted = $mutedUntil && now()->lt($mutedUntil);
+
+        return response()->json([
+            'muted' => $isMuted,
+            'muted_until' => $isMuted ? $mutedUntil : null,
         ]);
     }
 }

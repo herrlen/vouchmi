@@ -16,11 +16,16 @@ class UserController extends Controller
         $user = $request->user();
         $postCount = \DB::table('posts')->where('author_id', $user->id)->count();
 
+        $followerCount = \DB::table('follows')->where('following_id', $user->id)->count();
+        $followingCount = \DB::table('follows')->where('follower_id', $user->id)->count();
+
         return response()->json([
             'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role'),
             'stats' => [
                 'communities_count' => $user->communities()->count(),
                 'posts_count' => $postCount,
+                'followers_count' => $followerCount,
+                'following_count' => $followingCount,
             ],
         ]);
     }
@@ -70,5 +75,57 @@ class UserController extends Controller
         );
 
         return response()->json(['tracked' => true]);
+    }
+
+    public function follow(string $userId, Request $request): JsonResponse
+    {
+        $me = $request->user();
+        if ($me->id === $userId) {
+            return response()->json(['message' => 'Du kannst dir nicht selbst folgen.'], 400);
+        }
+
+        \App\Models\User::findOrFail($userId);
+
+        $exists = \DB::table('follows')->where('follower_id', $me->id)->where('following_id', $userId)->exists();
+        if ($exists) {
+            return response()->json(['message' => 'Du folgst diesem Nutzer bereits.'], 409);
+        }
+
+        \DB::table('follows')->insert([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'follower_id' => $me->id,
+            'following_id' => $userId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $count = \DB::table('follows')->where('following_id', $userId)->count();
+        return response()->json(['following' => true, 'followers_count' => $count]);
+    }
+
+    public function unfollow(string $userId, Request $request): JsonResponse
+    {
+        \DB::table('follows')->where('follower_id', $request->user()->id)->where('following_id', $userId)->delete();
+        $count = \DB::table('follows')->where('following_id', $userId)->count();
+        return response()->json(['following' => false, 'followers_count' => $count]);
+    }
+
+    public function publicProfile(string $userId, Request $request): JsonResponse
+    {
+        $user = \App\Models\User::findOrFail($userId);
+        $postCount = \DB::table('posts')->where('author_id', $user->id)->count();
+        $followerCount = \DB::table('follows')->where('following_id', $user->id)->count();
+        $followingCount = \DB::table('follows')->where('follower_id', $user->id)->count();
+        $isFollowing = \DB::table('follows')->where('follower_id', $request->user()->id)->where('following_id', $userId)->exists();
+
+        return response()->json([
+            'profile' => $user->only('id', 'username', 'display_name', 'avatar_url', 'bio', 'link'),
+            'stats' => [
+                'posts_count' => $postCount,
+                'followers_count' => $followerCount,
+                'following_count' => $followingCount,
+            ],
+            'is_following' => $isFollowing,
+        ]);
     }
 }

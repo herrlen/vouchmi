@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, Linking } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, Linking, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Heart, MessageCircle, Share2, MoreHorizontal, ExternalLink } from "lucide-react-native";
+import { Heart, MessageCircle, Share2, MoreHorizontal, ExternalLink, Plus } from "lucide-react-native";
 import { router } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { feed as feedApi, links as linksApi, type Post } from "../../src/lib/api";
@@ -56,6 +56,7 @@ export default function FeedTab() {
           keyExtractor={(p) => p.id}
           contentContainerStyle={{ paddingBottom: 120 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+          ListHeaderComponent={<StoryBar posts={posts} />}
           ListEmptyComponent={
             <View style={s.empty}>
               <Text style={s.emptyTitle}>Noch keine Posts</Text>
@@ -69,6 +70,39 @@ export default function FeedTab() {
         />
       )}
     </SafeAreaView>
+  );
+}
+
+const SB = 62;
+function StoryBar({ posts }: { posts: Post[] }) {
+  const authors = posts.map((p) => p.author).filter((a, i, arr) => arr.findIndex((x) => x.id === a.id) === i).slice(0, 10);
+  return (
+    <View style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingVertical: 10 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 14 }}>
+        <Pressable style={{ alignItems: "center", width: SB + 8 }} onPress={() => router.push("/create-story")}>
+          <View style={{ width: SB + 6, height: SB + 6, borderRadius: (SB + 6) / 2, backgroundColor: colors.bgCard, justifyContent: "center", alignItems: "center" }}>
+            <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: colors.bgInput, justifyContent: "center", alignItems: "center" }}>
+              <Plus color={colors.accent} size={26} />
+            </View>
+          </View>
+          <Text style={{ color: colors.gray, fontSize: 11, marginTop: 5 }}>Du</Text>
+        </Pressable>
+        {authors.map((a) => (
+          <View key={a.id} style={{ alignItems: "center", width: SB + 8 }}>
+            <View style={{ width: SB + 6, height: SB + 6, borderRadius: (SB + 6) / 2, borderWidth: 2, borderColor: colors.accent, justifyContent: "center", alignItems: "center" }}>
+              {a.avatar_url ? (
+                <Image source={{ uri: a.avatar_url }} style={{ width: SB, height: SB, borderRadius: SB / 2 }} />
+              ) : (
+                <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: colors.bgInput, justifyContent: "center", alignItems: "center" }}>
+                  <Text style={{ color: colors.white, fontWeight: "700", fontSize: 22 }}>{(a.display_name ?? a.username)[0]?.toUpperCase()}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={{ color: colors.gray, fontSize: 11, marginTop: 5, maxWidth: SB + 8, textAlign: "center" }} numberOfLines={1}>{a.username}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -96,17 +130,19 @@ function PostItem({ post, onLike }: { post: Post; onLike: (id: string) => void }
   return (
     <View style={s.post}>
       <View style={s.postHeader}>
-        {post.author.avatar_url ? (
-          <Image source={{ uri: post.author.avatar_url }} style={s.postAvatar} />
-        ) : (
-          <View style={[s.postAvatar, s.avatarPlaceholder]}>
-            <Text style={s.avatarInitial}>{initial}</Text>
-          </View>
-        )}
-        <View style={{ flex: 1 }}>
+        <Pressable onPress={() => router.push(`/user/${post.author.id}`)}>
+          {post.author.avatar_url ? (
+            <Image source={{ uri: post.author.avatar_url }} style={s.postAvatar} />
+          ) : (
+            <View style={[s.postAvatar, s.avatarPlaceholder]}>
+              <Text style={s.avatarInitial}>{initial}</Text>
+            </View>
+          )}
+        </Pressable>
+        <Pressable style={{ flex: 1 }} onPress={() => router.push(`/user/${post.author.id}`)}>
           <Text style={s.authorName}>{post.author.display_name ?? post.author.username}</Text>
           <Text style={s.username}>@{post.author.username} · {timeAgo(post.created_at)}</Text>
-        </View>
+        </Pressable>
         <Pressable hitSlop={10} style={s.menuBtn}>
           <MoreHorizontal color={colors.gray} size={20} />
         </Pressable>
