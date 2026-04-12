@@ -10,12 +10,12 @@ use Illuminate\Support\Facades\Cache;
 
 class HumHubService
 {
-    private string $baseUrl;
-    private string $adminToken;
+    private ?string $baseUrl;
+    private ?string $adminToken;
 
     public function __construct()
     {
-        $this->baseUrl = config('services.humhub.url') . '/api/v1';
+        $this->baseUrl = config('services.humhub.url') ? config('services.humhub.url') . '/api/v1' : null;
         $this->adminToken = config('services.humhub.admin_token');
     }
 

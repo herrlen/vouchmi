@@ -15,8 +15,18 @@ class BrandController extends Controller
 {
     public function profile(Request $request): JsonResponse
     {
-        $brand = BrandProfile::where('user_id', $request->user()->id)->firstOrFail();
+        $user = $request->user();
+        if ($user->role !== 'brand') {
+            return response()->json(['message' => 'Kein Brand-Account'], 403);
+        }
+        $brand = BrandProfile::where('user_id', $user->id)->first();
         return response()->json(['brand' => $brand]);
+    }
+
+    public function publicProfile(string $slug): JsonResponse
+    {
+        $brand = BrandProfile::where('brand_slug', $slug)->firstOrFail();
+        return response()->json(['brand' => $brand->only('id', 'brand_name', 'brand_slug', 'description', 'logo_url', 'website_url', 'industry', 'is_verified')]);
     }
 
     public function updateProfile(Request $request): JsonResponse

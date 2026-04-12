@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\Http;
 
 class MatomoService
 {
-    private string $baseUrl;
+    private ?string $baseUrl;
     private int $siteId;
-    private string $authToken;
+    private ?string $authToken;
 
     public function __construct()
     {
@@ -18,8 +18,14 @@ class MatomoService
         $this->authToken = config('services.matomo.auth_token');
     }
 
+    private function enabled(): bool
+    {
+        return !empty($this->baseUrl);
+    }
+
     public function trackEvent(string $userId, string $category, string $action, ?string $name = null, ?float $value = null): void
     {
+        if (!$this->enabled()) return;
         Http::async()->get("{$this->baseUrl}/matomo.php", [
             'idsite' => $this->siteId,
             'rec' => 1,
@@ -34,6 +40,7 @@ class MatomoService
 
     public function trackEcommerceOrder(string $userId, string $orderId, float $revenue, array $items = []): void
     {
+        if (!$this->enabled()) return;
         Http::async()->get("{$this->baseUrl}/matomo.php", [
             'idsite' => $this->siteId,
             'rec' => 1,
@@ -48,6 +55,7 @@ class MatomoService
 
     public function getVisitsSummary(string $period = 'day', string $date = 'today'): array
     {
+        if (!$this->enabled()) return [];
         $response = Http::get("{$this->baseUrl}/index.php", [
             'module' => 'API',
             'method' => 'VisitsSummary.get',

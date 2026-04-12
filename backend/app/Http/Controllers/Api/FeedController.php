@@ -21,7 +21,12 @@ class FeedController extends Controller
 
     public function index(string $communityId, Request $request): JsonResponse
     {
+        $blockedIds = DB::table('user_blocks')
+            ->where('blocker_id', $request->user()->id)
+            ->pluck('blocked_id');
+
         $posts = Post::where('community_id', $communityId)
+            ->whereNotIn('author_id', $blockedIds)
             ->with('author:id,username,display_name,avatar_url')
             ->latest()
             ->paginate(20);
@@ -29,29 +34,79 @@ class FeedController extends Controller
         return response()->json($posts);
     }
 
+    public function allMyFeed(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $blockedIds = DB::table('user_blocks')
+            ->where('blocker_id', $user->id)
+            ->pluck('blocked_id');
+
+        $communityIds = DB::table('community_members')
+            ->where('user_id', $user->id)
+            ->pluck('community_id');
+
+        $posts = Post::whereIn('community_id', $communityIds)
+            ->whereNotIn('author_id', $blockedIds)
+            ->with('author:id,username,display_name,avatar_url')
+            ->with('community:id,name,slug')
+            ->latest()
+            ->paginate(30);
+
+        return response()->json($posts);
+    }
+
+    public function myPosts(Request $request): JsonResponse
+    {
+        $posts = Post::where('author_id', $request->user()->id)
+            ->with('author:id,username,display_name,avatar_url')
+            ->with('community:id,name,slug')
+            ->latest()
+            ->paginate(50);
+
+        return response()->json($posts);
+    }
+
     public function store(string $communityId, Request $request): JsonResponse
     {
         $data = $request->validate([
-            'content' => 'required|string|max:5000',
-            'link_url' => 'nullable|url',
+            'content' => 'nullable|string|max:500',
+            'link_url' => 'required|url',
+            'link_title' => 'nullable|string|max:200',
+            'link_image' => 'nullable|url',
+            'link_price' => 'nullable|numeric',
             'media_urls' => 'nullable|array',
         ]);
 
-        $linkData = [];
-        if (!empty($data['link_url'])) {
+        $host = strtolower(parse_url($data['link_url'], PHP_URL_HOST) ?? '');
+        if (preg_match('/(^|\.)(amazon|amzn)\./i', $host)) {
+            return response()->json([
+                'message' => 'Amazon-Links sind auf TrusCart nicht erlaubt.',
+            ], 422);
+        }
+
+        $username = $request->user()->username;
+        $finalUrl = $this->links->addRefTag($data['link_url'], $username);
+
+        $linkData = [
+            'link_url' => $data['link_url'],
+            'link_affiliate_url' => $finalUrl,
+            'link_domain' => $host,
+            'post_type' => 'link',
+            'link_title' => $data['link_title'] ?? null,
+            'link_image' => $data['link_image'] ?? null,
+            'link_price' => $data['link_price'] ?? null,
+        ];
+
+        if (empty($data['link_title']) || empty($data['link_image'])) {
             $preview = $this->links->getPreview($data['link_url']);
             if ($preview) {
-                $linkData = [
-                    'link_url' => $preview['original_url'],
-                    'link_affiliate_url' => $preview['affiliate_url'],
-                    'link_title' => $preview['title'],
-                    'link_image' => $preview['image'],
-                    'link_price' => $preview['price'],
-                    'link_domain' => $preview['domain'],
-                    'post_type' => 'link',
-                ];
+                $linkData['link_title'] = $linkData['link_title'] ?? $preview['title'] ?? null;
+                $linkData['link_image'] = $linkData['link_image'] ?? $preview['image'] ?? null;
+                $linkData['link_price'] = $linkData['link_price'] ?? $preview['price'] ?? null;
             }
         }
+
+        $data['content'] = $data['content'] ?? '';
 
         $post = Post::create([
             'community_id' => $communityId,

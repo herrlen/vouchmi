@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LinkPreviewController;
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\SponsoredDropController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ModerationController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public ──
@@ -46,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities/join-by-code/{code}', [CommunityController::class, 'joinByCode']);
 
     // Feed (Posts mit Produkt-Links)
+    Route::get('/feed', [FeedController::class, 'allMyFeed']);
+    Route::get('/user/posts', [FeedController::class, 'myPosts']);
     Route::get('/communities/{id}/feed', [FeedController::class, 'index']);
     Route::post('/communities/{id}/feed', [FeedController::class, 'store']);
     Route::post('/feed/{postId}/like', [FeedController::class, 'like']);
@@ -64,6 +67,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Tracking
     Route::post('/track/event', [UserController::class, 'trackEvent']);
     Route::post('/track/click', [LinkPreviewController::class, 'trackClick']);
+
+    // Brand-Profil (nur lesen in der App, Bearbeitung/Signup via Web)
+    Route::get('/brand/me', [BrandController::class, 'profile']);
+    Route::get('/brands/{slug}', [BrandController::class, 'publicProfile']);
+
+    // Moderation (Apple-Pflicht: Melden, Blockieren, Account-Löschung)
+    Route::post('/reports', [ModerationController::class, 'report']);
+    Route::post('/users/{userId}/block', [ModerationController::class, 'block']);
+    Route::delete('/users/{userId}/block', [ModerationController::class, 'unblock']);
+    Route::get('/users/blocked', [ModerationController::class, 'blockedUsers']);
+    Route::delete('/account', [ModerationController::class, 'deleteAccount']);
 });
 
 // ── Brand API (nur für zahlende Marken) ──

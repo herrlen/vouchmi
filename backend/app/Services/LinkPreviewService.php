@@ -10,18 +10,7 @@ use Illuminate\Support\Facades\Cache;
 
 class LinkPreviewService
 {
-    /**
-     * Affiliate-Tags pro Netzwerk.
-     * Trage hier deine IDs ein sobald du bei den Programmen angemeldet bist.
-     */
-    private array $affiliateTags = [
-        'amazon.de'      => ['tag' => 'truscart-21', 'param' => 'tag'],
-        'amazon.com'     => ['tag' => 'truscart-20', 'param' => 'tag'],
-        'zalando.de'     => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
-        'otto.de'        => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
-        'aboutyou.de'    => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
-        'mediamarkt.de'  => ['network' => 'awin', 'publisher_id' => 'DEINE_AWIN_ID'],
-    ];
+    private array $affiliateTags = [];
 
     /**
      * Generiert eine Link-Preview mit OG-Tags + Affiliate-Link
@@ -121,6 +110,17 @@ class LinkPreviewService
         }
 
         return $data;
+    }
+
+    /**
+     * Hängt den Promoter-Username als ?ref=<username> an die URL an.
+     * Kernmechanik: Marken erkennen so in ihren Analytics,
+     * welcher TrusCart-User die Klicks/Käufe geliefert hat.
+     */
+    public function addRefTag(string $url, string $username): string
+    {
+        $separator = str_contains($url, '?') ? '&' : '?';
+        return $url . $separator . 'ref=' . rawurlencode($username);
     }
 
     /**

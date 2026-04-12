@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Http;
 
 class ReviveAdService
 {
-    private string $baseUrl;
-    private string $apiKey;
+    private ?string $baseUrl;
+    private ?string $apiKey;
 
     public function __construct()
     {

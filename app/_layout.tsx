@@ -1,0 +1,37 @@
+// app/_layout.tsx
+import { useEffect } from "react";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useAuth } from "../src/lib/store";
+import { colors } from "../src/constants/theme";
+
+export default function Layout() {
+  const init = useAuth((s) => s.init);
+  useEffect(() => { init(); }, []);
+
+  return (
+    <>
+      <StatusBar style="light" />
+      <Stack screenOptions={{
+        headerStyle: { backgroundColor: colors.bg },
+        headerTintColor: colors.accent,
+        headerTitleStyle: { fontWeight: "bold", color: colors.white },
+        contentStyle: { backgroundColor: colors.bg },
+      }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ title: "Einloggen", headerShown: false }} />
+        <Stack.Screen name="create-community" options={{ title: "Neue Community", presentation: "modal" }} />
+        <Stack.Screen name="create-post" options={{ headerShown: false, presentation: "modal" }} />
+        <Stack.Screen name="discover" options={{ title: "Entdecken" }} />
+        <Stack.Screen name="community/[id]" options={{ title: "" }} />
+        <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="profile-edit" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+        <Stack.Screen name="blocked-users" options={{ headerShown: false }} />
+        <Stack.Screen name="brand" options={{ headerShown: false }} />
+      </Stack>
+    </>
+  );
+}

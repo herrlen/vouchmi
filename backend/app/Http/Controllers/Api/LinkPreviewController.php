@@ -20,10 +20,18 @@ class LinkPreviewController extends Controller
     public function preview(Request $request): JsonResponse
     {
         $url = $request->validate(['url' => 'required|url'])['url'];
+
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        if (preg_match('/(^|\.)(amazon|amzn)\./i', $host)) {
+            return response()->json([
+                'message' => 'Amazon-Links sind auf TrusCart nicht erlaubt.',
+            ], 422);
+        }
+
         $preview = $this->links->getPreview($url);
 
         if (!$preview) {
-            return response()->json(['message' => 'Konnte keine Preview generieren'], 422);
+            return response()->json(['message' => 'Konnte keine Preview generieren. Probiere einen anderen Link.'], 422);
         }
 
         return response()->json(['preview' => $preview]);

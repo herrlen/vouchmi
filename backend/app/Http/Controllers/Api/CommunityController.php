@@ -5,14 +5,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Community;
-use App\Services\HumHubService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CommunityController extends Controller
 {
-    public function __construct(private HumHubService $humhub) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -49,7 +47,20 @@ class CommunityController extends Controller
             'is_private' => 'boolean',
         ]);
 
-        $slug = Str::slug($data['name']) . '-' . Str::random(6);
+        $normalizedName = trim($data['name']);
+        $data['name'] = $normalizedName;
+
+        $exists = Community::where('owner_id', $request->user()->id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($normalizedName)])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'message' => 'Du hast bereits eine Community mit diesem Namen.',
+            ], 409);
+        }
+
+        $slug = Str::slug($normalizedName) . '-' . Str::random(6);
 
         $community = Community::create([
             ...$data,
@@ -57,16 +68,6 @@ class CommunityController extends Controller
             'owner_id' => $request->user()->id,
         ]);
 
-        // HumHub Space erstellen
-        try {
-            $humhubToken = $this->getHumHubToken($request->user());
-            $space = $this->humhub->createSpace($data, $humhubToken);
-            $community->update(['humhub_space_id' => $space['id'] ?? null]);
-        } catch (\Exception $e) {
-            logger()->warning('HumHub space creation failed', ['error' => $e->getMessage()]);
-        }
-
-        // Owner als Member hinzufügen
         $community->members()->attach($request->user()->id, ['role' => 'owner']);
 
         return response()->json(['community' => $community], 201);
@@ -103,15 +104,6 @@ class CommunityController extends Controller
 
         $community->members()->attach($user->id, ['role' => 'member']);
         $community->increment('member_count');
-
-        // HumHub Sync
-        if ($community->humhub_space_id && $user->humhub_user_id) {
-            try {
-                $this->humhub->addSpaceMember($community->humhub_space_id, $user->humhub_user_id);
-            } catch (\Exception $e) {
-                logger()->warning('HumHub member sync failed');
-            }
-        }
 
         return response()->json(['message' => 'Willkommen in der Community!']);
     }
@@ -164,11 +156,5 @@ class CommunityController extends Controller
             'invite_code' => $invite->code,
             'invite_link' => config('app.frontend_url') . '/join/' . $invite->code,
         ]);
-    }
-
-    private function getHumHubToken($user): ?string
-    {
-        if (!$user->humhub_user_id) return null;
-        return $this->humhub->getUserToken($user->humhub_user_id);
     }
 }

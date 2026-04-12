@@ -14,11 +14,13 @@ class UserController extends Controller
     public function profile(Request $request): JsonResponse
     {
         $user = $request->user();
+        $postCount = \DB::table('posts')->where('author_id', $user->id)->count();
+
         return response()->json([
-            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'role'),
+            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role'),
             'stats' => [
                 'communities_count' => $user->communities()->count(),
-                'posts_count' => $user->ownedCommunities()->count(), // TODO: posts relation
+                'posts_count' => $postCount,
             ],
         ]);
     }
@@ -27,11 +29,27 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'display_name' => 'nullable|string|max:50',
-            'bio' => 'nullable|string|max:500',
+            'bio' => 'nullable|string|max:250',
+            'link' => 'nullable|url|max:255',
         ]);
 
         $request->user()->update($data);
         return response()->json(['profile' => $request->user()->fresh()]);
+    }
+
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ]);
+
+        $user = $request->user();
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $url = asset('storage/' . $path);
+
+        $user->update(['avatar_url' => $url]);
+
+        return response()->json(['avatar_url' => $url]);
     }
 
     public function trackEvent(Request $request): JsonResponse
