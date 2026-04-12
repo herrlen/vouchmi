@@ -54,6 +54,22 @@ class FeedController extends Controller
             ->latest()
             ->paginate(30);
 
+        $myReposts = DB::table('reposts')
+            ->where('user_id', $user->id)
+            ->pluck('original_post_id')
+            ->toArray();
+
+        $myLikes = DB::table('likes')
+            ->where('user_id', $user->id)
+            ->pluck('post_id')
+            ->toArray();
+
+        $posts->getCollection()->transform(function ($post) use ($myReposts, $myLikes) {
+            $post->is_reposted = in_array($post->id, $myReposts);
+            $post->is_liked = in_array($post->id, $myLikes);
+            return $post;
+        });
+
         return response()->json($posts);
     }
 
@@ -195,5 +211,64 @@ class FeedController extends Controller
         }
         $post->delete();
         return response()->json(['message' => 'Gelöscht']);
+    }
+
+    public function repost(string $postId, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $post = Post::findOrFail($postId);
+
+        if ($post->author_id === $user->id) {
+            return response()->json(['message' => 'Du kannst deine eigenen Beiträge nicht reposten.'], 400);
+        }
+
+        $exists = DB::table('reposts')->where('user_id', $user->id)->where('original_post_id', $postId)->exists();
+        if ($exists) {
+            return response()->json(['message' => 'Du hast diesen Beitrag bereits geteilt.'], 409);
+        }
+
+        $data = $request->validate(['comment' => 'nullable|string|max:280']);
+
+        DB::table('reposts')->insert([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'user_id' => $user->id,
+            'original_post_id' => $postId,
+            'comment' => $data['comment'] ?? null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $post->increment('repost_count');
+
+        return response()->json([
+            'reposted' => true,
+            'repost_count' => $post->fresh()->repost_count,
+        ], 201);
+    }
+
+    public function unrepost(string $postId, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $deleted = DB::table('reposts')->where('user_id', $user->id)->where('original_post_id', $postId)->delete();
+        if ($deleted) {
+            Post::where('id', $postId)->decrement('repost_count');
+        }
+        $post = Post::find($postId);
+        return response()->json([
+            'reposted' => false,
+            'repost_count' => $post ? $post->repost_count : 0,
+        ]);
+    }
+
+    public function reposters(string $postId): JsonResponse
+    {
+        $users = DB::table('reposts')
+            ->where('original_post_id', $postId)
+            ->join('users', 'reposts.user_id', '=', 'users.id')
+            ->select('users.id', 'users.username', 'users.display_name', 'users.avatar_url')
+            ->latest('reposts.created_at')
+            ->limit(50)
+            ->get();
+
+        return response()->json(['reposters' => $users]);
     }
 }

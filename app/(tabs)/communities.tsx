@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, ActivityIndicator, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
@@ -58,9 +58,13 @@ export default function CommunitiesTab() {
           }
           renderItem={({ item }) => (
             <Pressable style={s.card} onPress={() => router.push(`/community/${item.id}`)}>
-              <View style={[s.image, { backgroundColor: stringColor(item.name) }]}>
-                <Text style={s.imageInitial}>{item.name[0]?.toUpperCase()}</Text>
-              </View>
+              {item.image_url ? (
+                <Image source={{ uri: item.image_url }} style={s.image} />
+              ) : (
+                <View style={[s.image, { backgroundColor: stringColor(item.name) }]}>
+                  <Text style={s.imageInitial}>{item.name[0]?.toUpperCase()}</Text>
+                </View>
+              )}
               <View style={{ flex: 1, gap: 3 }}>
                 <Text style={s.name} numberOfLines={1}>{item.name}</Text>
                 {item.description && <Text style={s.desc} numberOfLines={2}>{item.description}</Text>}

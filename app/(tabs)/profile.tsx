@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Settings as SettingsIcon, Link as LinkIcon2, Film } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
@@ -97,7 +97,11 @@ export default function ProfileTab() {
                 <Pressable style={s.editBtn} onPress={() => router.push("/profile-edit")}>
                   <Text style={s.editText}>Profil bearbeiten</Text>
                 </Pressable>
-                <Pressable style={s.shareBtn}>
+                <Pressable style={s.shareBtn} onPress={async () => {
+                  try {
+                    await Share.share({ message: `Schau dir mein Profil auf TrusCart an:\nhttps://truscart.com/@${me?.username}` });
+                  } catch {}
+                }}>
                   <Text style={s.shareText}>Teilen</Text>
                 </Pressable>
               </View>

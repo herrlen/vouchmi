@@ -108,6 +108,9 @@ export const feed = {
   like: (pid: string) => api.post<{ like_count: number; liked: boolean }>(`/feed/${pid}/like`),
   comment: (pid: string, content: string) => api.post<{ comment: Comment }>(`/feed/${pid}/comment`, { content }),
   comments: (pid: string) => api.get<{ comments: Comment[] }>(`/feed/${pid}/comments`),
+  repost: (pid: string, comment?: string) => api.post<{ reposted: boolean; repost_count: number }>(`/feed/${pid}/repost`, { comment }),
+  unrepost: (pid: string) => api.del<{ reposted: boolean; repost_count: number }>(`/feed/${pid}/repost`),
+  reposters: (pid: string) => api.get<{ reposters: User[] }>(`/feed/${pid}/reposters`),
 };
 
 export const chat = {
@@ -174,7 +177,7 @@ export const drops = {
 export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string };
 export type Community = { id: string; name: string; slug: string; description: string | null; image_url: string | null; category: string | null; tags?: string[] | null; member_count: number; is_private: boolean; role?: string; is_member?: boolean; my_role?: string; owner_id?: string };
 export type CommunityMember = { id: string; username: string; display_name: string | null; avatar_url: string | null; role: string; muted_until?: string | null };
-export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; click_count: number; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
+export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; repost_count: number; click_count: number; is_liked?: boolean; is_reposted?: boolean; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
 export type Comment = { id: string; content: string; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
 export type Msg = { id: string; content: string; link_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; created_at: string; sender: { id: string; username: string; display_name: string; avatar_url: string | null } };
 export type LinkPreview = { original_url: string; affiliate_url: string; title: string | null; image: string | null; price: number | null; domain: string };

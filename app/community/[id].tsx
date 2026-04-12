@@ -1,13 +1,15 @@
 import { useEffect, useState, useRef } from "react";
-import { View, Text, FlatList, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert, Linking, Share, Image, ActionSheetIOS } from "react-native";
+import { View, Text, FlatList, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert, Share, Image, ActionSheetIOS } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MessageSquare, Gift, Mail, Heart, MessageCircle, Share2, ExternalLink, ChevronLeft, Settings } from "lucide-react-native";
+import { MessageSquare, Gift, Mail, ChevronLeft, Settings, Share2 } from "lucide-react-native";
 import { useAuth, useApp } from "../../src/lib/store";
 import LinkEmbed from "../../src/components/LinkEmbed";
 import BottomBar from "../../src/components/BottomBar";
+import PostActions from "../../src/components/PostActions";
+import LinkCard from "../../src/components/LinkCard";
 import { colors } from "../../src/constants/theme";
-import { communities as communitiesApi, feed as feedApi, links as linksApi, type Post } from "../../src/lib/api";
+import { communities as communitiesApi, feed as feedApi, type Post } from "../../src/lib/api";
 
 type Tab = "feed" | "chat" | "drops" | "messages";
 
@@ -61,13 +63,6 @@ export default function CommunityDetail() {
     } catch (e: any) {
       Alert.alert("Fehler", e.message);
     }
-  };
-
-  const openShop = async (post: Post) => {
-    const url = post.link_affiliate_url ?? post.link_url;
-    if (!url) return;
-    linksApi.trackClick({ post_id: post.id, community_id: post.community_id, original_url: post.link_url ?? url, affiliate_url: url }).catch(() => {});
-    try { await Linking.openURL(url); } catch {}
   };
 
   const inviteFriends = async () => {
@@ -140,7 +135,7 @@ export default function CommunityDetail() {
             refreshing={false}
             ListEmptyComponent={<Text style={s.emptyText}>Noch keine Posts. Nutze + um etwas zu teilen!</Text>}
             renderItem={({ item }) => (
-              <FeedPost post={item} onLike={likePost} onOpenShop={openShop} onRefresh={() => id && loadFeed(id)} canModerate={isOwnerOrAdmin} communityId={id!} />
+              <FeedPost post={item} onRefresh={() => id && loadFeed(id)} canModerate={isOwnerOrAdmin} communityId={id!} />
             )}
           />
         )}
@@ -199,10 +194,8 @@ export default function CommunityDetail() {
   );
 }
 
-function FeedPost({ post, onLike, onOpenShop, onRefresh, canModerate, communityId }: {
+function FeedPost({ post, onRefresh, canModerate, communityId }: {
   post: Post;
-  onLike: (id: string) => void;
-  onOpenShop: (post: Post) => void;
   onRefresh: () => void;
   canModerate: boolean;
   communityId: string;
@@ -228,17 +221,19 @@ function FeedPost({ post, onLike, onOpenShop, onRefresh, canModerate, communityI
   return (
     <View style={s.post}>
       <View style={s.postTop}>
-        {post.author.avatar_url ? (
-          <Image source={{ uri: post.author.avatar_url }} style={s.postAvatar} />
-        ) : (
-          <View style={[s.postAvatar, s.postAvatarFallback]}>
-            <Text style={s.postAvatarInitial}>{initial}</Text>
-          </View>
-        )}
-        <View style={s.postMeta}>
+        <Pressable onPress={() => router.push(`/user/${post.author.id}`)}>
+          {post.author.avatar_url ? (
+            <Image source={{ uri: post.author.avatar_url }} style={s.postAvatar} />
+          ) : (
+            <View style={[s.postAvatar, s.postAvatarFallback]}>
+              <Text style={s.postAvatarInitial}>{initial}</Text>
+            </View>
+          )}
+        </Pressable>
+        <Pressable style={s.postMeta} onPress={() => router.push(`/user/${post.author.id}`)}>
           <Text style={s.postAuthor}>{post.author.display_name ?? post.author.username}</Text>
           <Text style={s.postTime}>@{post.author.username} · {timeAgo(post.created_at)}</Text>
-        </View>
+        </Pressable>
         {canModerate && (
           <Pressable onPress={openModMenu} hitSlop={10} style={s.modBtn}>
             <Text style={s.modDots}>⋯</Text>
@@ -248,44 +243,8 @@ function FeedPost({ post, onLike, onOpenShop, onRefresh, canModerate, communityI
 
       {!!post.content && <Text style={s.postContent}>{post.content}</Text>}
 
-      {post.link_image && (
-        <Pressable onPress={() => onOpenShop(post)}>
-          <Image source={{ uri: post.link_image }} style={s.postImage} />
-        </Pressable>
-      )}
-
-      {post.link_title && (
-        <Pressable style={s.linkCard} onPress={() => onOpenShop(post)}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.linkTitle} numberOfLines={2}>{post.link_title}</Text>
-            <View style={s.linkMetaRow}>
-              <ExternalLink color={colors.accent} size={11} strokeWidth={1.8} />
-              {post.link_domain && <Text style={s.linkDomain}>{post.link_domain}</Text>}
-            </View>
-          </View>
-          {post.link_price != null && <Text style={s.linkPrice}>{post.link_price.toFixed(2)} €</Text>}
-        </Pressable>
-      )}
-
-      <View style={s.actions}>
-        <Pressable style={s.actionBtn} onPress={() => onLike(post.id)} hitSlop={6}>
-          <Heart color={colors.white} size={20} strokeWidth={1.8} />
-          {post.like_count > 0 && <Text style={s.actionCount}>{post.like_count}</Text>}
-        </Pressable>
-        <Pressable style={s.actionBtn} onPress={() => router.push(`/post/${post.id}`)} hitSlop={6}>
-          <MessageCircle color={colors.white} size={20} strokeWidth={1.8} />
-          {post.comment_count > 0 && <Text style={s.actionCount}>{post.comment_count}</Text>}
-        </Pressable>
-        <Pressable style={s.actionBtn} hitSlop={6}>
-          <Share2 color={colors.white} size={20} strokeWidth={1.8} />
-        </Pressable>
-        {post.link_affiliate_url && (
-          <Pressable style={s.shopBtn} onPress={() => onOpenShop(post)}>
-            <Text style={s.shopBtnText}>Zum Produkt</Text>
-            <ExternalLink color={colors.bg} size={13} strokeWidth={2} />
-          </Pressable>
-        )}
-      </View>
+      <LinkCard post={post} />
+      <PostActions post={post} />
     </View>
   );
 }
@@ -315,18 +274,7 @@ const s = StyleSheet.create({
   postMeta: { flex: 1 },
   postAuthor: { color: colors.white, fontSize: 14, fontWeight: "600" },
   postTime: { color: colors.gray, fontSize: 11, marginTop: 1 },
-  postContent: { color: colors.white, fontSize: 14, lineHeight: 19, marginBottom: 6 },
-  postImage: { width: "100%", aspectRatio: 1, borderRadius: 10, backgroundColor: colors.bgCard, marginBottom: 6 },
-  linkCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.bgCard, borderRadius: 10, padding: 10, marginBottom: 6, gap: 10 },
-  linkTitle: { color: colors.white, fontSize: 13, fontWeight: "600", lineHeight: 17 },
-  linkMetaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 },
-  linkDomain: { color: colors.gray, fontSize: 11 },
-  linkPrice: { color: colors.accent, fontSize: 16, fontWeight: "700" },
-  actions: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 4 },
-  actionBtn: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 44, paddingVertical: 4 },
-  actionCount: { color: colors.white, fontSize: 13 },
-  shopBtn: { flexDirection: "row", alignItems: "center", gap: 5, marginLeft: "auto", backgroundColor: colors.accent, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16 },
-  shopBtnText: { color: colors.bg, fontSize: 12, fontWeight: "700" },
+  postContent: { color: colors.white, fontSize: 14, lineHeight: 19, marginBottom: 4 },
   modBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "flex-end" },
   modDots: { color: colors.gray, fontSize: 20, lineHeight: 20 },
   muteBanner: { backgroundColor: "#FF3B3020", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.border },
