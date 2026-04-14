@@ -71,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Feed (Posts mit Produkt-Links)
     Route::get('/feed', [FeedController::class, 'allMyFeed']);
+    Route::get('/feed/top', [FeedController::class, 'top']);
     Route::get('/user/posts', [FeedController::class, 'myPosts']);
     Route::get('/communities/{id}/feed', [FeedController::class, 'index']);
     Route::post('/communities/{id}/feed', [FeedController::class, 'store']);

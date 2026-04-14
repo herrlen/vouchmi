@@ -75,13 +75,38 @@ class FeedController extends Controller
 
     public function myPosts(Request $request): JsonResponse
     {
-        $posts = Post::where('author_id', $request->user()->id)
+        $query = Post::where('author_id', $request->user()->id)
             ->with('author:id,username,display_name,avatar_url')
-            ->with('community:id,name,slug')
-            ->latest()
-            ->paginate(50);
+            ->with('community:id,name,slug');
 
-        return response()->json($posts);
+        if ($type = $request->query('type')) {
+            $query->where('post_type', $type);
+        }
+
+        return response()->json($query->latest()->paginate(50));
+    }
+
+    /**
+     * GET /api/feed/top?by=likes|comments|shares
+     * Beliebteste Posts plattformweit (Top 20).
+     */
+    public function top(Request $request): JsonResponse
+    {
+        $by = $request->query('by', 'likes');
+        $column = match ($by) {
+            'comments' => 'comment_count',
+            'shares'   => 'click_count',
+            default    => 'like_count',
+        };
+
+        $posts = Post::with('author:id,username,display_name,avatar_url')
+            ->with('community:id,name,slug')
+            ->orderByDesc($column)
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        return response()->json(['posts' => $posts]);
     }
 
     public function store(string $communityId, Request $request): JsonResponse

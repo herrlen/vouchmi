@@ -27,19 +27,19 @@ export default function ProfileTab() {
   const [subTab, setSubTab] = useState<SubTab>("reco");
 
   const load = useCallback(async () => {
-    try {
-      const [pRes, postsRes, repostsRes, bookmarksRes] = await Promise.all([
-        profileApi.get(),
-        feedApi.mine(),
-        feedApi.myReposts(),
-        feedApi.bookmarks(),
-      ]);
-      setProfileData(pRes.profile);
-      setStats(pRes.stats);
-      setMyPosts(postsRes.data);
-      setMyReposts(repostsRes.data);
-      setMyBookmarks(bookmarksRes.data);
-    } catch {}
+    const [pRes, postsRes, repostsRes, bookmarksRes] = await Promise.allSettled([
+      profileApi.get(),
+      feedApi.mine(),
+      feedApi.myReposts(),
+      feedApi.bookmarks(),
+    ]);
+    if (pRes.status === "fulfilled") {
+      setProfileData(pRes.value.profile);
+      setStats(pRes.value.stats);
+    }
+    if (postsRes.status === "fulfilled") setMyPosts(postsRes.value.data);
+    if (repostsRes.status === "fulfilled") setMyReposts(repostsRes.value.data);
+    if (bookmarksRes.status === "fulfilled") setMyBookmarks(bookmarksRes.value.data);
     setLoading(false);
     setRefreshing(false);
   }, []);
