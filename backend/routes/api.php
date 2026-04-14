@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\DirectMessageController;
 use App\Http\Controllers\Api\LinkPreviewController;
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\SponsoredDropController;
@@ -81,9 +82,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/feed/{postId}/repost', [FeedController::class, 'unrepost']);
     Route::get('/feed/{postId}/reposters', [FeedController::class, 'reposters']);
 
-    // Chat
+    // Chat (Community)
     Route::get('/communities/{id}/messages', [ChatController::class, 'index']);
     Route::post('/communities/{id}/messages', [ChatController::class, 'store']);
+
+    // Direktnachrichten (1:1)
+    Route::post('/dm/send', [DirectMessageController::class, 'send']);
+    Route::get('/dm/conversations', [DirectMessageController::class, 'conversations']);
+    Route::get('/dm/conversations/{userId}', [DirectMessageController::class, 'thread']);
+    Route::patch('/dm/read/{userId}', [DirectMessageController::class, 'markRead']);
 
     // Sponsored Drops (Nutzer-Seite: sehen & voten)
     Route::get('/communities/{id}/drops', [SponsoredDropController::class, 'index']);
