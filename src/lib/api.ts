@@ -60,6 +60,15 @@ export const auth = {
   login: (email: string, password: string) => req<{ user: User; token: string }>("POST", "/auth/login", { email, password }, true),
   logout: () => api.post("/auth/logout"),
   me: () => api.get<{ user: User }>("/auth/me"),
+  forgotPassword: (email: string) => req<{ message: string }>("POST", "/auth/forgot-password", { email }, true),
+  resetPassword: (d: { email: string; token: string; password: string }) =>
+    req<{ message: string }>("POST", "/auth/reset-password", d, true),
+};
+
+export const legal = {
+  privacy: () => req<{ title: string; updated_at: string; content: string }>("GET", "/legal/privacy", undefined, true),
+  terms:   () => req<{ title: string; updated_at: string; content: string }>("GET", "/legal/terms", undefined, true),
+  imprint: () => req<{ title: string; updated_at: string; content: string }>("GET", "/legal/imprint", undefined, true),
 };
 
 export const communities = {

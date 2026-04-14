@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet, FlatList, Dimensions, Linking } from "react-native";
+import { View, Text, Pressable, StyleSheet, FlatList, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -15,19 +15,19 @@ type Slide = {
 
 const slides: Slide[] = [
   {
-    emoji: "🛒",
-    title: "Empfehlungen unter Freunden",
-    text: "Vouchmi ist dein Community-Ort für Shopping-Tipps. Teile Produkte, die du wirklich gut findest – in deiner eigenen Gruppe.",
+    emoji: "💡",
+    title: "Du willst deiner Community zeigen, wo es die besten Produkte gibt?",
+    text: "Auf Vouchmi teilst du Produkte, die du wirklich gut findest – mit den Menschen, denen du vertraust.",
   },
   {
-    emoji: "🔗",
-    title: "Transparentes Promoter-Tracking",
-    text: "Wenn du einen Link teilst, hängt Vouchmi deinen Usernamen dran. So sehen Marken, welcher Nutzer ihre Produkte am besten empfiehlt – du kannst dich dann direkt bei Marken bewerben.",
+    emoji: "⭐",
+    title: "Du wirst automatisch zum Influencer, wenn du Produkte postest.",
+    text: "Marken sehen, welche Empfehlungen ankommen. Daraus können echte Kooperationen entstehen.",
   },
   {
-    emoji: "🤝",
-    title: "Sicher & fair",
-    text: "Keine Amazon-Links, keine anonymen Tracker. Alles läuft offen, DSGVO-konform und ohne versteckte Affiliate-Werbung.",
+    emoji: "🛍️",
+    title: "Du hast einen Onlineshop und willst deine Produkte mit der Community teilen?",
+    text: "Eröffne ein Brand-Profil und erreiche genau die Communities, die zu deinen Produkten passen.",
   },
 ];
 
@@ -70,17 +70,6 @@ export default function OnboardingScreen() {
       </View>
 
       <View style={s.footer}>
-        <Text style={s.legal}>
-          Mit „Weiter" stimmst du unseren{" "}
-          <Text style={s.link} onPress={() => Linking.openURL("https://vouchmi.com/terms")}>
-            Nutzungsbedingungen
-          </Text>
-          {" "}und der{" "}
-          <Text style={s.link} onPress={() => Linking.openURL("https://vouchmi.com/privacy")}>
-            Datenschutzerklärung
-          </Text>
-          {" "}zu.
-        </Text>
         <Pressable style={s.btn} onPress={next}>
           <Text style={s.btnText}>{index < slides.length - 1 ? "Weiter" : "Los geht's"}</Text>
         </Pressable>
@@ -93,14 +82,12 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   slide: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
   emoji: { fontSize: 88, marginBottom: 30 },
-  title: { color: colors.white, fontSize: 26, fontWeight: "700", textAlign: "center", marginBottom: 14 },
+  title: { color: colors.white, fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 14, lineHeight: 28 },
   text: { color: colors.gray, fontSize: 15, textAlign: "center", lineHeight: 23 },
   dots: { flexDirection: "row", justifyContent: "center", gap: 8, marginBottom: 20 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   dotOn: { backgroundColor: colors.accent, width: 22 },
   footer: { padding: 24 },
-  legal: { color: colors.grayDark, fontSize: 11, textAlign: "center", marginBottom: 14, lineHeight: 16 },
-  link: { color: colors.accent, textDecorationLine: "underline" },
   btn: { backgroundColor: colors.accent, borderRadius: 14, padding: 16, alignItems: "center" },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

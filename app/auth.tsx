@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, Linking } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { Check, Eye, EyeOff, Mail, Lock, User as UserIcon } from "lucide-react-native";
+import { Check, Eye, EyeOff, Mail, Lock, User as UserIcon, KeyRound } from "lucide-react-native";
 import { useAuth } from "../src/lib/store";
+import { auth as authApi } from "../src/lib/api";
 import { colors } from "../src/constants/theme";
 
-type Mode = "login" | "register" | "magic" | "forgot";
+type Mode = "login" | "register" | "forgot" | "reset";
 
 function validatePassword(pw: string) {
   return {
@@ -24,12 +25,11 @@ export default function Auth() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [resetToken, setResetToken] = useState("");
   const [username, setUsername] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [magicSent, setMagicSent] = useState(false);
-  const [forgotSent, setForgotSent] = useState(false);
   const { login, register } = useAuth();
   const router = useRouter();
 
@@ -37,14 +37,31 @@ export default function Auth() {
   const emailValid = useMemo(() => validateEmail(email), [email]);
 
   const handleSubmit = async () => {
-    if (mode === "magic") {
-      if (!emailValid) return Alert.alert("Fehler", "Bitte gib eine gültige E-Mail ein.");
-      setMagicSent(true);
-      return;
-    }
     if (mode === "forgot") {
       if (!emailValid) return Alert.alert("Fehler", "Bitte gib eine gültige E-Mail ein.");
-      setForgotSent(true);
+      setLoading(true);
+      try {
+        await authApi.forgotPassword(email);
+        Alert.alert("E-Mail gesendet", "Falls ein Konto mit dieser Adresse existiert, haben wir dir einen 6-stelligen Code gesendet.");
+        setMode("reset");
+      } catch (e: any) {
+        Alert.alert("Fehler", e.message);
+      } finally { setLoading(false); }
+      return;
+    }
+    if (mode === "reset") {
+      if (!emailValid || !resetToken || !pwCheck.valid)
+        return Alert.alert("Fehler", "Bitte E-Mail, Code und ein gültiges Passwort eingeben.");
+      setLoading(true);
+      try {
+        await authApi.resetPassword({ email, token: resetToken, password });
+        Alert.alert("Erledigt", "Dein Passwort wurde zurückgesetzt. Bitte einloggen.");
+        setMode("login");
+        setPassword("");
+        setResetToken("");
+      } catch (e: any) {
+        Alert.alert("Fehler", e.message);
+      } finally { setLoading(false); }
       return;
     }
     if (!email || !password) return Alert.alert("Fehler", "Bitte alle Felder ausfüllen.");
@@ -63,50 +80,38 @@ export default function Auth() {
     } finally { setLoading(false); }
   };
 
-  if (magicSent) {
-    return (
-      <View style={[s.container, s.centerContent]}>
-        <Mail color={colors.accent} size={56} strokeWidth={1.5} />
-        <Text style={s.sentTitle}>Prüfe dein Postfach</Text>
-        <Text style={s.sentText}>Wir haben dir einen Login-Link an {email} gesendet. Klicke auf den Link, um dich anzumelden.</Text>
-        <Pressable style={s.sentBtn} onPress={() => { setMagicSent(false); setMode("login"); }}>
-          <Text style={s.sentBtnText}>Zurück zum Login</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  const heading = mode === "login"
+    ? "Anmeldung"
+    : mode === "register"
+    ? "Account erstellen"
+    : mode === "forgot"
+    ? "Passwort vergessen"
+    : "Neues Passwort";
 
-  if (forgotSent) {
-    return (
-      <View style={[s.container, s.centerContent]}>
-        <Mail color={colors.accent} size={56} strokeWidth={1.5} />
-        <Text style={s.sentTitle}>E-Mail gesendet</Text>
-        <Text style={s.sentText}>Falls ein Konto mit {email} existiert, haben wir dir einen Link zum Zurücksetzen gesendet.</Text>
-        <Pressable style={s.sentBtn} onPress={() => { setForgotSent(false); setMode("login"); }}>
-          <Text style={s.sentBtnText}>Zurück zum Login</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  const submitLabel = loading
+    ? "Moment..."
+    : mode === "login"
+    ? "Einloggen"
+    : mode === "register"
+    ? "Registrieren"
+    : mode === "forgot"
+    ? "Code per E-Mail senden"
+    : "Passwort zurücksetzen";
 
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <Text style={s.logo}>Vouchmi</Text>
         <Text style={s.tagline}>Community Commerce</Text>
-        <Text style={s.subtitle}>
-          {mode === "login" ? "Willkommen zurück" : mode === "register" ? "Account erstellen" : mode === "magic" ? "Magic Link" : "Passwort zurücksetzen"}
-        </Text>
+        <Text style={s.subtitle}>{heading}</Text>
 
         <View style={s.form}>
           {mode === "register" && (
-            <View>
-              <View style={s.inputWrap}>
-                <UserIcon color={colors.grayDark} size={18} style={s.inputIcon} />
-                <TextInput style={s.inputField} placeholder="Username" placeholderTextColor={colors.grayDark}
-                  value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} />
-                {username.length >= 3 && <Check color={colors.accent} size={18} />}
-              </View>
+            <View style={s.inputWrap}>
+              <UserIcon color={colors.grayDark} size={18} style={s.inputIcon} />
+              <TextInput style={s.inputField} placeholder="Username" placeholderTextColor={colors.grayDark}
+                value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} />
+              {username.length >= 3 && <Check color={colors.accent} size={18} />}
             </View>
           )}
 
@@ -117,18 +122,26 @@ export default function Auth() {
             {email.length > 3 && emailValid && <Check color={colors.accent} size={18} />}
           </View>
 
-          {(mode === "login" || mode === "register") && (
+          {mode === "reset" && (
+            <View style={s.inputWrap}>
+              <KeyRound color={colors.grayDark} size={18} style={s.inputIcon} />
+              <TextInput style={s.inputField} placeholder="6-stelliger Code" placeholderTextColor={colors.grayDark}
+                value={resetToken} onChangeText={setResetToken} keyboardType="number-pad" maxLength={6} autoCapitalize="none" />
+            </View>
+          )}
+
+          {(mode === "login" || mode === "register" || mode === "reset") && (
             <View>
               <View style={s.inputWrap}>
                 <Lock color={colors.grayDark} size={18} style={s.inputIcon} />
-                <TextInput style={s.inputField} placeholder="Passwort" placeholderTextColor={colors.grayDark}
+                <TextInput style={s.inputField} placeholder={mode === "reset" ? "Neues Passwort" : "Passwort"} placeholderTextColor={colors.grayDark}
                   value={password} onChangeText={setPassword} secureTextEntry={!showPw} />
                 <Pressable onPress={() => setShowPw(!showPw)} hitSlop={10}>
                   {showPw ? <EyeOff color={colors.gray} size={18} /> : <Eye color={colors.gray} size={18} />}
                 </Pressable>
               </View>
 
-              {mode === "register" && password.length > 0 && (
+              {(mode === "register" || mode === "reset") && password.length > 0 && (
                 <View style={s.pwChecks}>
                   <PwRule ok={pwCheck.length} label="Min. 8 Zeichen" />
                   <PwRule ok={pwCheck.upper} label="1 Großbuchstabe" />
@@ -145,37 +158,36 @@ export default function Auth() {
               </View>
               <Text style={s.termsText}>
                 Ich akzeptiere die{" "}
-                <Text style={s.link} onPress={() => Linking.openURL("https://vouchmi.com/terms")}>Nutzungsbedingungen</Text>
+                <Text style={s.link} onPress={() => router.push("/legal/terms")}>Nutzungsbedingungen</Text>
                 {" "}und die{" "}
-                <Text style={s.link} onPress={() => Linking.openURL("https://vouchmi.com/privacy")}>Datenschutzerklärung</Text>.
+                <Text style={s.link} onPress={() => router.push("/legal/privacy")}>Datenschutzerklärung</Text>.
               </Text>
             </Pressable>
           )}
 
           <Pressable style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
-            <Text style={s.btnText}>
-              {loading ? "Moment..." : mode === "login" ? "Einloggen" : mode === "register" ? "Registrieren" : mode === "magic" ? "Magic Link senden" : "Link senden"}
-            </Text>
+            <Text style={s.btnText}>{submitLabel}</Text>
           </Pressable>
 
           {mode === "login" && (
-            <>
-              <Pressable onPress={() => setMode("forgot")} style={s.secondaryBtn}>
-                <Text style={s.secondaryText}>Passwort vergessen?</Text>
-              </Pressable>
-              <View style={s.divider}><View style={s.dividerLine} /><Text style={s.dividerText}>oder</Text><View style={s.dividerLine} /></View>
-              <Pressable style={s.magicBtn} onPress={() => setMode("magic")}>
-                <Mail color={colors.accent} size={18} />
-                <Text style={s.magicBtnText}>Magic Link per E-Mail</Text>
-              </Pressable>
-            </>
+            <Pressable onPress={() => setMode("forgot")} style={s.secondaryBtn}>
+              <Text style={s.secondaryText}>Passwort vergessen?</Text>
+            </Pressable>
           )}
 
-          <Pressable onPress={() => setMode(mode === "register" ? "login" : "register")} style={s.toggle}>
-            <Text style={s.toggleText}>
-              {mode === "register" ? "Bereits dabei? Einloggen" : "Noch kein Account? Registrieren"}
-            </Text>
-          </Pressable>
+          {(mode === "forgot" || mode === "reset") && (
+            <Pressable onPress={() => setMode("login")} style={s.secondaryBtn}>
+              <Text style={s.secondaryText}>Zurück zur Anmeldung</Text>
+            </Pressable>
+          )}
+
+          {(mode === "login" || mode === "register") && (
+            <Pressable onPress={() => setMode(mode === "register" ? "login" : "register")} style={s.toggle}>
+              <Text style={s.toggleText}>
+                {mode === "register" ? "Bereits dabei? Einloggen" : "Noch kein Account? Registrieren"}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -193,7 +205,6 @@ function PwRule({ ok, label }: { ok: boolean; label: string }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  centerContent: { justifyContent: "center", alignItems: "center", padding: 32 },
   scroll: { flexGrow: 1, justifyContent: "center", padding: 32 },
   logo: { color: colors.accent, fontSize: 42, fontWeight: "900", textAlign: "center", letterSpacing: -1 },
   tagline: { color: colors.gray, fontSize: 14, textAlign: "center", marginTop: 4, letterSpacing: 2, textTransform: "uppercase" },
@@ -219,11 +230,6 @@ const s = StyleSheet.create({
   btnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
   secondaryBtn: { padding: 10, alignItems: "center" },
   secondaryText: { color: colors.gray, fontSize: 13 },
-  divider: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
-  dividerLine: { flex: 1, height: 0.5, backgroundColor: colors.border },
-  dividerText: { color: colors.grayDark, fontSize: 12 },
-  magicBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: colors.bgCard, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border },
-  magicBtnText: { color: colors.accent, fontSize: 15, fontWeight: "600" },
   toggle: { padding: 12 },
   toggleText: { color: colors.accent, textAlign: "center", fontSize: 14 },
   termsRow: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 6, gap: 10 },
@@ -232,8 +238,4 @@ const s = StyleSheet.create({
   checkmark: { color: "#fff", fontWeight: "bold", fontSize: 14 },
   termsText: { flex: 1, color: colors.gray, fontSize: 13, lineHeight: 19 },
   link: { color: colors.accent, textDecorationLine: "underline" },
-  sentTitle: { color: colors.white, fontSize: 22, fontWeight: "700", marginTop: 20, marginBottom: 10 },
-  sentText: { color: colors.gray, fontSize: 15, textAlign: "center", lineHeight: 22, marginBottom: 24 },
-  sentBtn: { backgroundColor: colors.bgCard, borderRadius: 12, padding: 16, paddingHorizontal: 32 },
-  sentBtnText: { color: colors.white, fontSize: 15, fontWeight: "600" },
 });

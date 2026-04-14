@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\DirectMessageController;
+use App\Http\Controllers\Api\LegalController;
 use App\Http\Controllers\Api\LinkPreviewController;
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\SponsoredDropController;
@@ -20,6 +21,13 @@ use Illuminate\Support\Facades\Route;
 // ── Public ──
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+
+// ── Legal (öffentlich) ──
+Route::get('/legal/privacy', [LegalController::class, 'privacy']);
+Route::get('/legal/terms',   [LegalController::class, 'terms']);
+Route::get('/legal/imprint', [LegalController::class, 'imprint']);
 
 // ── Link Preview (öffentlich, gecached) ──
 Route::get('/link-preview', [LinkPreviewController::class, 'preview']);

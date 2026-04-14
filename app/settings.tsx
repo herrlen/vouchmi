@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, Alert, ScrollView, Linking } from "react-native";
+import { View, Text, Pressable, StyleSheet, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
@@ -31,8 +31,6 @@ export default function SettingsScreen() {
       ],
     );
   };
-
-  const openUrl = (url: string) => Linking.openURL(url).catch(() => {});
 
   return (
     <SafeAreaView style={s.container} edges={["top"]}>
@@ -78,9 +76,9 @@ export default function SettingsScreen() {
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>Rechtliches</Text>
-          <Button label="Nutzungsbedingungen" onPress={() => openUrl("https://vouchmi.com/terms")} />
-          <Button label="Datenschutzerklärung" onPress={() => openUrl("https://vouchmi.com/privacy")} />
-          <Button label="Impressum" onPress={() => openUrl("https://vouchmi.com/imprint")} />
+          <Button label="Nutzungsbedingungen" onPress={() => router.push("/legal/terms")} />
+          <Button label="Datenschutzerklärung" onPress={() => router.push("/legal/privacy")} />
+          <Button label="Impressum" onPress={() => router.push("/legal/imprint")} />
           <View style={s.disclosureBox}>
             <Text style={s.disclosureTitle}>Transparenz</Text>
             <Text style={s.disclosureText}>
