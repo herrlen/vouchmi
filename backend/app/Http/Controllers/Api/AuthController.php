@@ -31,7 +31,7 @@ class AuthController extends Controller
             'terms_version' => '1.0',
         ]);
 
-        $token = $user->createToken('truscart')->plainTextToken;
+        $token = $user->createToken('vouchmi')->plainTextToken;
 
         return response()->json([
             'user' => $this->userResponse($user),
@@ -54,7 +54,7 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('truscart')->plainTextToken;
+        $token = $user->createToken('vouchmi')->plainTextToken;
 
         return response()->json([
             'user' => $this->userResponse($user),

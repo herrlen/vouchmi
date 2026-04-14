@@ -1,4 +1,4 @@
-# TrusCart — Apple App Store Compliance
+# Vouchmi — Apple App Store Compliance
 
 Regeln, die wir zwingend vor dem ersten App-Store-Submit einhalten müssen. Quelle: [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/).
 
@@ -6,13 +6,13 @@ Regeln, die wir zwingend vor dem ersten App-Store-Submit einhalten müssen. Quel
 
 **Regel:** Digitale Abos/Services, die in der App freigeschaltet werden, MÜSSEN Apple IAP nutzen (30% / 15% Commission).
 
-**Konsequenz für TrusCart:**
-- Brand-Abos (Starter €99 / Pro €299 / Enterprise €799) werden **ausschließlich über die Website** (app.truscart.com/brands) verkauft.
+**Konsequenz für Vouchmi:**
+- Brand-Abos (Starter €99 / Pro €299 / Enterprise €799) werden **ausschließlich über die Website** (app.vouchmi.com/brands) verkauft.
 - In der iOS-App:
   - KEIN Kauf-Button
   - KEIN Link/Deep-Link zu Stripe-Checkout
   - KEIN Hinweis wie "Jetzt upgraden" mit externem Link
-  - Erlaubt: neutraler Info-Text "Brand-Accounts werden auf truscart.com verwaltet" ohne Call-to-Action / ohne klickbaren Link.
+  - Erlaubt: neutraler Info-Text "Brand-Accounts werden auf vouchmi.com verwaltet" ohne Call-to-Action / ohne klickbaren Link.
 - Affiliate-Links zu physischen Produkten (Amazon, Zalando, …) sind erlaubt — IAP greift nur bei digitalen Gütern.
 
 ## 2. User Generated Content (Guideline 1.2)
@@ -55,7 +55,7 @@ Regeln, die wir zwingend vor dem ersten App-Store-Submit einhalten müssen. Quel
 ## 6. Safety & Transparenz (Guideline 1.1 + 5.4)
 
 **Affiliate-Disclosure:**
-- [ ] Footer/Info-Screen: "TrusCart erhält bei einigen geteilten Links eine Provision vom Händler. Für dich entstehen keine Mehrkosten."
+- [ ] Footer/Info-Screen: "Vouchmi erhält bei einigen geteilten Links eine Provision vom Händler. Für dich entstehen keine Mehrkosten."
 - [ ] AGB enthalten Affiliate-Hinweis
 - [ ] Bei Link-Embeds optional kleines Badge "Affiliate"
 
@@ -72,7 +72,7 @@ Regeln, die wir zwingend vor dem ersten App-Store-Submit einhalten müssen. Quel
 
 ## Pflicht-Checkliste vor erstem Submit
 
-- [ ] AGB + Datenschutz + Impressum online (truscart.com/legal)
+- [ ] AGB + Datenschutz + Impressum online (vouchmi.com/legal)
 - [ ] In-App-Links zu AGB/Datenschutz
 - [ ] Account-Löschung implementiert
 - [ ] Report- & Block-Funktion implementiert

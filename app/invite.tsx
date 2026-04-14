@@ -34,7 +34,7 @@ export default function InviteScreen() {
   const shareLink = async () => {
     if (!inviteLink || !selected) return;
     await Share.share({
-      message: `Hey! Tritt meiner Community "${selected.name}" auf TrusCart bei:\n${inviteLink}`,
+      message: `Hey! Tritt meiner Community "${selected.name}" auf Vouchmi bei:\n${inviteLink}`,
     });
   };
 
@@ -47,7 +47,7 @@ export default function InviteScreen() {
   const shareViaSMS = async () => {
     if (!inviteLink || !selected) return;
     await Share.share({
-      message: `Hey! Schau dir meine Community "${selected.name}" auf TrusCart an:\n${inviteLink}`,
+      message: `Hey! Schau dir meine Community "${selected.name}" auf Vouchmi an:\n${inviteLink}`,
     });
   };
 
@@ -134,7 +134,7 @@ export default function InviteScreen() {
 }
 
 function stringColor(s: string) {
-  const c = ["#25D366", "#34B7F1", "#F15C6D", "#FFB800", "#8B5CF6"];
+  const c = ["#F59E0B", "#FBBF24", "#4F46E5", "#10B981", "#F472B6"];
   let h = 0;
   for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
   return c[Math.abs(h) % c.length];
@@ -149,7 +149,7 @@ const s = StyleSheet.create({
   empty: { alignItems: "center", paddingTop: 40 },
   emptyText: { color: colors.gray, fontSize: 14, marginBottom: 16 },
   emptyBtn: { backgroundColor: colors.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 10 },
-  emptyBtnText: { color: colors.bg, fontWeight: "700" },
+  emptyBtnText: { color: "#fff", fontWeight: "700" },
   commCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.bgCard, borderRadius: 14, padding: 14, gap: 12 },
   commAvatar: { width: 48, height: 48, borderRadius: 12, justifyContent: "center", alignItems: "center" },
   commInitial: { color: "#fff", fontSize: 20, fontWeight: "800" },

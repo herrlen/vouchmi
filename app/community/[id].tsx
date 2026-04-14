@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { View, Text, FlatList, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert, Share, Image, ActionSheetIOS } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MessageSquare, Gift, Mail, ChevronLeft, Settings, Share2 } from "lucide-react-native";
+import { ChevronLeft, Menu } from "lucide-react-native";
 import { useAuth, useApp } from "../../src/lib/store";
 import LinkEmbed from "../../src/components/LinkEmbed";
 import BottomBar from "../../src/components/BottomBar";
@@ -28,6 +28,8 @@ export default function CommunityDetail() {
   const [input, setInput] = useState("");
   const [communityName, setCommunityName] = useState("");
   const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isFollowed, setIsFollowed] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [mutedUntil, setMutedUntil] = useState<string | null>(null);
   const { feed, messages, loadFeed, likePost, loadMessages, sendMessage, startPolling, stopPolling } = useApp();
@@ -41,6 +43,8 @@ export default function CommunityDetail() {
       setCommunityName(r.community.name);
       const myRole = r.community.my_role;
       setIsOwnerOrAdmin(myRole === "owner" || myRole === "admin" || myRole === "moderator");
+      setIsOwner(r.community.owner_id === user?.id);
+      setIsFollowed(!!(r.community as any).is_followed);
     }).catch(() => {});
     communitiesApi.muteStatus(id).then((r) => { setIsMuted(r.muted); setMutedUntil(r.muted_until); }).catch(() => {});
     return () => stopPolling();
@@ -69,17 +73,17 @@ export default function CommunityDetail() {
     if (!id) return;
     try {
       const { invite_link } = await communitiesApi.invite(id);
-      await Share.share({ message: `Hey! Tritt meiner TrusCart-Community bei:\n${invite_link}` });
+      await Share.share({ message: `Hey! Tritt meiner Vouchmi-Community bei:\n${invite_link}` });
     } catch (e: any) {
       Alert.alert("Fehler", e.message);
     }
   };
 
-  const topTabs: { key: Tab; label: string; Icon: any }[] = [
-    { key: "feed", label: "Feed", Icon: null },
-    { key: "chat", label: "Chat", Icon: MessageSquare },
-    { key: "drops", label: "Drops", Icon: Gift },
-    { key: "messages", label: "", Icon: Mail },
+  const topTabs: { key: Tab; label: string }[] = [
+    { key: "feed", label: "Feed" },
+    { key: "chat", label: "Chat" },
+    { key: "drops", label: "Drops" },
+    { key: "messages", label: "Mail" },
   ];
 
   return (
@@ -93,27 +97,41 @@ export default function CommunityDetail() {
         </Pressable>
         <Text style={s.headerTitle} numberOfLines={1}>{communityName || "Community"}</Text>
         <View style={s.headerIcons}>
-          {isOwnerOrAdmin && (
-            <Pressable onPress={() => router.push(`/community-settings?id=${id}`)} hitSlop={10} style={s.headerIconBtn}>
-              <Settings color={colors.white} size={20} strokeWidth={1.8} />
+          {!isOwner && (
+            <Pressable
+              style={[s.followBtn, isFollowed && s.followBtnActive]}
+              onPress={async () => {
+                if (!id) return;
+                try {
+                  if (isFollowed) {
+                    await communitiesApi.unfollow(id);
+                    setIsFollowed(false);
+                  } else {
+                    await communitiesApi.follow(id);
+                    setIsFollowed(true);
+                  }
+                } catch (e: any) { Alert.alert("Fehler", e.message); }
+              }}
+              hitSlop={6}
+            >
+              <Text style={[s.followBtnText, isFollowed && s.followBtnTextActive]}>
+                {isFollowed ? "Folgt" : "Folgen"}
+              </Text>
             </Pressable>
           )}
-          <Pressable onPress={inviteFriends} hitSlop={10} style={s.headerIconBtn}>
-            <Share2 color={colors.white} size={20} strokeWidth={1.8} />
-          </Pressable>
+          {isOwnerOrAdmin && (
+            <Pressable onPress={() => router.push(`/community-settings?id=${id}`)} hitSlop={10} style={s.headerIconBtn}>
+              <Menu color={colors.white} size={22} strokeWidth={1.8} />
+            </Pressable>
+          )}
         </View>
       </View>
 
       {/* Top Tabs */}
       <View style={s.topTabs}>
-        {topTabs.map(({ key, label, Icon }) => (
+        {topTabs.map(({ key, label }) => (
           <Pressable key={key} style={[s.topTab, tab === key && s.topTabOn]} onPress={() => setTab(key)}>
-            {Icon ? (
-              <Icon color={tab === key ? colors.white : colors.grayDark} size={18} strokeWidth={1.8} />
-            ) : null}
-            {label ? (
-              <Text style={[s.topTabText, tab === key && s.topTabTextOn]}>{label}</Text>
-            ) : null}
+            <Text style={[s.topTabText, tab === key && s.topTabTextOn]}>{label}</Text>
           </Pressable>
         ))}
       </View>
@@ -174,7 +192,7 @@ export default function CommunityDetail() {
 
         {tab === "drops" && (
           <View style={s.center}>
-            <Gift color={colors.grayDark} size={48} strokeWidth={1.2} />
+            <Text style={{ fontSize: 42 }}>🎁</Text>
             <Text style={s.emptyTitle}>Sponsored Drops</Text>
             <Text style={s.emptyText}>Hier erscheinen exklusive Angebote von Marken.</Text>
           </View>
@@ -182,7 +200,7 @@ export default function CommunityDetail() {
 
         {tab === "messages" && (
           <View style={s.center}>
-            <Mail color={colors.grayDark} size={48} strokeWidth={1.2} />
+            <Text style={{ fontSize: 42 }}>✉︎</Text>
             <Text style={s.emptyTitle}>Nachrichten</Text>
             <Text style={s.emptyText}>Private Nachrichten an Community-Mitglieder kommen bald.</Text>
           </View>
@@ -254,8 +272,12 @@ const s = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, gap: 10 },
   backBtn: { minWidth: 44, minHeight: 44, justifyContent: "center" },
   headerTitle: { flex: 1, color: colors.white, fontSize: 17, fontWeight: "600" },
-  headerIcons: { flexDirection: "row", alignItems: "center", gap: 4 },
+  headerIcons: { flexDirection: "row", alignItems: "center", gap: 8, marginLeft: "auto" },
   headerIconBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "center" },
+  followBtn: { backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, minHeight: 32, justifyContent: "center" },
+  followBtnActive: { backgroundColor: colors.bgInput },
+  followBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  followBtnTextActive: { color: colors.white },
   topTabs: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: colors.border },
   topTab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 12, minHeight: 44, borderBottomWidth: 2, borderBottomColor: "transparent" },
   topTabOn: { borderBottomColor: colors.accent },
@@ -270,15 +292,15 @@ const s = StyleSheet.create({
   postTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   postAvatar: { width: 36, height: 36, borderRadius: 18 },
   postAvatarFallback: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  postAvatarInitial: { color: colors.bg, fontWeight: "800", fontSize: 15 },
+  postAvatarInitial: { color: "#fff", fontWeight: "800", fontSize: 15 },
   postMeta: { flex: 1 },
   postAuthor: { color: colors.white, fontSize: 14, fontWeight: "600" },
   postTime: { color: colors.gray, fontSize: 11, marginTop: 1 },
   postContent: { color: colors.white, fontSize: 14, lineHeight: 19, marginBottom: 4 },
   modBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "flex-end" },
   modDots: { color: colors.gray, fontSize: 20, lineHeight: 20 },
-  muteBanner: { backgroundColor: "#FF3B3020", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.border },
-  muteBannerText: { color: "#FF3B30", fontSize: 13, fontWeight: "600", textAlign: "center" },
+  muteBanner: { backgroundColor: "#EF444420", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.border },
+  muteBannerText: { color: "#EF4444", fontSize: 13, fontWeight: "600", textAlign: "center" },
 
   // Chat
   msg: { maxWidth: "80%", padding: 10, borderRadius: 16, marginBottom: 4 },
@@ -289,5 +311,5 @@ const s = StyleSheet.create({
   chatInput: { flexDirection: "row", alignItems: "flex-end", gap: 8, padding: 10, borderTopWidth: 0.5, borderTopColor: colors.border },
   chatTextInput: { flex: 1, backgroundColor: colors.bgInput, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9, color: colors.white, fontSize: 14, maxHeight: 100 },
   sendBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  sendBtnText: { color: colors.bg, fontSize: 18, fontWeight: "bold" },
+  sendBtnText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });

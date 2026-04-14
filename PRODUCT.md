@@ -1,8 +1,8 @@
-# TrusCart — Produkt-Definition
+# Vouchmi — Produkt-Definition
 
 ## Elevator Pitch
 
-TrusCart ist eine Community-Commerce-App für Menschen, die gern shoppen und Empfehlungen austauschen. Nutzer teilen Produktlinks in kleinen Gruppen, die besten Empfehler werden von Marken als Mikro-Influencer engagiert. Affiliate-Marketing trifft WhatsApp-Gruppe.
+Vouchmi ist eine Community-Commerce-App für Menschen, die gern shoppen und Empfehlungen austauschen. Nutzer teilen Produktlinks in kleinen Gruppen, die besten Empfehler werden von Marken als Mikro-Influencer engagiert. Affiliate-Marketing trifft WhatsApp-Gruppe.
 
 ## Zielgruppe
 
@@ -11,7 +11,7 @@ Menschen, die beides lieben: **Social Media** + **Shopping** + **Tipps austausch
 ## Kernmechanik
 
 1. User teilt Produktlink in Community-Feed
-2. TrusCart hängt automatisch den Usernamen an die URL (`?ref=username`)
+2. Vouchmi hängt automatisch den Usernamen an die URL (`?ref=username`)
 3. Marke sieht in ihren Analytics welcher User die meisten Klicks/Käufe bringt
 4. Marke kontaktiert Top-Promoter → gibt Rabattcodes oder Gratisprodukte
 5. Promoter macht mehr Posts → Flywheel
@@ -30,16 +30,16 @@ Menschen, die beides lieben: **Social Media** + **Shopping** + **Tipps austausch
 
 ### Brand (Registrierung nur via Web)
 - **Nicht in der App registrierbar** (Apple 3.1.1 Compliance)
-- Website-Signup: `truscart.com/brands`
+- Website-Signup: `vouchmi.com/brands`
 - Voraussetzungen:
   - Firmen-E-Mail (der Firmenname MUSS im Domain-Teil vorkommen, z.B. `max@nike.com`)
   - E-Mail-Verifizierung via Code
   - PayPal-Account für Abo-Zahlung
-  - €5/Monat via PayPal (direkt an TrusCart, nicht über Apple IAP)
+  - €5/Monat via PayPal (direkt an Vouchmi, nicht über Apple IAP)
 - Brand-Login in der App möglich (kein "Brand werden"-Button)
 - Brandseite: Logo, Name, Beschreibung (max 250 Zeichen), Website-Link
 - Kann Top-Promoter kontaktieren und eigene Produkte promoten
-- **Payouts:** TrusCart vermittelt nur. Brand und Promoter regeln Rabatte/Gratisprodukte direkt. Kein Geldfluss über TrusCart im MVP.
+- **Payouts:** Vouchmi vermittelt nur. Brand und Promoter regeln Rabatte/Gratisprodukte direkt. Kein Geldfluss über Vouchmi im MVP.
 
 ## MVP-Umfang (v1.0)
 
@@ -77,7 +77,7 @@ Menschen, die beides lieben: **Social Media** + **Shopping** + **Tipps austausch
 | Enduser | Gratis im MVP | — |
 | Enduser Pro (später) | ~€5/mo | Apple IAP (Apple zieht 15%) |
 | Brand | €5/mo | PayPal über Website (KEIN Apple-Cut) |
-| TrusCart-Affiliate-Revenue | — | Provision via Amazon PartnerNet, AWIN etc. |
+| Vouchmi-Affiliate-Revenue | — | Provision via Amazon PartnerNet, AWIN etc. |
 
 ## Rechtlich & Compliance
 
@@ -91,13 +91,13 @@ Menschen, die beides lieben: **Social Media** + **Shopping** + **Tipps austausch
 - Server-Standort EU (Linevast ist in DE)
 - Kontakte werden NICHT roh gespeichert, nur gehasht verglichen
 - Opt-in für Tracking
-- Impressum + Datenschutz + AGB auf truscart.com
+- Impressum + Datenschutz + AGB auf vouchmi.com
 - Recht auf Löschung (Account-Löschung in App)
 - Datenexport auf Anfrage
 
 ### Influencer-Recht
 - Posts die im Auftrag einer Marke gemacht werden müssen als "Werbung" / "Anzeige" gekennzeichnet sein
-- TrusCart bietet Toggle beim Posten: "Dieser Post ist eine Kooperation mit einer Marke"
+- Vouchmi bietet Toggle beim Posten: "Dieser Post ist eine Kooperation mit einer Marke"
 
 ## Launch-Strategie
 

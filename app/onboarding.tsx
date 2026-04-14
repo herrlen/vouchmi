@@ -17,12 +17,12 @@ const slides: Slide[] = [
   {
     emoji: "🛒",
     title: "Empfehlungen unter Freunden",
-    text: "TrusCart ist dein Community-Ort für Shopping-Tipps. Teile Produkte, die du wirklich gut findest – in deiner eigenen Gruppe.",
+    text: "Vouchmi ist dein Community-Ort für Shopping-Tipps. Teile Produkte, die du wirklich gut findest – in deiner eigenen Gruppe.",
   },
   {
     emoji: "🔗",
     title: "Transparentes Promoter-Tracking",
-    text: "Wenn du einen Link teilst, hängt TrusCart deinen Usernamen dran. So sehen Marken, welcher Nutzer ihre Produkte am besten empfiehlt – du kannst dich dann direkt bei Marken bewerben.",
+    text: "Wenn du einen Link teilst, hängt Vouchmi deinen Usernamen dran. So sehen Marken, welcher Nutzer ihre Produkte am besten empfiehlt – du kannst dich dann direkt bei Marken bewerben.",
   },
   {
     emoji: "🤝",
@@ -72,11 +72,11 @@ export default function OnboardingScreen() {
       <View style={s.footer}>
         <Text style={s.legal}>
           Mit „Weiter" stimmst du unseren{" "}
-          <Text style={s.link} onPress={() => Linking.openURL("https://truscart.com/terms")}>
+          <Text style={s.link} onPress={() => Linking.openURL("https://vouchmi.com/terms")}>
             Nutzungsbedingungen
           </Text>
           {" "}und der{" "}
-          <Text style={s.link} onPress={() => Linking.openURL("https://truscart.com/privacy")}>
+          <Text style={s.link} onPress={() => Linking.openURL("https://vouchmi.com/privacy")}>
             Datenschutzerklärung
           </Text>
           {" "}zu.
@@ -102,5 +102,5 @@ const s = StyleSheet.create({
   legal: { color: colors.grayDark, fontSize: 11, textAlign: "center", marginBottom: 14, lineHeight: 16 },
   link: { color: colors.accent, textDecorationLine: "underline" },
   btn: { backgroundColor: colors.accent, borderRadius: 14, padding: 16, alignItems: "center" },
-  btnText: { color: colors.bg, fontSize: 16, fontWeight: "700" },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

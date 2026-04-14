@@ -121,5 +121,5 @@ const s = StyleSheet.create({
   catText: { color: colors.gray, fontSize: 14 },
   catTextActive: { color: colors.accent },
   btn: { backgroundColor: colors.accent, borderRadius: 12, padding: 16, alignItems: "center", marginTop: 32 },
-  btnText: { color: colors.bg, fontSize: 16, fontWeight: "bold" },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });

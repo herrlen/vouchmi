@@ -22,7 +22,7 @@ class LinkPreviewService
         return Cache::remember($cacheKey, 3600, function () use ($url) {
             try {
                 $response = Http::timeout(8)
-                    ->withHeaders(['User-Agent' => 'TrusCart Bot/1.0'])
+                    ->withHeaders(['User-Agent' => 'Vouchmi Bot/1.0'])
                     ->get($url);
 
                 if (!$response->successful()) return null;
@@ -115,7 +115,7 @@ class LinkPreviewService
     /**
      * Hängt den Promoter-Username als ?ref=<username> an die URL an.
      * Kernmechanik: Marken erkennen so in ihren Analytics,
-     * welcher TrusCart-User die Klicks/Käufe geliefert hat.
+     * welcher Vouchmi-User die Klicks/Käufe geliefert hat.
      */
     public function addRefTag(string $url, string $username): string
     {

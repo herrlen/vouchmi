@@ -3,18 +3,18 @@ import { ExpoConfig, ConfigContext } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "TrusCart",
-  slug: "truscart",
+  name: "Vouchmi",
+  slug: "vouchmi",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
-  scheme: "truscart",
+  scheme: "vouchmi",
   userInterfaceStyle: "dark",
-  splash: { backgroundColor: "#111B21" },
+  splash: { backgroundColor: "#1A1D2E" },
   plugins: ["expo-router", "expo-secure-store", "expo-asset"],
   experiments: { typedRoutes: true },
   ios: {
-    bundleIdentifier: "com.truscart.app",
+    bundleIdentifier: "com.vouchmi.app",
     supportsTablet: true,
     privacyManifests: {
       NSPrivacyAccessedAPITypes: [
@@ -24,13 +24,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
   },
   android: {
-    package: "com.truscart.app",
+    package: "com.vouchmi.app",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
-      backgroundColor: "#111B21",
+      backgroundColor: "#1A1D2E",
     },
   },
   extra: {
-    API_URL: process.env.EXPO_PUBLIC_API_URL ?? "https://app.truscart.com/api",
+    API_URL: process.env.EXPO_PUBLIC_API_URL ?? "https://app.vouchmi.com/api",
   },
 });

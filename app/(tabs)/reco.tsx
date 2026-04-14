@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MoreHorizontal, Plus } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { feed as feedApi, type Post } from "../../src/lib/api";
+import { useScrollStore } from "../../src/lib/scroll-store";
 import PostActions from "../../src/components/PostActions";
 import LinkCard from "../../src/components/LinkCard";
 
@@ -21,6 +22,9 @@ export default function RecoTab() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const listRef = useRef<FlatList>(null);
+  const scrollToPostId = useScrollStore((s) => s.scrollToPostId);
+  const clearScroll = useScrollStore((s) => s.setScrollToPostId);
 
   const load = useCallback(async () => {
     try {
@@ -33,7 +37,20 @@ export default function RecoTab() {
     setRefreshing(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  useEffect(() => {
+    if (scrollToPostId && posts.length > 0) {
+      const idx = posts.findIndex((p) => p.id === scrollToPostId);
+      if (idx >= 0) {
+        setTimeout(() => {
+          listRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0 });
+        }, 300);
+      }
+      clearScroll(null);
+    }
+  }, [scrollToPostId, posts]);
+
   const onRefresh = () => { setRefreshing(true); load(); };
 
   const handleLikeChange = (pid: string, count: number) => {
@@ -42,15 +59,17 @@ export default function RecoTab() {
 
   return (
     <SafeAreaView style={s.container} edges={["top"]}>
-      <View style={s.header}><Text style={s.title}>TrusCart</Text></View>
-
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
+          ref={listRef}
           data={posts}
           keyExtractor={(p) => p.id}
           contentContainerStyle={{ paddingBottom: 120 }}
+          onScrollToIndexFailed={(info) => {
+            setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 500);
+          }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
           ListHeaderComponent={<StoryBar posts={posts} />}
           ListEmptyComponent={
@@ -102,8 +121,15 @@ function StoryBar({ posts }: { posts: Post[] }) {
   );
 }
 
+const COLLAPSED_LENGTH = 140;
+
 function PostItem({ post, onLikeChange }: { post: Post; onLikeChange: (id: string, count: number) => void }) {
   const initial = (post.author.display_name ?? post.author.username)[0]?.toUpperCase() ?? "?";
+  const [expanded, setExpanded] = useState(false);
+
+  const content = post.content ?? "";
+  const isLong = content.length > COLLAPSED_LENGTH;
+  const displayContent = !isLong || expanded ? content : content.slice(0, COLLAPSED_LENGTH).trimEnd() + "…";
 
   return (
     <View style={s.post}>
@@ -123,10 +149,19 @@ function PostItem({ post, onLikeChange }: { post: Post; onLikeChange: (id: strin
         </Pressable>
       </View>
 
-      {!!post.content && <Text style={s.postText}>{post.content}</Text>}
-
       <LinkCard post={post} />
       <PostActions post={post} onLikeChange={onLikeChange} />
+
+      {!!content && (
+        <View style={s.descBlock}>
+          <Text style={s.postText}>{displayContent}</Text>
+          {isLong && (
+            <Pressable onPress={() => setExpanded((v) => !v)} hitSlop={6}>
+              <Text style={s.moreText}>{expanded ? "weniger" : "mehr"}</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -139,13 +174,27 @@ const s = StyleSheet.create({
   emptyTitle: { color: colors.white, fontSize: 18, fontWeight: "700", marginBottom: 6 },
   emptyText: { color: colors.gray, fontSize: 14, textAlign: "center", marginBottom: 18 },
   emptyBtn: { backgroundColor: colors.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 10 },
-  emptyBtnText: { color: colors.bg, fontWeight: "700" },
+  emptyBtnText: { color: "#fff", fontWeight: "700" },
   post: { marginBottom: 6, borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingBottom: 6 },
   postHeader: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
   postAvatar: { width: 36, height: 36, borderRadius: 18 },
   avatarPlaceholder: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  avatarInitial: { color: colors.bg, fontWeight: "800", fontSize: 15 },
+  avatarInitial: { color: "#fff", fontWeight: "800", fontSize: 15 },
   authorName: { color: colors.white, fontSize: 14, fontWeight: "600" },
   username: { color: colors.gray, fontSize: 12, marginTop: 1 },
-  postText: { color: colors.white, fontSize: 14, lineHeight: 19, paddingHorizontal: 12, marginBottom: 4 },
+  postText: { color: colors.white, fontSize: 14, lineHeight: 19 },
+  descBlock: { paddingHorizontal: 12, paddingTop: 4, paddingBottom: 6 },
+  moreText: { color: colors.gray, fontSize: 13, marginTop: 2, fontWeight: "500" },
+  commentsToggle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 10, gap: 6 },
+  commentsToggleText: { color: colors.gray, fontSize: 13, fontWeight: "500" },
+  commentsList: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
+  loadingText: { color: colors.gray, fontSize: 12, paddingVertical: 6 },
+  commentRow: { flexDirection: "row", gap: 8, paddingVertical: 4 },
+  cAvatar: { width: 28, height: 28, borderRadius: 14 },
+  cAvatarFallback: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
+  cInitial: { color: "#fff", fontWeight: "700", fontSize: 11 },
+  cHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 1 },
+  cName: { color: colors.white, fontSize: 12, fontWeight: "600" },
+  cTime: { color: colors.grayDark, fontSize: 10 },
+  cText: { color: colors.white, fontSize: 13, lineHeight: 17 },
 });

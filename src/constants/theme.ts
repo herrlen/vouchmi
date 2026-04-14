@@ -1,20 +1,38 @@
 // src/constants/theme.ts
-// WhatsApp-inspired dark theme
+// Vouchmi Brand Identity v1.0
 export const colors = {
-  bg: "#111B21",
-  bgCard: "#1F2C33",
-  bgInput: "#2A3942",
-  bgElevated: "#202C33",
-  accent: "#25D366",
-  accentDim: "#25D36620",
-  white: "#E9EDEF",
-  gray: "#8696A0",
-  grayDark: "#54656F",
-  border: "#222E35",
-  red: "#F15C6D",
-  gold: "#FFB800",
-  tabInactive: "#8696A0",
-  tabActive: "#25D366",
+  // Core Backgrounds
+  bg: "#1A1D2E",
+  bgCard: "#242738",
+  bgInput: "#2D3048",
+  bgElevated: "#1F2235",
+
+  // Primary — Amber Glow
+  accent: "#F59E0B",
+  accentLight: "#FBBF24",
+  accentDim: "#F59E0B20",
+
+  // Sekundär — Vouch Indigo (Links, kleine Akzente)
+  indigo: "#4F46E5",
+  indigoLight: "#6366F1",
+
+  // Weitere
+  success: "#10B981",
+  coral: "#F472B6",
+
+  // Text
+  white: "#F8F7F4",
+  gray: "#94A3B8",
+  grayDark: "#5A6178",
+  border: "#2A2D40",
+
+  // Semantisch
+  red: "#EF4444",
+  gold: "#F59E0B",
+
+  // Tab-Bar
+  tabInactive: "#94A3B8",
+  tabActive: "#F59E0B",
 };
 
 export const fonts = {

@@ -24,7 +24,7 @@ class LinkPreviewController extends Controller
         $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
         if (preg_match('/(^|\.)(amazon|amzn)\./i', $host)) {
             return response()->json([
-                'message' => 'Amazon-Links sind auf TrusCart nicht erlaubt.',
+                'message' => 'Amazon-Links sind auf Vouchmi nicht erlaubt.',
             ], 422);
         }
 

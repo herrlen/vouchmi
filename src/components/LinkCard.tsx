@@ -81,5 +81,5 @@ const s = StyleSheet.create({
     borderRadius: 10,
     minHeight: 44,
   },
-  shopBtnText: { color: colors.bg, fontSize: 14, fontWeight: "700" },
+  shopBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 });

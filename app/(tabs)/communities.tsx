@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, ActivityIndicator, Alert, Image } from "react-native";
+import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, ActivityIndicator, Alert, Image, Share } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
+import { Plus, Send } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
+import { useAuth } from "../../src/lib/store";
 import { communities as communitiesApi, type Community } from "../../src/lib/api";
 
 export default function CommunitiesTab() {
+  const me = useAuth((s) => s.user);
   const [mine, setMine] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -25,6 +27,25 @@ export default function CommunitiesTab() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const onRefresh = () => { setRefreshing(true); load(); };
+
+  const toggleFollow = async (c: Community) => {
+    try {
+      if (c.is_followed) {
+        const { follower_count } = await communitiesApi.unfollow(c.id);
+        setMine((arr) => arr.map((x) => x.id === c.id ? { ...x, is_followed: false, follower_count } : x));
+      } else {
+        const { follower_count } = await communitiesApi.follow(c.id);
+        setMine((arr) => arr.map((x) => x.id === c.id ? { ...x, is_followed: true, follower_count } : x));
+      }
+    } catch (e: any) { Alert.alert("Fehler", e.message); }
+  };
+
+  const shareCommunity = async (c: Community) => {
+    try {
+      const { invite_link } = await communitiesApi.invite(c.id);
+      await Share.share({ message: `Tritt der Community "${c.name}" auf Vouchmi bei:\n${invite_link}` });
+    } catch (e: any) { Alert.alert("Fehler", e.message); }
+  };
 
   return (
     <SafeAreaView style={s.container} edges={["top"]}>
@@ -56,26 +77,47 @@ export default function CommunitiesTab() {
               </Pressable>
             </View>
           }
-          renderItem={({ item }) => (
-            <Pressable style={s.card} onPress={() => router.push(`/community/${item.id}`)}>
-              {item.image_url ? (
-                <Image source={{ uri: item.image_url }} style={s.image} />
-              ) : (
-                <View style={[s.image, { backgroundColor: stringColor(item.name) }]}>
-                  <Text style={s.imageInitial}>{item.name[0]?.toUpperCase()}</Text>
-                </View>
-              )}
-              <View style={{ flex: 1, gap: 3 }}>
-                <Text style={s.name} numberOfLines={1}>{item.name}</Text>
-                {item.description && <Text style={s.desc} numberOfLines={2}>{item.description}</Text>}
-                <Text style={s.meta}>
-                  {item.member_count} {item.member_count === 1 ? "Mitglied" : "Mitglieder"}
-                  {item.category ? ` · ${item.category}` : ""}
-                  {item.role === "owner" ? " · Owner" : ""}
-                </Text>
+          renderItem={({ item }) => {
+            const isOwn = item.role === "owner" || item.my_role === "owner";
+            return (
+              <View style={s.card}>
+                <Pressable style={{ flexDirection: "row", alignItems: "center", flex: 1, gap: 12 }} onPress={() => router.push(`/community/${item.id}`)}>
+                  {item.image_url ? (
+                    <Image source={{ uri: item.image_url }} style={s.image} />
+                  ) : (
+                    <View style={[s.image, { backgroundColor: stringColor(item.name) }]}>
+                      <Text style={s.imageInitial}>{item.name[0]?.toUpperCase()}</Text>
+                    </View>
+                  )}
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text style={s.name} numberOfLines={1}>{item.name}</Text>
+                    {item.description && <Text style={s.desc} numberOfLines={2}>{item.description}</Text>}
+                    <Text style={s.meta}>
+                      {item.member_count} {item.member_count === 1 ? "Mitglied" : "Mitglieder"}
+                      {item.category ? ` · ${item.category}` : ""}
+                      {isOwn ? " · Owner" : ""}
+                    </Text>
+                  </View>
+                </Pressable>
+                {!isOwn && (
+                  <View style={s.actions}>
+                    <Pressable style={s.iconBtn} onPress={() => shareCommunity(item)} hitSlop={6}>
+                      <Send color={colors.white} size={18} strokeWidth={1.8} />
+                    </Pressable>
+                    <Pressable
+                      style={[s.followBtn, item.is_followed && s.followBtnActive]}
+                      onPress={() => toggleFollow(item)}
+                      hitSlop={6}
+                    >
+                      <Text style={[s.followBtnText, item.is_followed && s.followBtnTextActive]}>
+                        {item.is_followed ? "Folgt" : "Folgen"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
-            </Pressable>
-          )}
+            );
+          }}
         />
       )}
     </SafeAreaView>
@@ -83,7 +125,7 @@ export default function CommunitiesTab() {
 }
 
 function stringColor(s: string) {
-  const c = ["#25D366", "#34B7F1", "#F15C6D", "#FFB800", "#8B5CF6"];
+  const c = ["#F59E0B", "#FBBF24", "#4F46E5", "#10B981", "#F472B6"];
   let h = 0;
   for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
   return c[Math.abs(h) % c.length];
@@ -121,5 +163,11 @@ const s = StyleSheet.create({
   emptyText: { color: colors.gray, fontSize: 14, textAlign: "center", marginBottom: 18 },
   emptyBtn: { backgroundColor: colors.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 10, marginBottom: 8 },
   emptyBtnSecondary: { backgroundColor: colors.bgCard },
-  emptyBtnText: { color: colors.bg, fontWeight: "700" },
+  emptyBtnText: { color: "#fff", fontWeight: "700" },
+  actions: { flexDirection: "row", alignItems: "center", gap: 6 },
+  iconBtn: { width: 36, height: 32, justifyContent: "center", alignItems: "center" },
+  followBtn: { backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, minHeight: 32, justifyContent: "center" },
+  followBtnActive: { backgroundColor: colors.bgInput },
+  followBtnText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  followBtnTextActive: { color: colors.white },
 });

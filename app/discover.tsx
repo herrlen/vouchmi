@@ -66,6 +66,6 @@ const s = StyleSheet.create({
   sub: { color: colors.gray, fontSize: 13, marginTop: 2 },
   desc: { color: colors.grayDark, fontSize: 12, marginTop: 4, lineHeight: 16 },
   joinBtn: { backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  joinText: { color: colors.bg, fontWeight: "bold", fontSize: 13 },
+  joinText: { color: "#fff", fontWeight: "bold", fontSize: 13 },
   empty: { color: colors.gray, textAlign: "center", marginTop: 40 },
 });

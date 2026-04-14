@@ -44,7 +44,7 @@ export default function CreateSheet({ visible, onClose, communityId }: Props) {
               <Pressable style={s.option} onPress={() => pick("/create-post")}>
                 <View style={s.icon}><LinkIcon color={colors.accent} size={22} strokeWidth={1.8} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.optionTitle}>Link erstellen</Text>
+                  <Text style={s.optionTitle}>Reco erstellen</Text>
                   <Text style={s.optionSub}>Produkt-Link teilen mit Preview</Text>
                 </View>
               </Pressable>

@@ -18,7 +18,7 @@ class BrandMiddleware
 
         $brand = BrandProfile::where('user_id', $user->id)->first();
         if (!$brand || !$brand->subscription_expires_at || $brand->subscription_expires_at->isPast()) {
-            return response()->json(['message' => 'Dein Abo ist abgelaufen. Bitte verlängere es unter truscart.com/brand/billing'], 402);
+            return response()->json(['message' => 'Dein Abo ist abgelaufen. Bitte verlängere es unter vouchmi.com/brand/billing'], 402);
         }
 
         return $next($request);

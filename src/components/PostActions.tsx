@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
 import { View, Text, Pressable, StyleSheet, Share, Alert, Modal, TouchableWithoutFeedback, Animated, TextInput, Image, FlatList, Platform } from "react-native";
-import { Heart, MessageCircle, Repeat2, Send, X, Copy, ExternalLink } from "lucide-react-native";
+import { Heart, MessageCircle, Repeat2, Send, X, Copy, ExternalLink, Bookmark } from "lucide-react-native";
 import { router } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { colors } from "../constants/theme";
 import { feed as feedApi, type Post } from "../lib/api";
 import { useAuth } from "../lib/store";
+import CommentsSheet from "./CommentsSheet";
 
 type Props = {
   post: Post;
@@ -22,6 +23,9 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
   const [reposted, setReposted] = useState(post.is_reposted ?? false);
   const [repostCount, setRepostCount] = useState(post.repost_count ?? 0);
 
+  const [bookmarked, setBookmarked] = useState(post.is_bookmarked ?? false);
+  const [commentCount, setCommentCount] = useState(post.comment_count);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [repostSheet, setRepostSheet] = useState(false);
   const [sendSheet, setSendSheet] = useState(false);
   const [repostEditor, setRepostEditor] = useState(false);
@@ -36,6 +40,13 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
       setLiked(nowLiked);
       setLikeCount(like_count);
       onLikeChange?.(post.id, like_count);
+    } catch {}
+  };
+
+  const toggleBookmark = async () => {
+    try {
+      const { bookmarked: now } = await feedApi.bookmark(post.id);
+      setBookmarked(now);
     } catch {}
   };
 
@@ -128,13 +139,13 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
     <View>
       <View style={s.row}>
         <Pressable style={s.btn} onPress={toggleLike} hitSlop={6}>
-          <Heart color={liked ? "#FF3B30" : colors.white} fill={liked ? "#FF3B30" : "none"} size={20} strokeWidth={1.8} />
-          {likeCount > 0 && <Text style={[s.count, liked && { color: "#FF3B30" }]}>{likeCount}</Text>}
+          <Heart color={liked ? "#EF4444" : colors.white} fill={liked ? "#EF4444" : "none"} size={20} strokeWidth={1.8} />
+          {likeCount > 0 && <Text style={[s.count, liked && { color: "#EF4444" }]}>{likeCount}</Text>}
         </Pressable>
 
-        <Pressable style={s.btn} onPress={() => router.push(`/post/${post.id}`)} hitSlop={6}>
+        <Pressable style={s.btn} onPress={() => setCommentsOpen(true)} hitSlop={6}>
           <MessageCircle color={colors.white} size={20} strokeWidth={1.8} />
-          {post.comment_count > 0 && <Text style={s.count}>{post.comment_count}</Text>}
+          {commentCount > 0 && <Text style={s.count}>{commentCount}</Text>}
         </Pressable>
 
         <Pressable style={s.btn} onPress={openRepostSheet} hitSlop={6} disabled={isOwn}>
@@ -144,6 +155,10 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
 
         <Pressable style={s.btn} onPress={openSendSheet} hitSlop={6}>
           <Send color={colors.white} size={20} strokeWidth={1.8} />
+        </Pressable>
+
+        <Pressable style={s.bookmarkBtn} onPress={toggleBookmark} hitSlop={6}>
+          <Bookmark color={bookmarked ? colors.accent : colors.white} fill={bookmarked ? colors.accent : "none"} size={20} strokeWidth={1.8} />
         </Pressable>
       </View>
 
@@ -237,6 +252,14 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
           </Animated.View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Comments Sheet */}
+      <CommentsSheet
+        postId={commentsOpen ? post.id : null}
+        visible={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        onCommentAdded={() => setCommentCount((c) => c + 1)}
+      />
     </View>
   );
 }
@@ -244,6 +267,7 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
 const s = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 4 },
   btn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, minHeight: 44, paddingVertical: 6 },
+  bookmarkBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "center" },
   count: { color: colors.gray, fontSize: 13, fontWeight: "500" },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   sheet: { backgroundColor: colors.bgElevated, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: Platform.OS === "ios" ? 44 : 24 },
@@ -261,11 +285,11 @@ const s = StyleSheet.create({
   editorInput: { color: colors.white, fontSize: 16, minHeight: 60, marginBottom: 4 },
   editorCounter: { color: colors.gray, fontSize: 11, textAlign: "right", marginBottom: 16 },
 
-  embedCard: { backgroundColor: "#1E2A32", borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: "#2A3942" },
+  embedCard: { backgroundColor: "#242738", borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: "#2A2D40" },
   embedHeader: { flexDirection: "row", alignItems: "center", gap: 8, padding: 12, paddingBottom: 6 },
   embedAvatar: { width: 24, height: 24, borderRadius: 12 },
   embedAvatarFallback: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  embedAvatarInitial: { color: colors.bg, fontWeight: "800", fontSize: 10 },
+  embedAvatarInitial: { color: "#fff", fontWeight: "800", fontSize: 10 },
   embedName: { color: colors.gray, fontSize: 12, fontWeight: "600" },
   embedImage: { width: "100%", aspectRatio: 16 / 9, backgroundColor: colors.bgCard },
   embedTitle: { color: colors.white, fontSize: 13, fontWeight: "600", paddingHorizontal: 12, paddingTop: 8 },

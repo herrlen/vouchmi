@@ -30,11 +30,11 @@ export default function CreatePostScreen() {
       .catch(() => {});
   }, []);
 
-  const fetchPreview = async () => {
-    const clean = url.trim();
+  const fetchPreview = async (rawUrl?: string, silent = false) => {
+    const clean = (rawUrl ?? url).trim();
     if (!clean) return;
     if (!/^https?:\/\//i.test(clean)) {
-      Alert.alert("Ungültiger Link", "Der Link muss mit http:// oder https:// beginnen.");
+      if (!silent) Alert.alert("Ungültiger Link", "Der Link muss mit http:// oder https:// beginnen.");
       return;
     }
     setLoadingPreview(true);
@@ -43,12 +43,21 @@ export default function CreatePostScreen() {
       const { preview } = await links.preview(clean);
       setPreview(preview);
       setTitle(preview.title ?? "");
-      setDescription("");
+      setDescription(preview.description ?? "");
     } catch (e: any) {
-      Alert.alert("Preview fehlgeschlagen", e.message);
+      if (!silent) Alert.alert("Preview fehlgeschlagen", e.message);
     }
     setLoadingPreview(false);
   };
+
+  // Auto-load preview when URL changes (debounced)
+  useEffect(() => {
+    const clean = url.trim();
+    if (!clean || !/^https?:\/\//i.test(clean)) return;
+    if (preview && preview.original_url === clean) return;
+    const timer = setTimeout(() => fetchPreview(clean, true), 600);
+    return () => clearTimeout(timer);
+  }, [url]);
 
   const clearPreview = () => {
     setPreview(null);
@@ -199,7 +208,7 @@ export default function CreatePostScreen() {
 
               <View style={s.disclosure}>
                 <Text style={s.disclosureText}>
-                  🔗 Beim Posten hängt TrusCart automatisch deinen Usernamen an den Link. So sehen Marken, dass du das Produkt empfohlen hast.
+                  🔗 Beim Posten hängt Vouchmi automatisch deinen Usernamen an den Link. So sehen Marken, dass du das Produkt empfohlen hast.
                 </Text>
               </View>
             </>

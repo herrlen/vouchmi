@@ -1,7 +1,7 @@
 <?php
 
 // routes/api.php
-// TrusCart API – Community Commerce Platform
+// Vouchmi API – Community Commerce Platform
 // Kein eigener Shop. Nutzer teilen Links. Marken zahlen.
 
 use App\Http\Controllers\Api\AuthController;
@@ -125,7 +125,7 @@ Route::middleware(['auth:sanctum', 'brand'])->prefix('brand')->group(function ()
     Route::post('/seeding', [BrandController::class, 'createSeeding']);
     Route::get('/seeding', [BrandController::class, 'seedingCampaigns']);
 
-    // Analytics (was passiert mit meiner Marke auf TrusCart)
+    // Analytics (was passiert mit meiner Marke auf Vouchmi)
     Route::get('/analytics/mentions', [BrandController::class, 'mentions']);
     Route::get('/analytics/clicks', [BrandController::class, 'clickStats']);
     Route::get('/analytics/communities', [BrandController::class, 'topCommunities']);

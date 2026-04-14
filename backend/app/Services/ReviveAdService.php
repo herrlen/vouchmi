@@ -32,7 +32,7 @@ class ReviveAdService
     {
         $response = $this->request()->post("{$this->baseUrl}/api/campaign", [
             'advertiser_id' => $drop['advertiser_id'],
-            'campaign_name' => "TrusCart Drop: {$drop['title']}",
+            'campaign_name' => "Vouchmi Drop: {$drop['title']}",
             'start_date' => $drop['starts_at'],
             'end_date' => $drop['expires_at'],
             'priority' => 5,
@@ -101,7 +101,7 @@ class ReviveAdService
     {
         $discount = $drop['discount_percent'] ?? 0;
         return <<<HTML
-        <div class="truscart-drop" data-drop-id="{$drop['id']}">
+        <div class="vouchmi-drop" data-drop-id="{$drop['id']}">
             <img src="{$drop['image_url']}" alt="{$drop['title']}" />
             <h3>{$drop['title']}</h3>
             <p>{$drop['description']}</p>

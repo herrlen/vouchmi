@@ -1,6 +1,6 @@
 <?php
 
-// database/migrations/2026_04_09_000001_create_truscart_tables.php
+// database/migrations/2026_04_09_000001_create_vouchmi_tables.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

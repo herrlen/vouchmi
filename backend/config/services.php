@@ -52,7 +52,7 @@ return [
     ],
 
     'affiliate' => [
-        'amazon_tag' => env('AMAZON_AFFILIATE_TAG', 'truscart-21'),
+        'amazon_tag' => env('AMAZON_AFFILIATE_TAG', 'vouchmi-21'),
         'awin_id' => env('AWIN_PUBLISHER_ID'),
     ],
 

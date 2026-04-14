@@ -8,8 +8,8 @@
 
 ## Design-Vorgaben
 
-- Hintergrund: #111B21 (TrusCart Dark)
-- Akzentfarbe: #25D366 (TrusCart Grün)
+- Hintergrund: #111B21 (Vouchmi Dark)
+- Akzentfarbe: #25D366 (Vouchmi Grün)
 - Logo: Stilisiertes "T" oder Kompass-Symbol in Grün auf dunklem Hintergrund
 - Keine Transparenz beim iOS-Icon (Apple Requirement)
 - Abgerundete Ecken NICHT im Icon — iOS rundet automatisch

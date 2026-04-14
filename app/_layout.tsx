@@ -35,6 +35,8 @@ export default function Layout() {
         <Stack.Screen name="brand" options={{ headerShown: false }} />
         <Stack.Screen name="invite" options={{ headerShown: false }} />
         <Stack.Screen name="user/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="security" options={{ headerShown: false }} />
+        <Stack.Screen name="find-friends" options={{ headerShown: false }} />
       </Stack>
     </>
   );

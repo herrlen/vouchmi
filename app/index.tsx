@@ -21,7 +21,7 @@ export default function Gate() {
   if (isLoading || !onboardingChecked) {
     return (
       <View style={s.center}>
-        <Text style={s.logo}>TrusCart</Text>
+        <Text style={s.logo}>Vouchmi</Text>
         <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />
       </View>
     );

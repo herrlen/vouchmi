@@ -301,9 +301,9 @@ const s = StyleSheet.create({
   tagInputRow: { flexDirection: "row", gap: 8 },
   tagInput: { flex: 1, backgroundColor: colors.bgInput, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, color: colors.white, fontSize: 14 },
   tagAddBtn: { width: 44, height: 44, borderRadius: 10, backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  tagAddText: { color: colors.bg, fontSize: 22, fontWeight: "600" },
+  tagAddText: { color: "#fff", fontSize: 22, fontWeight: "600" },
   saveBtn: { backgroundColor: colors.accent, borderRadius: 12, padding: 16, alignItems: "center", minHeight: 50 },
-  saveBtnText: { color: colors.bg, fontSize: 16, fontWeight: "700" },
+  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 
   // Members
   memberSearch: { flexDirection: "row", alignItems: "center", backgroundColor: colors.bgInput, borderRadius: 10, paddingHorizontal: 12, height: 40, gap: 8, marginBottom: 12 },
@@ -311,16 +311,16 @@ const s = StyleSheet.create({
   memberRow: { flexDirection: "row", alignItems: "center", backgroundColor: colors.bgCard, borderRadius: 12, padding: 12, gap: 10 },
   memberAvatar: { width: 40, height: 40, borderRadius: 20 },
   memberAvatarFallback: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  memberInitial: { color: colors.bg, fontWeight: "800", fontSize: 16 },
+  memberInitial: { color: "#fff", fontWeight: "800", fontSize: 16 },
   memberNameRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   memberName: { color: colors.white, fontSize: 14, fontWeight: "600", maxWidth: 160 },
   memberHandle: { color: colors.gray, fontSize: 11 },
   memberRole: { color: colors.grayDark, fontSize: 11, fontWeight: "500" },
-  mutedBadge: { color: "#FF3B30", fontSize: 10, fontWeight: "600", marginTop: 1 },
+  mutedBadge: { color: "#EF4444", fontSize: 10, fontWeight: "600", marginTop: 1 },
 
   // Delete
   deleteBtn: { padding: 16, alignItems: "center", marginTop: 24 },
-  deleteBtnText: { color: "#FF3B30", fontSize: 15 },
+  deleteBtnText: { color: "#EF4444", fontSize: 15 },
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: 24 },
   modal: { backgroundColor: colors.bgElevated, borderRadius: 16, padding: 24 },
   modalTitle: { color: colors.white, fontSize: 18, fontWeight: "700", marginBottom: 10 },
@@ -330,6 +330,6 @@ const s = StyleSheet.create({
   modalBtns: { flexDirection: "row", gap: 10 },
   modalCancel: { flex: 1, backgroundColor: colors.bgCard, borderRadius: 10, padding: 14, alignItems: "center", minHeight: 48, justifyContent: "center" },
   modalCancelText: { color: colors.white, fontSize: 15, fontWeight: "600" },
-  modalDelete: { flex: 1, backgroundColor: "#FF3B30", borderRadius: 10, padding: 14, alignItems: "center", minHeight: 48, justifyContent: "center" },
+  modalDelete: { flex: 1, backgroundColor: "#EF4444", borderRadius: 10, padding: 14, alignItems: "center", minHeight: 48, justifyContent: "center" },
   modalDeleteText: { color: "#fff", fontSize: 15, fontWeight: "700" },
 });

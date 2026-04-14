@@ -43,12 +43,12 @@ export default function BrandScreen() {
           <Text style={s.emoji}>🏷️</Text>
           <Text style={s.headline}>Für Marken & Unternehmen</Text>
           <Text style={s.body}>
-            Du möchtest deine Marke auf TrusCart vertreten? Brand-Accounts erstellst du ausschließlich auf unserer Website.
+            Du möchtest deine Marke auf Vouchmi vertreten? Brand-Accounts erstellst du ausschließlich auf unserer Website.
           </Text>
           <Text style={s.body}>
             Voraussetzungen: Firmen-E-Mail-Adresse, PayPal-Account und €5/Monat.
           </Text>
-          <Pressable style={s.linkBtn} onPress={() => Linking.openURL("https://truscart.com/brands")}>
+          <Pressable style={s.linkBtn} onPress={() => Linking.openURL("https://vouchmi.com/brands")}>
             <Text style={s.linkBtnText}>Mehr erfahren</Text>
           </Pressable>
           <Text style={s.footnote}>
@@ -62,7 +62,7 @@ export default function BrandScreen() {
           <Text style={s.body}>
             Dein Account ist als Brand markiert, aber es gibt noch kein Profil. Bitte vervollständige das Setup auf der Website.
           </Text>
-          <Pressable style={s.linkBtn} onPress={() => Linking.openURL("https://truscart.com/brand/setup")}>
+          <Pressable style={s.linkBtn} onPress={() => Linking.openURL("https://vouchmi.com/brand/setup")}>
             <Text style={s.linkBtnText}>Zur Website</Text>
           </Pressable>
         </ScrollView>
@@ -98,9 +98,9 @@ export default function BrandScreen() {
           <View style={s.infoBox}>
             <Text style={s.infoTitle}>Brand-Verwaltung</Text>
             <Text style={s.infoText}>
-              Logo, Beschreibung, Sponsored Drops und Analytics verwaltest du auf truscart.com/brand.
+              Logo, Beschreibung, Sponsored Drops und Analytics verwaltest du auf vouchmi.com/brand.
             </Text>
-            <Pressable onPress={() => Linking.openURL("https://truscart.com/brand")}>
+            <Pressable onPress={() => Linking.openURL("https://vouchmi.com/brand")}>
               <Text style={s.infoLink}>Zur Brand-Verwaltung →</Text>
             </Pressable>
           </View>
@@ -120,7 +120,7 @@ const s = StyleSheet.create({
   headline: { color: colors.white, fontSize: 22, fontWeight: "700", marginBottom: 12, textAlign: "center" },
   body: { color: colors.gray, fontSize: 15, lineHeight: 22, textAlign: "center", marginBottom: 16 },
   linkBtn: { backgroundColor: colors.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12, marginTop: 8 },
-  linkBtnText: { color: colors.bg, fontWeight: "700", fontSize: 15 },
+  linkBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   footnote: { color: colors.grayDark, fontSize: 11, marginTop: 16, textAlign: "center", lineHeight: 16 },
   brandHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 20 },
   logo: { width: 70, height: 70, borderRadius: 14, backgroundColor: colors.bgCard },

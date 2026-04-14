@@ -55,11 +55,19 @@ export default function SettingsScreen() {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Social</Text>
           <Button label="Freunde einladen" onPress={() => router.push("/invite")} />
+          <Button label="Freunde finden" onPress={() => router.push("/find-friends")} />
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Sicherheit & Moderation</Text>
+          <Text style={s.sectionTitle}>Sicherheit</Text>
+          <Button label="Zwei-Faktor-Authentifizierung" onPress={() => router.push("/security")} />
           <Button label="Blockierte Nutzer" onPress={() => router.push("/blocked-users")} />
+        </View>
+
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Datenschutz</Text>
+          <Button label="Kontaktzugriff verwalten" onPress={() => router.push("/find-friends")} />
+          <Button label="Meine Daten herunterladen" onPress={() => Alert.alert("Datenexport", "Wir stellen deine Daten zusammen und senden sie dir per E-Mail zu. Dies kann bis zu 48 Stunden dauern.", [{ text: "Anfordern", onPress: () => Alert.alert("Angefordert", "Du erhältst eine E-Mail sobald dein Export bereit ist.") }, { text: "Abbrechen", style: "cancel" }])} />
         </View>
 
         <View style={s.section}>
@@ -69,13 +77,13 @@ export default function SettingsScreen() {
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>Rechtliches</Text>
-          <Button label="Nutzungsbedingungen" onPress={() => openUrl("https://truscart.com/terms")} />
-          <Button label="Datenschutzerklärung" onPress={() => openUrl("https://truscart.com/privacy")} />
-          <Button label="Impressum" onPress={() => openUrl("https://truscart.com/imprint")} />
+          <Button label="Nutzungsbedingungen" onPress={() => openUrl("https://vouchmi.com/terms")} />
+          <Button label="Datenschutzerklärung" onPress={() => openUrl("https://vouchmi.com/privacy")} />
+          <Button label="Impressum" onPress={() => openUrl("https://vouchmi.com/imprint")} />
           <View style={s.disclosureBox}>
             <Text style={s.disclosureTitle}>Transparenz</Text>
             <Text style={s.disclosureText}>
-              TrusCart hängt deinen Username an geteilte Links. Marken erkennen so, welcher Nutzer ihre Produkte am besten empfiehlt. Für dich entstehen keine Kosten.
+              Vouchmi hängt deinen Username an geteilte Links. Marken erkennen so, welcher Nutzer ihre Produkte am besten empfiehlt. Für dich entstehen keine Kosten.
             </Text>
           </View>
         </View>
