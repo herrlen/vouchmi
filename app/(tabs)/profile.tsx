@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Menu, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2 } from "lucide-react-native";
+import { Menu, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { useAuth } from "../../src/lib/store";
+import { useProfileMode } from "../../src/lib/profile-mode";
 import { useScrollStore } from "../../src/lib/scroll-store";
 import { profile as profileApi, feed as feedApi, type Post } from "../../src/lib/api";
 
@@ -17,6 +18,9 @@ type SubTab = "reco" | "shared" | "saved";
 
 export default function ProfileTab() {
   const me = useAuth((s) => s.user);
+  const profileMode = useProfileMode((s) => s.mode);
+  const brandStatus = useProfileMode((s) => s.status);
+  const setProfileMode = useProfileMode((s) => s.setMode);
   const [profileData, setProfileData] = useState<any>(null);
   const [stats, setStats] = useState({ communities_count: 0, posts_count: 0, followers_count: 0, following_count: 0 });
   const [myPosts, setMyPosts] = useState<Post[]>([]);
@@ -90,9 +94,29 @@ export default function ProfileTab() {
                 </Pressable>
               </View>
 
+              {/* Profil-Modus-Switcher (nur wenn Brand-Abo aktiv) */}
+              {brandStatus?.is_active && (
+                <View style={s.modeSwitcher}>
+                  <Pressable
+                    style={[s.modePill, profileMode === "personal" && s.modePillOn]}
+                    onPress={() => setProfileMode("personal")}
+                  >
+                    <UserIcon color={profileMode === "personal" ? colors.white : colors.gray} size={14} strokeWidth={2} />
+                    <Text style={[s.modePillText, profileMode === "personal" && s.modePillTextOn]}>Persönlich</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[s.modePill, profileMode === "brand" && s.modePillOn]}
+                    onPress={() => setProfileMode("brand")}
+                  >
+                    <Store color={profileMode === "brand" ? colors.white : colors.gray} size={14} strokeWidth={2} />
+                    <Text style={[s.modePillText, profileMode === "brand" && s.modePillTextOn]}>Brand</Text>
+                  </Pressable>
+                </View>
+              )}
+
               {/* Name + Bio */}
               <View style={s.info}>
-                <Text style={s.name}>{displayName}</Text>
+                <Text style={s.name}>{profileMode === "brand" && brandStatus?.brand?.brand_name ? brandStatus.brand.brand_name : displayName}</Text>
                 <Text style={s.handle}>@{me?.username}</Text>
                 {!!profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
                 {!!profileData?.link && (
@@ -184,6 +208,11 @@ const s = StyleSheet.create({
 
   // Info
   info: { paddingHorizontal: 16, paddingTop: 6 },
+  modeSwitcher: { flexDirection: "row", alignSelf: "center", backgroundColor: colors.bgCard, borderRadius: 20, padding: 3, marginTop: 10, gap: 2 },
+  modePill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 18 },
+  modePillOn: { backgroundColor: colors.accent },
+  modePillText: { color: colors.gray, fontSize: 13, fontWeight: "600" },
+  modePillTextOn: { color: colors.white },
   name: { color: colors.white, fontSize: 15, fontWeight: "700" },
   handle: { color: colors.gray, fontSize: 12, marginTop: 1 },
   bio: { color: colors.white, fontSize: 13, lineHeight: 17, marginTop: 4 },

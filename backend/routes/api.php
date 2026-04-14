@@ -29,6 +29,9 @@ Route::get('/legal/privacy', [LegalController::class, 'privacy']);
 Route::get('/legal/terms',   [LegalController::class, 'terms']);
 Route::get('/legal/imprint', [LegalController::class, 'imprint']);
 
+// ── PayPal Webhook (öffentlich, von PayPal aufgerufen) ──
+Route::post('/webhooks/paypal', [BrandController::class, 'webhook']);
+
 // ── Link Preview (öffentlich, gecached) ──
 Route::get('/link-preview', [LinkPreviewController::class, 'preview']);
 
@@ -109,8 +112,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/track/event', [UserController::class, 'trackEvent']);
     Route::post('/track/click', [LinkPreviewController::class, 'trackClick']);
 
-    // Brand-Profil (nur lesen in der App, Bearbeitung/Signup via Web)
+    // Brand-Profil — Registrierung & Abo-Verwaltung für den eingeloggten User
     Route::get('/brand/me', [BrandController::class, 'profile']);
+    Route::get('/brand/status', [BrandController::class, 'status']);
+    Route::post('/brand/register', [BrandController::class, 'register']);
+    Route::post('/brand/subscribe', [BrandController::class, 'subscribe']);
+    Route::post('/brand/cancel', [BrandController::class, 'cancel']);
     Route::get('/brands/{slug}', [BrandController::class, 'publicProfile']);
 
     // Moderation (Apple-Pflicht: Melden, Blockieren, Account-Löschung)

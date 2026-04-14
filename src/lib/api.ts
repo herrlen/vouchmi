@@ -154,9 +154,21 @@ export type Brand = {
   is_verified: boolean;
 };
 
+export type BrandStatus = {
+  has_brand: boolean;
+  is_active: boolean;
+  paypal_status: string | null;
+  brand: (Brand & { company_email?: string | null; paypal_status?: string | null; subscription_started_at?: string | null }) | null;
+};
+
 export const brand = {
   me: () => api.get<{ brand: Brand | null }>("/brand/me"),
   public: (slug: string) => api.get<{ brand: Brand }>(`/brands/${slug}`),
+  status: () => api.get<BrandStatus>("/brand/status"),
+  register: (d: { brand_name: string; company_email: string; website_url?: string; industry?: string; description?: string }) =>
+    api.post<{ brand: Brand }>("/brand/register", d),
+  subscribe: () => api.post<{ approval_url: string | null; subscription_id: string | null; configured: boolean }>("/brand/subscribe"),
+  cancel: () => api.post<{ cancelled: boolean }>("/brand/cancel"),
 };
 
 export type Story = { id: string; community_id: string; media_url: string; media_type: "image" | "video"; duration: number | null; caption: string | null; view_count: number; expires_at: string | null; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };

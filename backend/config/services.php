@@ -56,4 +56,12 @@ return [
         'awin_id' => env('AWIN_PUBLISHER_ID'),
     ],
 
+    'paypal' => [
+        'mode'          => env('PAYPAL_MODE', 'live'), // 'sandbox' | 'live'
+        'client_id'     => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'plan_id'       => env('PAYPAL_PLAN_ID'),       // 0,99 €/Monat Plan
+        'webhook_id'    => env('PAYPAL_WEBHOOK_ID'),
+    ],
+
 ];

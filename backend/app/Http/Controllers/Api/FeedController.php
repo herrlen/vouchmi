@@ -132,14 +132,33 @@ class FeedController extends Controller
         ]);
 
         $host = strtolower(parse_url($data['link_url'], PHP_URL_HOST) ?? '');
-        if (preg_match('/(^|\.)(amazon|amzn)\./i', $host)) {
+        $normalizedHost = preg_replace('/^www\./', '', $host);
+
+        // Amazon-Kurzlinks (amzn.to, amzn.eu, ...) ablehnen — User soll den
+        // vollständigen Produkt-Link einfügen.
+        if (preg_match('/^amzn\./', $normalizedHost)) {
             return response()->json([
-                'message' => 'Amazon-Links sind auf Vouchmi nicht erlaubt.',
+                'message' => 'Bitte den vollständigen Amazon-Produkt-Link einfügen (keine Kurzlinks).',
             ], 422);
         }
 
+        // Amazon-Links: auf reine PDP-URL reduzieren, alle Affiliate-Tags entfernen.
+        $linkUrl = $data['link_url'];
+        if (str_contains($normalizedHost, 'amazon.')) {
+            $clean = $this->links->canonicalizeAmazon($linkUrl);
+            if (!$clean) {
+                return response()->json([
+                    'message' => 'Amazon-Link wird nicht erkannt. Bitte den Link zur Produktseite (dp/...) einfügen.',
+                ], 422);
+            }
+            $linkUrl = $clean;
+            $host = parse_url($linkUrl, PHP_URL_HOST) ?? $host;
+        }
+
         $username = $request->user()->username;
-        $finalUrl = $this->links->addRefTag($data['link_url'], $username);
+        $finalUrl = $this->links->addRefTag($linkUrl, $username);
+
+        $data['link_url'] = $linkUrl;
 
         $linkData = [
             'link_url' => $data['link_url'],

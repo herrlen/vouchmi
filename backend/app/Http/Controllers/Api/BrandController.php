@@ -7,9 +7,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\BrandProfile;
+use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class BrandController extends Controller
 {
@@ -58,6 +61,169 @@ class BrandController extends Controller
                 'enterprise' => ['price' => 799, 'drops_per_month' => 'unlimited', 'analytics' => 'full', 'seeding' => true, 'api' => true],
             ],
         ]);
+    }
+
+    /**
+     * GET /api/brand/status
+     * Liefert den Brand-Status für den eingeloggten User (auch wenn er
+     * kein aktiver Brand ist). Die App nutzt das für den Profil-Switcher.
+     */
+    public function status(Request $request): JsonResponse
+    {
+        $brand = BrandProfile::where('user_id', $request->user()->id)->first();
+
+        return response()->json([
+            'has_brand'    => (bool) $brand,
+            'is_active'    => $brand && $brand->paypal_status === 'ACTIVE',
+            'paypal_status'=> $brand?->paypal_status,
+            'brand'        => $brand?->only('id', 'brand_name', 'brand_slug', 'company_email', 'logo_url', 'website_url', 'industry', 'paypal_status', 'subscription_started_at'),
+        ]);
+    }
+
+    /**
+     * POST /api/brand/register
+     * Legt für den eingeloggten User ein Brand-Profil an. Es gibt pro User
+     * nur ein Brand-Profil (user_id ist unique in der Tabelle). Das Abo ist
+     * noch NICHT aktiv — dafür muss anschließend /brand/subscribe aufgerufen
+     * werden.
+     */
+    public function register(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'brand_name'    => 'required|string|max:100',
+            'company_email' => 'required|email|max:190',
+            'website_url'   => 'nullable|url|max:255',
+            'industry'      => 'nullable|string|max:50',
+            'description'   => 'nullable|string|max:1000',
+        ]);
+
+        $existing = BrandProfile::where('user_id', $request->user()->id)->first();
+        if ($existing) {
+            return response()->json([
+                'message' => 'Du hast bereits ein Brand-Profil.',
+                'brand'   => $existing,
+            ], 409);
+        }
+
+        $brand = BrandProfile::create([
+            'user_id'       => $request->user()->id,
+            'brand_name'    => $data['brand_name'],
+            'brand_slug'    => Str::slug($data['brand_name']) . '-' . Str::random(5),
+            'company_email' => $data['company_email'],
+            'website_url'   => $data['website_url'] ?? null,
+            'industry'      => $data['industry'] ?? null,
+            'description'   => $data['description'] ?? null,
+            'paypal_status' => 'PENDING',
+        ]);
+
+        return response()->json(['brand' => $brand], 201);
+    }
+
+    /**
+     * POST /api/brand/subscribe
+     * Startet eine PayPal-Subscription. Gibt die Approval-URL zurück, die
+     * die App im In-App-Browser öffnet. Nach erfolgreicher Zahlung schickt
+     * PayPal einen Webhook, der paypal_status auf ACTIVE setzt.
+     */
+    public function subscribe(Request $request, PayPalService $paypal): JsonResponse
+    {
+        $brand = BrandProfile::where('user_id', $request->user()->id)->firstOrFail();
+
+        if ($brand->paypal_status === 'ACTIVE') {
+            return response()->json([
+                'message' => 'Abo ist bereits aktiv.',
+                'brand'   => $brand,
+            ], 409);
+        }
+
+        $result = $paypal->createSubscription([
+            'email'      => $brand->company_email ?: $request->user()->email,
+            'brand_name' => $brand->brand_name,
+        ]);
+
+        if (!empty($result['subscription_id'])) {
+            $brand->paypal_subscription_id = $result['subscription_id'];
+            $brand->paypal_status = $result['status'];
+            $brand->save();
+        }
+
+        return response()->json([
+            'approval_url'    => $result['approval_url'],
+            'subscription_id' => $result['subscription_id'],
+            'configured'      => $result['configured'] ?? false,
+        ]);
+    }
+
+    /**
+     * POST /api/brand/cancel
+     */
+    public function cancel(Request $request, PayPalService $paypal): JsonResponse
+    {
+        $brand = BrandProfile::where('user_id', $request->user()->id)->firstOrFail();
+        if (!$brand->paypal_subscription_id) {
+            return response()->json(['message' => 'Kein aktives Abo.'], 404);
+        }
+
+        $ok = $paypal->cancelSubscription($brand->paypal_subscription_id, 'User requested cancellation');
+
+        if ($ok) {
+            $brand->paypal_status = 'CANCELLED';
+            $brand->save();
+        }
+
+        return response()->json([
+            'cancelled' => $ok,
+            'brand'     => $brand->fresh(),
+        ]);
+    }
+
+    /**
+     * POST /api/webhooks/paypal
+     * Empfängt Subscription-Events. Ohne gültige PAYPAL_WEBHOOK_ID-Verifizierung
+     * akzeptieren wir nur Requests aus dem lokalen Netzwerk (Entwicklung) —
+     * sobald Credentials da sind, muss hier die Signature-Verifikation ergänzt
+     * werden.
+     */
+    public function webhook(Request $request): JsonResponse
+    {
+        $event = $request->input('event_type');
+        $resource = $request->input('resource', []);
+        $subscriptionId = $resource['id'] ?? null;
+
+        Log::info('paypal.webhook.received', ['event' => $event, 'id' => $subscriptionId]);
+
+        if (!$subscriptionId) {
+            return response()->json(['ok' => false, 'reason' => 'no resource id'], 200);
+        }
+
+        $brand = BrandProfile::where('paypal_subscription_id', $subscriptionId)->first();
+        if (!$brand) {
+            return response()->json(['ok' => false, 'reason' => 'unknown subscription'], 200);
+        }
+
+        switch ($event) {
+            case 'BILLING.SUBSCRIPTION.ACTIVATED':
+            case 'BILLING.SUBSCRIPTION.RENEWED':
+                $brand->paypal_status = 'ACTIVE';
+                $brand->subscription_started_at = $brand->subscription_started_at ?: now();
+                $brand->subscription_expires_at = now()->addMonth();
+                $brand->subscription_plan = 'brand';
+                $brand->user()->update(['role' => 'brand']);
+                $brand->save();
+                break;
+            case 'BILLING.SUBSCRIPTION.CANCELLED':
+            case 'BILLING.SUBSCRIPTION.EXPIRED':
+                $brand->paypal_status = 'CANCELLED';
+                $brand->save();
+                break;
+            case 'BILLING.SUBSCRIPTION.SUSPENDED':
+            case 'PAYMENT.SALE.DENIED':
+                $brand->paypal_status = 'SUSPENDED';
+                $brand->save();
+                break;
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function mentions(Request $request): JsonResponse

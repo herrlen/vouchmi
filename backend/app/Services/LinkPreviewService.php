@@ -124,6 +124,39 @@ class LinkPreviewService
     }
 
     /**
+     * Amazon-Links müssen auf die reine Produkt-Detail-Seite reduziert werden:
+     * - Kurzlinks (amzn.to, amzn.eu, ...) werden abgelehnt — User soll den
+     *   vollständigen Link einfügen.
+     * - Affiliate-Parameter (tag, linkCode, ascsubtag, ref_, …) werden
+     *   entfernt. Der ASIN wird aus dem Pfad extrahiert und die URL neu
+     *   gebaut als https://amazon.<tld>/dp/<ASIN>.
+     * - Gibt null zurück, wenn der Link kein gültiger Amazon-PDP-Link ist.
+     */
+    public function canonicalizeAmazon(string $url): ?string
+    {
+        $parts = parse_url($url);
+        if (!$parts || empty($parts['host'])) return null;
+        $host = strtolower($parts['host']);
+
+        if (preg_match('/^amzn\./', preg_replace('/^www\./', '', $host))) {
+            return null;
+        }
+
+        if (!preg_match('/(?:^|\.)amazon\.([a-z.]+)$/', $host, $m)) {
+            return null;
+        }
+        $tld = $m[1];
+
+        $path = $parts['path'] ?? '';
+        if (preg_match('#/(?:dp|gp/product|gp/aw/d)/([A-Z0-9]{10})(?:/|$)#', $path, $am)) {
+            $asin = $am[1];
+            return "https://www.amazon.{$tld}/dp/{$asin}";
+        }
+
+        return null;
+    }
+
+    /**
      * Fügt Affiliate-Tag zur URL hinzu
      */
     public function addAffiliateTag(string $url): string
