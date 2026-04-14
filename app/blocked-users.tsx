@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet, FlatList, Alert } from "react-native
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
 import { useEffect, useState } from "react";
+import { ChevronLeft } from "lucide-react-native";
 import { colors } from "../src/constants/theme";
 import { moderation, type User } from "../src/lib/api";
 
@@ -40,11 +41,11 @@ export default function BlockedUsersScreen() {
     <SafeAreaView style={s.container} edges={["top"]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text style={s.back}>‹ Zurück</Text>
+        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10}>
+          <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
         <Text style={s.title}>Blockierte Nutzer</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.iconBtn} />
       </View>
 
       <FlatList
@@ -68,7 +69,7 @@ export default function BlockedUsersScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 },
-  back: { color: colors.accent, fontSize: 16, width: 60 },
+  iconBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   title: { color: colors.white, fontSize: 18, fontWeight: "600" },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: colors.bgCard, padding: 14, borderRadius: 12, marginBottom: 6 },
   name: { color: colors.white, fontSize: 15 },

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet, Image, ScrollView, ActivityIndicator, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
 import { colors } from "../src/constants/theme";
 import { brand as brandApi, type Brand } from "../src/lib/api";
 import { useAuth } from "../src/lib/store";
@@ -29,11 +30,11 @@ export default function BrandScreen() {
     <SafeAreaView style={s.container} edges={["top"]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text style={s.back}>‹ Zurück</Text>
+        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10}>
+          <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
         <Text style={s.title}>Brand</Text>
-        <View style={{ width: 60 }} />
+        <View style={s.iconBtn} />
       </View>
 
       {loading ? (
@@ -113,7 +114,7 @@ export default function BrandScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 },
-  back: { color: colors.accent, fontSize: 16, width: 60 },
+  iconBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   title: { color: colors.white, fontSize: 18, fontWeight: "600" },
   centerContent: { padding: 32, alignItems: "center" },
   emoji: { fontSize: 64, marginTop: 40, marginBottom: 16 },

@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet, TextInput, ScrollView, Alert, Image,
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { ChevronLeft, Pencil, Check } from "lucide-react-native";
 import { colors } from "../src/constants/theme";
 import { profile as profileApi } from "../src/lib/api";
 import { useAuth } from "../src/lib/store";
@@ -90,14 +91,18 @@ export default function ProfileScreen() {
     <SafeAreaView style={s.container} edges={["top"]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text style={s.back}>‹ Zurück</Text>
+        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10}>
+          <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
         <Text style={s.title}>Profil</Text>
-        <Pressable onPress={() => editing ? save() : setEditing(true)} hitSlop={10}>
-          <Text style={[s.back, { textAlign: "right" }]}>
-            {saving ? "..." : editing ? "Speichern" : "Bearbeiten"}
-          </Text>
+        <Pressable onPress={() => editing ? save() : setEditing(true)} style={s.iconBtn} hitSlop={10} disabled={saving}>
+          {saving ? (
+            <ActivityIndicator color={colors.accent} size="small" />
+          ) : editing ? (
+            <Check color={colors.accent} size={24} strokeWidth={2.4} />
+          ) : (
+            <Pencil color={colors.white} size={20} strokeWidth={2} />
+          )}
         </Pressable>
       </View>
 
@@ -204,7 +209,7 @@ function Stat({ value, label }: { value: number; label: string }) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 },
-  back: { color: colors.accent, fontSize: 16, width: 90 },
+  iconBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   title: { color: colors.white, fontSize: 18, fontWeight: "600" },
   content: { padding: 20, paddingBottom: 60 },
   avatarWrap: { alignItems: "center", marginBottom: 10 },
