@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Community;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CommunityController extends Controller
@@ -29,11 +30,20 @@ class CommunityController extends Controller
 
     public function discover(Request $request): JsonResponse
     {
+        $meId = $request->user()->id;
+
+        $myIds = DB::table('community_members')
+            ->where('user_id', $meId)
+            ->pluck('community_id');
+
         $communities = Community::where('is_private', false)
-            ->whereDoesntHave('members', fn($q) => $q->where('user_id', $request->user()->id))
             ->orderByDesc('member_count')
             ->limit(50)
-            ->get(['id', 'name', 'slug', 'description', 'image_url', 'category', 'member_count']);
+            ->get(['id', 'name', 'slug', 'description', 'image_url', 'category', 'member_count'])
+            ->map(fn ($c) => [
+                ...$c->only('id', 'name', 'slug', 'description', 'image_url', 'category', 'member_count'),
+                'is_member' => $myIds->contains($c->id),
+            ]);
 
         return response()->json(['communities' => $communities]);
     }
