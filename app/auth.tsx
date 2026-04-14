@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { Check, Eye, EyeOff, Mail, Lock, User as UserIcon, KeyRound } from "lucide-react-native";
+import { Check, Eye, EyeOff, Mail, Lock, User as UserIcon } from "lucide-react-native";
 import { useAuth } from "../src/lib/store";
 import { auth as authApi } from "../src/lib/api";
 import { colors } from "../src/constants/theme";
 
-type Mode = "login" | "register" | "forgot" | "reset";
+type Mode = "login" | "register" | "forgot";
 
 function validatePassword(pw: string) {
   return {
@@ -25,7 +25,6 @@ export default function Auth() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [resetToken, setResetToken] = useState("");
   const [username, setUsername] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPw, setShowPw] = useState(false);
@@ -42,23 +41,11 @@ export default function Auth() {
       setLoading(true);
       try {
         await authApi.forgotPassword(email);
-        Alert.alert("E-Mail gesendet", "Falls ein Konto mit dieser Adresse existiert, haben wir dir einen 6-stelligen Code gesendet.");
-        setMode("reset");
-      } catch (e: any) {
-        Alert.alert("Fehler", e.message);
-      } finally { setLoading(false); }
-      return;
-    }
-    if (mode === "reset") {
-      if (!emailValid || !resetToken || !pwCheck.valid)
-        return Alert.alert("Fehler", "Bitte E-Mail, Code und ein gültiges Passwort eingeben.");
-      setLoading(true);
-      try {
-        await authApi.resetPassword({ email, token: resetToken, password });
-        Alert.alert("Erledigt", "Dein Passwort wurde zurückgesetzt. Bitte einloggen.");
+        Alert.alert(
+          "E-Mail gesendet",
+          "Falls ein Konto mit dieser Adresse existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Schau auch im Spam-Ordner nach."
+        );
         setMode("login");
-        setPassword("");
-        setResetToken("");
       } catch (e: any) {
         Alert.alert("Fehler", e.message);
       } finally { setLoading(false); }
@@ -84,9 +71,7 @@ export default function Auth() {
     ? "Anmeldung"
     : mode === "register"
     ? "Account erstellen"
-    : mode === "forgot"
-    ? "Passwort vergessen"
-    : "Neues Passwort";
+    : "Passwort vergessen";
 
   const submitLabel = loading
     ? "Moment..."
@@ -94,9 +79,7 @@ export default function Auth() {
     ? "Einloggen"
     : mode === "register"
     ? "Registrieren"
-    : mode === "forgot"
-    ? "Code per E-Mail senden"
-    : "Passwort zurücksetzen";
+    : "Link per E-Mail senden";
 
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -122,26 +105,18 @@ export default function Auth() {
             {email.length > 3 && emailValid && <Check color={colors.accent} size={18} />}
           </View>
 
-          {mode === "reset" && (
-            <View style={s.inputWrap}>
-              <KeyRound color={colors.grayDark} size={18} style={s.inputIcon} />
-              <TextInput style={s.inputField} placeholder="6-stelliger Code" placeholderTextColor={colors.grayDark}
-                value={resetToken} onChangeText={setResetToken} keyboardType="number-pad" maxLength={6} autoCapitalize="none" />
-            </View>
-          )}
-
-          {(mode === "login" || mode === "register" || mode === "reset") && (
+          {(mode === "login" || mode === "register") && (
             <View>
               <View style={s.inputWrap}>
                 <Lock color={colors.grayDark} size={18} style={s.inputIcon} />
-                <TextInput style={s.inputField} placeholder={mode === "reset" ? "Neues Passwort" : "Passwort"} placeholderTextColor={colors.grayDark}
+                <TextInput style={s.inputField} placeholder="Passwort" placeholderTextColor={colors.grayDark}
                   value={password} onChangeText={setPassword} secureTextEntry={!showPw} />
                 <Pressable onPress={() => setShowPw(!showPw)} hitSlop={10}>
                   {showPw ? <EyeOff color={colors.gray} size={18} /> : <Eye color={colors.gray} size={18} />}
                 </Pressable>
               </View>
 
-              {(mode === "register" || mode === "reset") && password.length > 0 && (
+              {mode === "register" && password.length > 0 && (
                 <View style={s.pwChecks}>
                   <PwRule ok={pwCheck.length} label="Min. 8 Zeichen" />
                   <PwRule ok={pwCheck.upper} label="1 Großbuchstabe" />
@@ -175,7 +150,7 @@ export default function Auth() {
             </Pressable>
           )}
 
-          {(mode === "forgot" || mode === "reset") && (
+          {mode === "forgot" && (
             <Pressable onPress={() => setMode("login")} style={s.secondaryBtn}>
               <Text style={s.secondaryText}>Zurück zur Anmeldung</Text>
             </Pressable>

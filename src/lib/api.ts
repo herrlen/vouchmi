@@ -61,7 +61,7 @@ export const auth = {
   logout: () => api.post("/auth/logout"),
   me: () => api.get<{ user: User }>("/auth/me"),
   forgotPassword: (email: string) => req<{ message: string }>("POST", "/auth/forgot-password", { email }, true),
-  resetPassword: (d: { email: string; token: string; password: string }) =>
+  resetPassword: (d: { email: string; token: string; password: string; password_confirmation: string }) =>
     req<{ message: string }>("POST", "/auth/reset-password", d, true),
 };
 

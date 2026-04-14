@@ -79,8 +79,8 @@ class AuthController extends Controller
 
     /**
      * POST /api/auth/forgot-password
-     * Erzeugt einen 6-stelligen Code, speichert ihn gehasht in
-     * password_reset_tokens und schickt ihn per E-Mail.
+     * Erzeugt einen langen Token, speichert ihn gehasht in
+     * password_reset_tokens und schickt einen Deep-Link per E-Mail.
      * Antwortet immer mit 200, um Account-Enumeration zu verhindern.
      */
     public function forgotPassword(Request $request): JsonResponse
@@ -89,21 +89,26 @@ class AuthController extends Controller
         $user = User::where('email', $data['email'])->first();
 
         if ($user) {
-            $code = (string) random_int(100000, 999999);
+            $plainToken = bin2hex(random_bytes(32));
 
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $data['email']],
-                ['token' => Hash::make($code), 'created_at' => now()],
+                ['token' => Hash::make($plainToken), 'created_at' => now()],
             );
 
+            $resetUrl = 'vouchmi://reset-password'
+                . '?token=' . urlencode($plainToken)
+                . '&email=' . urlencode($data['email']);
+
             try {
-                Mail::raw(
-                    "Hi {$user->username},\n\n" .
-                    "dein Vouchmi-Reset-Code lautet: {$code}\n\n" .
-                    "Der Code ist 60 Minuten gültig. Falls du den Reset nicht angefordert hast, ignoriere diese E-Mail.\n\n" .
-                    "Vouchmi",
+                Mail::send(
+                    'emails.reset-password',
+                    [
+                        'displayName' => $user->display_name ?: $user->username,
+                        'resetUrl'    => $resetUrl,
+                    ],
                     function ($m) use ($data) {
-                        $m->to($data['email'])->subject('Vouchmi: Passwort zurücksetzen');
+                        $m->to($data['email'])->subject('Vouchmi — Passwort zurücksetzen');
                     }
                 );
             } catch (\Throwable $e) {
@@ -112,7 +117,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Falls ein Konto existiert, wurde ein Reset-Code gesendet.',
+            'message' => 'Falls ein Konto existiert, wurde eine E-Mail mit Reset-Link gesendet.',
         ]);
     }
 
@@ -123,19 +128,19 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'email'    => 'required|email',
-            'token'    => 'required|string|size:6',
-            'password' => 'required|string|min:8',
+            'token'    => 'required|string|min:32',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         $row = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
 
         if (!$row || !Hash::check($data['token'], $row->token)) {
-            throw ValidationException::withMessages(['token' => ['Ungültiger Code.']]);
+            throw ValidationException::withMessages(['token' => ['Ungültiger oder abgelaufener Reset-Link.']]);
         }
 
         if (now()->diffInMinutes($row->created_at) > 60) {
             DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
-            throw ValidationException::withMessages(['token' => ['Code abgelaufen. Bitte erneut anfordern.']]);
+            throw ValidationException::withMessages(['token' => ['Link abgelaufen. Bitte erneut anfordern.']]);
         }
 
         $user = User::where('email', $data['email'])->first();
