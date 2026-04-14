@@ -45,7 +45,7 @@ export default function LinkCard({ post }: Props) {
 
       {(post.link_affiliate_url || post.link_url) && (
         <Pressable style={s.shopBtn} onPress={openShop}>
-          <Text style={s.shopBtnText}>Zum Produkt</Text>
+          <Text style={s.shopBtnText}>Empfehlung</Text>
           <ExternalLink color={colors.bg} size={13} strokeWidth={2} />
         </Pressable>
       )}
