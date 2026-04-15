@@ -56,7 +56,8 @@ export const profile = {
 };
 
 export const auth = {
-  register: (d: { email: string; username: string; password: string; accept_terms: boolean }) => req<{ user: User; token: string }>("POST", "/auth/register", d, true),
+  register: (d: { email: string; username: string; password: string; accept_terms: boolean; role?: "user" | "influencer" | "brand"; phone?: string }) =>
+    req<{ user: User; token: string }>("POST", "/auth/register", d, true),
   login: (email: string, password: string) => req<{ user: User; token: string }>("POST", "/auth/login", { email, password }, true),
   logout: () => api.post("/auth/logout"),
   me: () => api.get<{ user: User }>("/auth/me"),
@@ -165,7 +166,7 @@ export const brand = {
   me: () => api.get<{ brand: Brand | null }>("/brand/me"),
   public: (slug: string) => api.get<{ brand: Brand }>(`/brands/${slug}`),
   status: () => api.get<BrandStatus>("/brand/status"),
-  register: (d: { brand_name: string; company_email: string; website_url?: string; industry?: string; description?: string }) =>
+  register: (d: { brand_name: string; company_email: string; paypal_email?: string; website_url?: string; industry?: string; description?: string }) =>
     api.post<{ brand: Brand }>("/brand/register", d),
   subscribe: () => api.post<{ approval_url: string | null; subscription_id: string | null; configured: boolean }>("/brand/subscribe"),
   cancel: () => api.post<{ cancelled: boolean }>("/brand/cancel"),

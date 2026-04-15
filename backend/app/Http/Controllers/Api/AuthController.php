@@ -22,13 +22,24 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
             'display_name' => 'nullable|string|max:50',
             'accept_terms' => 'required|accepted',
+            'role'  => 'nullable|in:user,influencer,brand',
+            'phone' => 'nullable|string|max:32',
         ]);
+
+        // Brand-Rolle wird erst durch den Webhook (/brand/subscribe) vergeben;
+        // im Onboarding darf der User "brand" als Ziel wählen, Account startet
+        // aber als 'user' bis die Subscription aktiv ist.
+        $initialRole = in_array($data['role'] ?? null, ['influencer'], true)
+            ? $data['role']
+            : 'user';
 
         $user = User::create([
             'email' => $data['email'],
             'username' => $data['username'],
             'password' => Hash::make($data['password']),
             'display_name' => $data['display_name'] ?? $data['username'],
+            'role' => $initialRole,
+            'phone' => $data['phone'] ?? null,
             'terms_accepted_at' => now(),
             'terms_version' => '1.0',
         ]);

@@ -76,7 +76,7 @@ class BrandController extends Controller
             'has_brand'    => (bool) $brand,
             'is_active'    => $brand && $brand->paypal_status === 'ACTIVE',
             'paypal_status'=> $brand?->paypal_status,
-            'brand'        => $brand?->only('id', 'brand_name', 'brand_slug', 'company_email', 'logo_url', 'website_url', 'industry', 'paypal_status', 'subscription_started_at'),
+            'brand'        => $brand?->only('id', 'brand_name', 'brand_slug', 'company_email', 'paypal_email', 'logo_url', 'website_url', 'industry', 'paypal_status', 'subscription_started_at'),
         ]);
     }
 
@@ -92,6 +92,7 @@ class BrandController extends Controller
         $data = $request->validate([
             'brand_name'    => 'required|string|max:100',
             'company_email' => 'required|email|max:190',
+            'paypal_email'  => 'nullable|email|max:190',
             'website_url'   => 'nullable|url|max:255',
             'industry'      => 'nullable|string|max:50',
             'description'   => 'nullable|string|max:1000',
@@ -110,6 +111,7 @@ class BrandController extends Controller
             'brand_name'    => $data['brand_name'],
             'brand_slug'    => Str::slug($data['brand_name']) . '-' . Str::random(5),
             'company_email' => $data['company_email'],
+            'paypal_email'  => $data['paypal_email'] ?? $data['company_email'],
             'website_url'   => $data['website_url'] ?? null,
             'industry'      => $data['industry'] ?? null,
             'description'   => $data['description'] ?? null,
@@ -137,7 +139,7 @@ class BrandController extends Controller
         }
 
         $result = $paypal->createSubscription([
-            'email'      => $brand->company_email ?: $request->user()->email,
+            'email'      => $brand->paypal_email ?: ($brand->company_email ?: $request->user()->email),
             'brand_name' => $brand->brand_name,
         ]);
 

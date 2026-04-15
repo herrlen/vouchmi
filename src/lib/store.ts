@@ -9,7 +9,13 @@ interface AuthState {
   isLoading: boolean;
   init: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, username: string, acceptTerms: boolean) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    username: string,
+    acceptTerms: boolean,
+    extras?: { role?: "user" | "influencer" | "brand"; phone?: string }
+  ) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -35,8 +41,15 @@ export const useAuth = create<AuthState>((set) => ({
     await SecureStore.setItemAsync("token", token);
     set({ user });
   },
-  register: async (email, password, username, acceptTerms) => {
-    const { user, token } = await api.auth.register({ email, username, password, accept_terms: acceptTerms });
+  register: async (email, password, username, acceptTerms, extras) => {
+    const { user, token } = await api.auth.register({
+      email,
+      username,
+      password,
+      accept_terms: acceptTerms,
+      ...(extras?.role ? { role: extras.role } : {}),
+      ...(extras?.phone ? { phone: extras.phone } : {}),
+    });
     await SecureStore.setItemAsync("token", token);
     set({ user });
   },
