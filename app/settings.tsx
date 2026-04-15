@@ -55,6 +55,7 @@ export default function SettingsScreen() {
           <Text style={s.sectionTitle}>Social</Text>
           <Button label="Freunde einladen" onPress={() => router.push("/invite")} />
           <Button label="Freunde finden" onPress={() => router.push("/find-friends")} />
+          <Button label="Meine Links" onPress={() => router.push("/links")} />
         </View>
 
         <View style={s.section}>

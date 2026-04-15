@@ -1,5 +1,6 @@
-import { View, Text, Pressable, StyleSheet, Linking, Image } from "react-native";
-import { ExternalLink } from "lucide-react-native";
+import { View, Text, Pressable, StyleSheet, Linking, Image, Alert, ToastAndroid, Platform } from "react-native";
+import { ExternalLink, Copy, Lock } from "lucide-react-native";
+import * as Clipboard from "expo-clipboard";
 import { colors } from "../constants/theme";
 import { links as linksApi, type Post } from "../lib/api";
 
@@ -8,16 +9,28 @@ type Props = {
 };
 
 export default function LinkCard({ post }: Props) {
+  const shortUrl = post.link_affiliate_url ?? post.link_url;
+  const shortLabel = shortUrl?.replace(/^https?:\/\//, "") ?? "";
+
   const openShop = async () => {
-    const url = post.link_affiliate_url ?? post.link_url;
-    if (!url) return;
+    if (!shortUrl) return;
     linksApi.trackClick({
       post_id: post.id,
       community_id: post.community_id,
-      original_url: post.link_url ?? url,
-      affiliate_url: url,
+      original_url: post.link_url ?? shortUrl,
+      affiliate_url: shortUrl,
     }).catch(() => {});
-    try { await Linking.openURL(url); } catch {}
+    try { await Linking.openURL(shortUrl); } catch {}
+  };
+
+  const copyShort = async () => {
+    if (!shortUrl) return;
+    await Clipboard.setStringAsync(shortUrl);
+    if (Platform.OS === "android") {
+      ToastAndroid.show("Link kopiert", ToastAndroid.SHORT);
+    } else {
+      Alert.alert("Kopiert", "Kurzlink wurde in die Zwischenablage kopiert.");
+    }
   };
 
   return (
@@ -33,7 +46,7 @@ export default function LinkCard({ post }: Props) {
           <View style={{ flex: 1 }}>
             <Text style={s.title} numberOfLines={2}>{post.link_title}</Text>
             <View style={s.domainRow}>
-              <ExternalLink color={colors.accent} size={11} strokeWidth={1.8} />
+              <Lock color={colors.success} size={11} strokeWidth={2.2} />
               {post.link_domain && <Text style={s.domain}>{post.link_domain}</Text>}
             </View>
           </View>
@@ -43,8 +56,21 @@ export default function LinkCard({ post }: Props) {
         </Pressable>
       )}
 
-      {(post.link_affiliate_url || post.link_url) && (
-        <Pressable style={s.shopBtn} onPress={openShop}>
+      {shortUrl && (
+        <View style={s.shortRow}>
+          <Pressable style={s.shortLinkArea} onPress={openShop} accessibilityRole="link" accessibilityLabel={`Empfehlungs-Link ${shortLabel}`}>
+            <ExternalLink color={colors.accent} size={13} strokeWidth={2} />
+            <Text style={s.shortLink} numberOfLines={1}>{shortLabel}</Text>
+          </Pressable>
+          <Pressable style={s.copyBtn} onPress={copyShort} hitSlop={10} accessibilityRole="button" accessibilityLabel="Kurzlink kopieren">
+            <Copy color={colors.indigo} size={14} strokeWidth={2.2} />
+            <Text style={s.copyBtnText}>Kopieren</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {shortUrl && (
+        <Pressable style={s.shopBtn} onPress={openShop} accessibilityRole="button" accessibilityLabel="Empfehlung öffnen">
           <Text style={s.shopBtnText}>Empfehlung</Text>
           <ExternalLink color={colors.bg} size={13} strokeWidth={2} />
         </Pressable>
@@ -82,4 +108,33 @@ const s = StyleSheet.create({
     minHeight: 44,
   },
   shopBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
+
+  shortRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 12,
+    marginTop: 8,
+  },
+  shortLinkArea: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.bgCard,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    minHeight: 44,
+  },
+  shortLink: { color: colors.accent, fontSize: 13, fontWeight: "700", flexShrink: 1 },
+  copyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    minHeight: 44,
+    borderRadius: 10,
+    backgroundColor: "rgba(79,70,229,0.18)",
+  },
+  copyBtnText: { color: colors.indigo, fontSize: 13, fontWeight: "700" },
 });

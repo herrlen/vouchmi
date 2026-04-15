@@ -56,6 +56,11 @@ return [
         'awin_id' => env('AWIN_PUBLISHER_ID'),
     ],
 
+    'shortlinks' => [
+        'domain' => env('SHORT_LINK_DOMAIN', 'app.vouchmi.com'),
+        'scheme' => env('SHORT_LINK_SCHEME', 'https'),
+    ],
+
     'paypal' => [
         'mode'          => env('PAYPAL_MODE', 'live'), // 'sandbox' | 'live'
         'client_id'     => env('PAYPAL_CLIENT_ID'),

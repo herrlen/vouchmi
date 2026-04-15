@@ -4,10 +4,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Community;
 use App\Models\Post;
 use App\Models\Comment;
 use App\Services\LinkPreviewService;
 use App\Services\MatomoService;
+use App\Services\SharedLinkService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +19,7 @@ class FeedController extends Controller
     public function __construct(
         private LinkPreviewService $links,
         private MatomoService $matomo,
+        private SharedLinkService $shared,
     ) {}
 
     public function index(string $communityId, Request $request): JsonResponse
@@ -134,50 +137,31 @@ class FeedController extends Controller
         $host = strtolower(parse_url($data['link_url'], PHP_URL_HOST) ?? '');
         $normalizedHost = preg_replace('/^www\./', '', $host);
 
-        // Amazon-Kurzlinks (amzn.to, amzn.eu, ...) ablehnen — User soll den
-        // vollständigen Produkt-Link einfügen.
-        if (preg_match('/^amzn\./', $normalizedHost)) {
+        // Amazon-Links (auch Kurzlinks) komplett gesperrt — Vouchmi setzt auf
+        // eigenes Tracking via SharedLink, keine Affiliate-Netze.
+        if (preg_match('/(^|\.)(amazon|amzn)\./i', $normalizedHost)) {
             return response()->json([
-                'message' => 'Bitte den vollständigen Amazon-Produkt-Link einfügen (keine Kurzlinks).',
+                'message' => 'Amazon-Links sind auf Vouchmi nicht erlaubt.',
             ], 422);
         }
 
-        // Amazon-Links: auf reine PDP-URL reduzieren, alle Affiliate-Tags entfernen.
-        $linkUrl = $data['link_url'];
-        if (str_contains($normalizedHost, 'amazon.')) {
-            $clean = $this->links->canonicalizeAmazon($linkUrl);
-            if (!$clean) {
-                return response()->json([
-                    'message' => 'Amazon-Link wird nicht erkannt. Bitte den Link zur Produktseite (dp/...) einfügen.',
-                ], 422);
-            }
-            $linkUrl = $clean;
-            $host = parse_url($linkUrl, PHP_URL_HOST) ?? $host;
+        $community = Community::find($communityId);
+
+        try {
+            $shared = $this->shared->createSharedLink($request->user(), $data['link_url'], $community);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $username = $request->user()->username;
-        $finalUrl = $this->links->addRefTag($linkUrl, $username);
-
-        $data['link_url'] = $linkUrl;
 
         $linkData = [
-            'link_url' => $data['link_url'],
-            'link_affiliate_url' => $finalUrl,
-            'link_domain' => $host,
-            'post_type' => 'link',
-            'link_title' => $data['link_title'] ?? null,
-            'link_image' => $data['link_image'] ?? null,
-            'link_price' => $data['link_price'] ?? null,
+            'link_url'            => $shared->original_url,
+            'link_affiliate_url'  => $this->shared->buildShortUrl($shared),
+            'link_domain'         => $shared->domain,
+            'post_type'           => 'link',
+            'link_title'          => $data['link_title'] ?? $shared->og_title,
+            'link_image'          => $data['link_image'] ?? $shared->og_image,
+            'link_price'          => $data['link_price'] ?? null,
         ];
-
-        if (empty($data['link_title']) || empty($data['link_image'])) {
-            $preview = $this->links->getPreview($data['link_url']);
-            if ($preview) {
-                $linkData['link_title'] = $linkData['link_title'] ?? $preview['title'] ?? null;
-                $linkData['link_image'] = $linkData['link_image'] ?? $preview['image'] ?? null;
-                $linkData['link_price'] = $linkData['link_price'] ?? $preview['price'] ?? null;
-            }
-        }
 
         $data['content'] = $data['content'] ?? '';
 

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\DirectMessageController;
 use App\Http\Controllers\Api\BrandProfileController;
 use App\Http\Controllers\Api\LegalController;
+use App\Http\Controllers\Api\SharedLinkController;
 use App\Http\Controllers\Api\LinkPreviewController;
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\SponsoredDropController;
@@ -114,6 +115,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Tracking
     Route::post('/track/event', [UserController::class, 'trackEvent']);
     Route::post('/track/click', [LinkPreviewController::class, 'trackClick']);
+
+    // Shared Links (Vouchmi Short-Links + UTM-Tracking)
+    Route::get('/links', [SharedLinkController::class, 'index']);
+    Route::post('/links', [SharedLinkController::class, 'store']);
+    Route::get('/links/{id}/stats', [SharedLinkController::class, 'stats']);
+    Route::delete('/links/{id}', [SharedLinkController::class, 'destroy']);
 
     // Brand-Profil — Registrierung & Abo-Verwaltung für den eingeloggten User
     Route::get('/brand/me', [BrandController::class, 'profile']);

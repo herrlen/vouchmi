@@ -142,9 +142,38 @@ export const chat = {
   send: (cid: string, content: string, link_url?: string) => api.post<{ message: Msg }>(`/communities/${cid}/messages`, { content, link_url }),
 };
 
+export type SharedLink = {
+  id: string;
+  shortcode: string;
+  short_url: string;
+  original_url: string;
+  target_url: string;
+  domain: string;
+  community_id: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
+  click_count: number;
+  created_at: string;
+};
+
+export type LinkStats = {
+  link: SharedLink;
+  click_count: number;
+  clicks_today: number;
+  clicks_last_7_days: number;
+  clicks_last_30_days: number;
+  top_countries: { country: string; count: number }[];
+  clicks_per_day: { date: string; clicks: number }[];
+};
+
 export const links = {
   preview: (url: string) => req<{ preview: LinkPreview }>("GET", `/link-preview?url=${encodeURIComponent(url)}`, undefined, true),
   trackClick: (d: { post_id?: string; community_id?: string; original_url: string; affiliate_url: string }) => api.post("/track/click", d),
+  create: (d: { url: string; community_id?: string }) => api.post<SharedLink>("/links", d),
+  list: (page = 1) => api.get<{ data: SharedLink[]; last_page: number }>(`/links?page=${page}`),
+  stats: (id: string) => api.get<LinkStats>(`/links/${id}/stats`),
+  destroy: (id: string) => api.del<{ deleted: boolean }>(`/links/${id}`),
 };
 
 export type Brand = {
