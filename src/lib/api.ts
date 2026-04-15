@@ -62,6 +62,9 @@ export const auth = {
   logout: () => api.post("/auth/logout"),
   me: () => api.get<{ user: User }>("/auth/me"),
   forgotPassword: (email: string) => req<{ message: string }>("POST", "/auth/forgot-password", { email }, true),
+  verifyEmail: (d: { email: string; token: string }) =>
+    req<{ message: string; user: User }>("POST", "/auth/verify-email", d, true),
+  sendVerification: () => api.post<{ message: string }>("/auth/send-verification"),
   resetPassword: (d: { email: string; token: string; password: string; password_confirmation: string }) =>
     req<{ message: string }>("POST", "/auth/reset-password", d, true),
 };
@@ -207,7 +210,7 @@ export const drops = {
 };
 
 // Types
-export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string };
+export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string; email_verified_at?: string | null };
 export type Community = { id: string; name: string; slug: string; description: string | null; image_url: string | null; category: string | null; tags?: string[] | null; member_count: number; follower_count?: number; is_followed?: boolean; is_private: boolean; role?: string; is_member?: boolean; my_role?: string; owner_id?: string };
 export type CommunityMember = { id: string; username: string; display_name: string | null; avatar_url: string | null; role: string; muted_until?: string | null };
 export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; repost_count: number; click_count: number; is_liked?: boolean; is_reposted?: boolean; is_bookmarked?: boolean; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };

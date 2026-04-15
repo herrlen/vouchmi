@@ -27,6 +27,7 @@ export default function Layout() {
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ title: "Einloggen", headerShown: false }} />
         <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        <Stack.Screen name="verify-email" options={{ headerShown: false }} />
         <Stack.Screen name="create-community" options={{ title: "Neue Community", presentation: "modal" }} />
         <Stack.Screen name="create-post" options={{ headerShown: false, presentation: "modal" }} />
         <Stack.Screen name="create-story" options={{ headerShown: false, presentation: "modal" }} />

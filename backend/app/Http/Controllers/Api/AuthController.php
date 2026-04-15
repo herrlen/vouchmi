@@ -46,10 +46,97 @@ class AuthController extends Controller
 
         $token = $user->createToken('vouchmi')->plainTextToken;
 
+        $this->sendVerificationMail($user);
+
         return response()->json([
             'user' => $this->userResponse($user),
             'token' => $token,
         ], 201);
+    }
+
+    /**
+     * POST /api/auth/send-verification
+     * Erneut einen Verify-Link per E-Mail senden (für eingeloggte User).
+     */
+    public function sendVerification(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user->email_verified_at) {
+            return response()->json(['message' => 'E-Mail ist bereits bestätigt.']);
+        }
+        $this->sendVerificationMail($user);
+        return response()->json(['message' => 'Bestätigungs-Link wurde gesendet.']);
+    }
+
+    /**
+     * POST /api/auth/verify-email
+     * Validiert Token aus Deep-Link, setzt email_verified_at.
+     * Akzeptiert optional ein Bearer-Token (falls schon eingeloggt) oder läuft
+     * public: der Token selbst reicht zur Identifikation.
+     */
+    public function verifyEmail(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string|min:32',
+        ]);
+
+        $row = DB::table('email_verification_tokens')->where('email', $data['email'])->first();
+
+        if (!$row || !Hash::check($data['token'], $row->token)) {
+            throw ValidationException::withMessages(['token' => ['Ungültiger oder abgelaufener Bestätigungs-Link.']]);
+        }
+
+        if (now()->diffInHours($row->created_at) > 24) {
+            DB::table('email_verification_tokens')->where('email', $data['email'])->delete();
+            throw ValidationException::withMessages(['token' => ['Link abgelaufen. Bitte neuen anfordern.']]);
+        }
+
+        $user = User::where('email', $data['email'])->first();
+        if (!$user) {
+            throw ValidationException::withMessages(['email' => ['Konto nicht gefunden.']]);
+        }
+
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = now();
+            $user->save();
+        }
+
+        DB::table('email_verification_tokens')->where('email', $data['email'])->delete();
+
+        return response()->json([
+            'message' => 'E-Mail erfolgreich bestätigt.',
+            'user' => $this->userResponse($user),
+        ]);
+    }
+
+    private function sendVerificationMail(User $user): void
+    {
+        $plainToken = bin2hex(random_bytes(32));
+
+        DB::table('email_verification_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            ['token' => Hash::make($plainToken), 'created_at' => now()],
+        );
+
+        $verifyUrl = 'vouchmi://verify-email'
+            . '?token=' . urlencode($plainToken)
+            . '&email=' . urlencode($user->email);
+
+        try {
+            Mail::send(
+                'emails.verify-email',
+                [
+                    'displayName' => $user->display_name ?: $user->username,
+                    'verifyUrl'   => $verifyUrl,
+                ],
+                function ($m) use ($user) {
+                    $m->to($user->email)->subject('Vouchmi — E-Mail bestätigen');
+                }
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function login(Request $request): JsonResponse
@@ -177,6 +264,7 @@ class AuthController extends Controller
             'display_name' => $user->display_name,
             'avatar_url' => $user->avatar_url,
             'role' => $user->role,
+            'email_verified_at' => $user->email_verified_at,
         ];
     }
 }
