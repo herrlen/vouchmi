@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, Image, TextInput, Pressable, ActivityIndicator, Alert, RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search as SearchIcon, Plus, Heart, MessageCircle, Repeat2 } from "lucide-react-native";
+import { Search as SearchIcon, Plus, Heart, MessageCircle, Repeat2, LayoutGrid } from "lucide-react-native";
 import { router } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { communities as communitiesApi, feed as feedApi, users as usersApi, type Community, type Post } from "../../src/lib/api";
@@ -182,6 +182,29 @@ export default function SearchTab() {
                   ))}
                 </View>
               )}
+
+              {/* CTA-Buttons am Listen-Ende */}
+              <View style={s.ctaBlock}>
+                <Pressable
+                  style={s.ctaSecondary}
+                  onPress={() => router.push("/discover")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Mehr entdecken"
+                >
+                  <LayoutGrid color={colors.white} size={18} strokeWidth={2} />
+                  <Text style={s.ctaSecondaryText}>Mehr entdecken</Text>
+                </Pressable>
+
+                <Pressable
+                  style={s.ctaOutline}
+                  onPress={() => router.push("/create-community")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Community erstellen"
+                >
+                  <Plus color={colors.accent} size={18} strokeWidth={2.2} />
+                  <Text style={s.ctaOutlineText}>Community erstellen</Text>
+                </Pressable>
+              </View>
             </View>
         </ScrollView>
       )}
@@ -261,4 +284,20 @@ const s = StyleSheet.create({
 
   gridItem: { flex: 1 / 3, aspectRatio: 1, backgroundColor: colors.bgCard },
   gridImage: { width: "100%", height: "100%" },
+
+  // Action-Buttons am Listen-Ende (WhatsApp-Kanäle-Pattern)
+  ctaBlock: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 32, gap: 12 },
+  ctaSecondary: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+    backgroundColor: "#1A1D2E",
+    borderRadius: 14, minHeight: 50, paddingHorizontal: 16,
+  },
+  ctaSecondaryText: { color: colors.white, fontSize: 16, fontWeight: "600" },
+  ctaOutline: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+    backgroundColor: "transparent",
+    borderRadius: 14, minHeight: 50, paddingHorizontal: 16,
+    borderWidth: 1.5, borderColor: colors.accent,
+  },
+  ctaOutlineText: { color: colors.accent, fontSize: 16, fontWeight: "600" },
 });
