@@ -165,6 +165,39 @@ export type BrandStatus = {
   brand: (Brand & { company_email?: string | null; paypal_status?: string | null; subscription_started_at?: string | null }) | null;
 };
 
+export type BrandPublic = {
+  id: string;
+  user_id: string;
+  brand_name: string;
+  brand_slug: string;
+  description: string | null;
+  logo_url: string | null;
+  cover_url: string | null;
+  website_url: string | null;
+  industry: string | null;
+  company_email: string | null;
+  is_verified: boolean;
+  is_active: boolean;
+  paypal_status: string | null;
+  follower_count: number;
+  recommendation_count: number;
+  is_followed: boolean;
+  is_owner: boolean;
+  can_edit: boolean;
+};
+
+export type BrandProduct = {
+  link_url: string;
+  link_title: string | null;
+  link_image: string | null;
+  link_price: number | null;
+  link_domain: string | null;
+  recommendation_count: number;
+  last_posted_at: string;
+};
+
+export type BrandPhoto = { post_id: string; url: string; created_at: string };
+
 export const brand = {
   me: () => api.get<{ brand: Brand | null }>("/brand/me"),
   public: (slug: string) => api.get<{ brand: Brand }>(`/brands/${slug}`),
@@ -173,6 +206,23 @@ export const brand = {
     api.post<{ brand: Brand }>("/brand/register", d),
   subscribe: () => api.post<{ approval_url: string | null; subscription_id: string | null; configured: boolean }>("/brand/subscribe"),
   cancel: () => api.post<{ cancelled: boolean }>("/brand/cancel"),
+
+  profile: (id: string) => api.get<{ brand: BrandPublic }>(`/brands/${id}/profile`),
+  posts: (id: string, page = 1) => api.get<{ data: Post[]; last_page: number }>(`/brands/${id}/posts?page=${page}`),
+  products: (id: string) => api.get<{ products: BrandProduct[] }>(`/brands/${id}/products`),
+  photos: (id: string) => api.get<{ photos: BrandPhoto[] }>(`/brands/${id}/photos`),
+  follow: (id: string) => api.post<{ is_followed: boolean; follower_count: number }>(`/brands/${id}/follow`),
+  unfollow: (id: string) => api.del<{ is_followed: boolean; follower_count: number }>(`/brands/${id}/follow`),
+  update: (id: string, d: { brand_name?: string; description?: string; website_url?: string; industry?: string }) =>
+    api.put<{ brand: BrandPublic }>(`/brands/${id}`, d),
+  uploadHeader: async (id: string, uri: string) => {
+    const form = new FormData();
+    const ext = (uri.split(".").pop() || "jpg").toLowerCase();
+    const type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+    // @ts-expect-error RN FormData file
+    form.append("image", { uri, name: `cover.${ext}`, type });
+    return req<{ cover_url: string }>("POST", `/brands/${id}/header-image`, form);
+  },
 };
 
 export type Story = { id: string; community_id: string; media_url: string; media_type: "image" | "video"; duration: number | null; caption: string | null; view_count: number; expires_at: string | null; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };

@@ -39,6 +39,7 @@ export default function Layout() {
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="blocked-users" options={{ headerShown: false }} />
         <Stack.Screen name="brand" options={{ headerShown: false }} />
+        <Stack.Screen name="brand/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="invite" options={{ headerShown: false }} />
         <Stack.Screen name="user/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="security" options={{ headerShown: false }} />

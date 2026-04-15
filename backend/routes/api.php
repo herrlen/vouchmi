@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\DirectMessageController;
+use App\Http\Controllers\Api\BrandProfileController;
 use App\Http\Controllers\Api\LegalController;
 use App\Http\Controllers\Api\LinkPreviewController;
 use App\Http\Controllers\Api\BrandController;
@@ -121,6 +122,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/brand/subscribe', [BrandController::class, 'subscribe']);
     Route::post('/brand/cancel', [BrandController::class, 'cancel']);
     Route::get('/brands/{slug}', [BrandController::class, 'publicProfile']);
+
+    // Brand-Profilseite (öffentlich sichtbar, UUID oder Slug)
+    Route::get('/brands/{id}/profile',      [BrandProfileController::class, 'show']);
+    Route::get('/brands/{id}/posts',        [BrandProfileController::class, 'posts']);
+    Route::get('/brands/{id}/products',     [BrandProfileController::class, 'products']);
+    Route::get('/brands/{id}/photos',       [BrandProfileController::class, 'photos']);
+    Route::post('/brands/{id}/follow',      [BrandProfileController::class, 'follow']);
+    Route::delete('/brands/{id}/follow',    [BrandProfileController::class, 'unfollow']);
+    Route::put('/brands/{id}',              [BrandProfileController::class, 'update']);
+    Route::post('/brands/{id}/header-image', [BrandProfileController::class, 'uploadHeader']);
 
     // Moderation (Apple-Pflicht: Melden, Blockieren, Account-Löschung)
     Route::post('/reports', [ModerationController::class, 'report']);
