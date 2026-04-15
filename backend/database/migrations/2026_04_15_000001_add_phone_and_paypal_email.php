@@ -8,22 +8,25 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('phone', 32)->nullable()->after('bio');
-        });
+        if (!Schema::hasColumn('users', 'phone')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('phone', 32)->nullable()->after('bio');
+            });
+        }
 
-        Schema::table('brand_profiles', function (Blueprint $table) {
-            $table->string('paypal_email')->nullable()->after('company_email');
-        });
+        if (!Schema::hasColumn('brand_profiles', 'paypal_email')) {
+            Schema::table('brand_profiles', function (Blueprint $table) {
+                $table->string('paypal_email')->nullable()->after('company_email');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('phone');
-        });
-        Schema::table('brand_profiles', function (Blueprint $table) {
-            $table->dropColumn('paypal_email');
-        });
+        if (Schema::hasColumn('brand_profiles', 'paypal_email')) {
+            Schema::table('brand_profiles', function (Blueprint $table) {
+                $table->dropColumn('paypal_email');
+            });
+        }
     }
 };
