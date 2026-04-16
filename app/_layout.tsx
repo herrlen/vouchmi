@@ -46,6 +46,7 @@ export default function Layout() {
         <Stack.Screen name="user/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="security" options={{ headerShown: false }} />
         <Stack.Screen name="find-friends" options={{ headerShown: false }} />
+        <Stack.Screen name="layout-settings" options={{ headerShown: false }} />
       </Stack>
     </>
   );

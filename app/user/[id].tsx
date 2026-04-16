@@ -4,8 +4,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { ChevronLeft, Link as LinkIcon } from "lucide-react-native";
 import { colors } from "../../src/constants/theme";
-import { users as usersApi, feed as feedApi, type Post, type User } from "../../src/lib/api";
+import { users as usersApi, feed as feedApi, type Post, type User, type ProfileLayout } from "../../src/lib/api";
 import { useAuth } from "../../src/lib/store";
+import MasonryGallery from "../../src/components/gallery/MasonryGallery";
+import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
+import StoryGallery from "../../src/components/gallery/StoryGallery";
 
 const { width } = Dimensions.get("window");
 const TILE = (width - 4) / 3;
@@ -18,11 +21,12 @@ export default function UserProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileLayout, setProfileLayout] = useState<ProfileLayout>("masonry");
 
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      usersApi.profile(id).then((r) => { setProfileData(r.profile); setStats(r.stats); setIsFollowing(r.is_following); }),
+      usersApi.profile(id).then((r) => { setProfileData(r.profile); setStats(r.stats); setIsFollowing(r.is_following); setProfileLayout(r.profile.profile_layout ?? "masonry"); }),
       feedApi.all().then((r) => setPosts(r.data.filter((p) => p.author.id === id))),
     ]).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
@@ -63,11 +67,10 @@ export default function UserProfileScreen() {
       </View>
 
       <FlatList
-        data={posts.filter((p) => p.link_image)}
+        data={profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story" ? [] : posts.filter((p) => p.link_image)}
         keyExtractor={(p) => p.id}
-        numColumns={3}
-        columnWrapperStyle={posts.length > 0 ? { gap: 2 } : undefined}
-        contentContainerStyle={{ paddingBottom: 40, gap: 2 }}
+        numColumns={profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story" ? 1 : 3}
+        contentContainerStyle={{ paddingBottom: 40 }}
         ListHeaderComponent={
           <View style={s.profileSection}>
             <View style={s.topRow}>
@@ -98,7 +101,20 @@ export default function UserProfileScreen() {
             <View style={s.divider} />
           </View>
         }
-        ListEmptyComponent={<Text style={s.emptyText}>Noch keine Posts.</Text>}
+        ListFooterComponent={
+          profileLayout === "masonry" ? (
+            <MasonryGallery posts={posts} />
+          ) : profileLayout === "featured" ? (
+            <FeaturedGallery posts={posts} />
+          ) : profileLayout === "story" ? (
+            <StoryGallery posts={posts} />
+          ) : null
+        }
+        ListEmptyComponent={
+          profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story"
+            ? null
+            : <Text style={s.emptyText}>Noch keine Posts.</Text>
+        }
         renderItem={({ item }) => (
           <Pressable style={s.tile}><Image source={{ uri: item.link_image! }} style={s.tileImg} /></Pressable>
         )}

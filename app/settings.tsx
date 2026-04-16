@@ -47,6 +47,7 @@ export default function SettingsScreen() {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Account</Text>
           <Button label="Profil bearbeiten" onPress={() => router.push("/profile-edit")} />
+          <Button label="Galerie-Layout" onPress={() => router.push("/layout-settings")} />
           <Row label="Username" value={user?.username ?? "-"} />
           <Row label="E-Mail" value={user?.email ?? "-"} />
         </View>

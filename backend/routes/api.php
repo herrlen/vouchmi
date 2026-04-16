@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/profile', [UserController::class, 'profile']);
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
     Route::post('/user/avatar', [UserController::class, 'uploadAvatar']);
+    Route::put('/user/profile/layout', [UserController::class, 'updateLayout']);
     Route::get('/users/{userId}/profile', [UserController::class, 'publicProfile']);
     Route::post('/users/{userId}/follow', [UserController::class, 'follow']);
     Route::delete('/users/{userId}/follow', [UserController::class, 'unfollow']);

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share, Linking } from "react-native";
+import { View, Text, StyleSheet, FlatList, ScrollView, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Menu, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
@@ -7,7 +7,10 @@ import { colors } from "../../src/constants/theme";
 import { useAuth } from "../../src/lib/store";
 import { useProfileMode } from "../../src/lib/profile-mode";
 import { useScrollStore } from "../../src/lib/scroll-store";
-import { profile as profileApi, feed as feedApi, type Post } from "../../src/lib/api";
+import { profile as profileApi, feed as feedApi, type Post, type ProfileLayout } from "../../src/lib/api";
+import MasonryGallery from "../../src/components/gallery/MasonryGallery";
+import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
+import StoryGallery from "../../src/components/gallery/StoryGallery";
 
 const { width } = Dimensions.get("window");
 const NUM_COLS = 3;
@@ -29,6 +32,7 @@ export default function ProfileTab() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [subTab, setSubTab] = useState<SubTab>("reco");
+  const [profileLayout, setProfileLayout] = useState<ProfileLayout>("masonry");
 
   const load = useCallback(async () => {
     const [pRes, postsRes, repostsRes, bookmarksRes] = await Promise.allSettled([
@@ -40,6 +44,7 @@ export default function ProfileTab() {
     if (pRes.status === "fulfilled") {
       setProfileData(pRes.value.profile);
       setStats(pRes.value.stats);
+      setProfileLayout(pRes.value.profile.profile_layout ?? "masonry");
     }
     if (postsRes.status === "fulfilled") setMyPosts(postsRes.value.data);
     if (repostsRes.status === "fulfilled") setMyReposts(repostsRes.value.data);
@@ -56,106 +61,126 @@ export default function ProfileTab() {
 
   const currentData = subTab === "reco" ? myPosts : subTab === "shared" ? myReposts : myBookmarks;
 
+  const profileHeader = (
+    <View>
+      {/* Compact Header: Avatar + Stats + Menu */}
+      <View style={s.topBar}>
+        <Pressable onPress={() => router.push("/profile-edit")}>
+          {profileData?.avatar_url ? (
+            <Image source={{ uri: profileData.avatar_url }} style={s.avatar} />
+          ) : (
+            <View style={[s.avatar, s.avatarFallback]}>
+              <Text style={s.avatarInitial}>{initial}</Text>
+            </View>
+          )}
+        </Pressable>
+
+        <View style={s.statsRow}>
+          <Stat label="Posts" value={stats.posts_count} />
+          <Stat label="Follower" value={stats.followers_count} />
+          <Stat label="Folge ich" value={stats.following_count} />
+        </View>
+
+        <Pressable style={s.menuBtn} onPress={() => router.push("/settings")} hitSlop={10}>
+          <Menu color={colors.white} size={22} strokeWidth={1.8} />
+        </Pressable>
+      </View>
+
+      {/* Profil-Modus-Switcher (nur wenn Brand-Abo aktiv) */}
+      {brandStatus?.is_active && (
+        <View style={s.modeSwitcher}>
+          <Pressable
+            style={[s.modePill, profileMode === "personal" && s.modePillOn]}
+            onPress={() => setProfileMode("personal")}
+          >
+            <UserIcon color={profileMode === "personal" ? colors.white : colors.gray} size={14} strokeWidth={2} />
+            <Text style={[s.modePillText, profileMode === "personal" && s.modePillTextOn]}>Persönlich</Text>
+          </Pressable>
+          <Pressable
+            style={[s.modePill, profileMode === "brand" && s.modePillOn]}
+            onPress={() => setProfileMode("brand")}
+          >
+            <Store color={profileMode === "brand" ? colors.white : colors.gray} size={14} strokeWidth={2} />
+            <Text style={[s.modePillText, profileMode === "brand" && s.modePillTextOn]}>Brand</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Name + Bio */}
+      <View style={s.info}>
+        <Text style={s.name}>{profileMode === "brand" && brandStatus?.brand?.brand_name ? brandStatus.brand.brand_name : displayName}</Text>
+        <Text style={s.handle}>@{me?.username}</Text>
+        {!!profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
+        {!!profileData?.link && (
+          <Pressable style={s.linkRow} onPress={() => profileData.link && Linking.openURL(profileData.link)}>
+            <LinkIcon2 color={colors.accent} size={12} />
+            <Text style={s.link} numberOfLines={1}>{profileData.link}</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {/* CTA Buttons */}
+      <View style={s.ctaRow}>
+        <Pressable style={s.ctaBtn} onPress={() => router.push("/profile-edit")}>
+          <Text style={s.ctaText}>Profil bearbeiten</Text>
+        </Pressable>
+        <Pressable style={s.ctaBtn} onPress={async () => {
+          try { await Share.share({ message: `Schau dir mein Profil auf Vouchmi an:\nhttps://vouchmi.com/@${me?.username}` }); } catch {}
+        }}>
+          <Text style={s.ctaText}>Teilen</Text>
+        </Pressable>
+      </View>
+
+      {/* Sub Tabs: Reco | Geteilt | Gespeichert */}
+      <View style={s.subTabs}>
+        <Pressable style={[s.subTab, subTab === "reco" && s.subTabOn]} onPress={() => setSubTab("reco")}>
+          <Compass color={subTab === "reco" ? colors.white : colors.gray} size={18} strokeWidth={1.8} />
+          <Text style={[s.subTabText, subTab === "reco" && s.subTabTextOn]}>Reco</Text>
+        </Pressable>
+        <Pressable style={[s.subTab, subTab === "shared" && s.subTabOn]} onPress={() => setSubTab("shared")}>
+          <Repeat2 color={subTab === "shared" ? colors.white : colors.gray} size={18} strokeWidth={1.8} />
+          <Text style={[s.subTabText, subTab === "shared" && s.subTabTextOn]}>Geteilt</Text>
+        </Pressable>
+        <Pressable style={[s.subTab, subTab === "saved" && s.subTabOn]} onPress={() => setSubTab("saved")}>
+          <BookmarkIcon color={subTab === "saved" ? colors.white : colors.gray} size={18} strokeWidth={1.8} />
+          <Text style={[s.subTabText, subTab === "saved" && s.subTabTextOn]}>Gespeichert</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  // Determine if reco tab should use a gallery layout instead of the default grid
+  const useCustomGallery = subTab === "reco" && (profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story");
+
+  const galleryContent = useCustomGallery ? (
+    profileLayout === "masonry" ? <MasonryGallery posts={myPosts} /> :
+    profileLayout === "featured" ? <FeaturedGallery posts={myPosts} /> :
+    <StoryGallery posts={myPosts} />
+  ) : null;
+
   return (
     <SafeAreaView style={s.container} edges={["top"]}>
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 60 }} />
+      ) : useCustomGallery ? (
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 120 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+        >
+          {profileHeader}
+          {galleryContent}
+        </ScrollView>
       ) : (
         <FlatList
           data={currentData}
           keyExtractor={(p) => p.id}
           numColumns={NUM_COLS}
+          key={`grid-${NUM_COLS}`}
           columnWrapperStyle={currentData.length > 0 ? { gap: GAP } : undefined}
           ItemSeparatorComponent={() => <View style={{ height: GAP }} />}
           contentContainerStyle={{ paddingBottom: 120 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
-          ListHeaderComponent={
-            <View>
-              {/* Compact Header: Avatar + Stats + Menu */}
-              <View style={s.topBar}>
-                <Pressable onPress={() => router.push("/profile-edit")}>
-                  {profileData?.avatar_url ? (
-                    <Image source={{ uri: profileData.avatar_url }} style={s.avatar} />
-                  ) : (
-                    <View style={[s.avatar, s.avatarFallback]}>
-                      <Text style={s.avatarInitial}>{initial}</Text>
-                    </View>
-                  )}
-                </Pressable>
-
-                <View style={s.statsRow}>
-                  <Stat label="Posts" value={stats.posts_count} />
-                  <Stat label="Follower" value={stats.followers_count} />
-                  <Stat label="Folge ich" value={stats.following_count} />
-                </View>
-
-                <Pressable style={s.menuBtn} onPress={() => router.push("/settings")} hitSlop={10}>
-                  <Menu color={colors.white} size={22} strokeWidth={1.8} />
-                </Pressable>
-              </View>
-
-              {/* Profil-Modus-Switcher (nur wenn Brand-Abo aktiv) */}
-              {brandStatus?.is_active && (
-                <View style={s.modeSwitcher}>
-                  <Pressable
-                    style={[s.modePill, profileMode === "personal" && s.modePillOn]}
-                    onPress={() => setProfileMode("personal")}
-                  >
-                    <UserIcon color={profileMode === "personal" ? colors.white : colors.gray} size={14} strokeWidth={2} />
-                    <Text style={[s.modePillText, profileMode === "personal" && s.modePillTextOn]}>Persönlich</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[s.modePill, profileMode === "brand" && s.modePillOn]}
-                    onPress={() => setProfileMode("brand")}
-                  >
-                    <Store color={profileMode === "brand" ? colors.white : colors.gray} size={14} strokeWidth={2} />
-                    <Text style={[s.modePillText, profileMode === "brand" && s.modePillTextOn]}>Brand</Text>
-                  </Pressable>
-                </View>
-              )}
-
-              {/* Name + Bio */}
-              <View style={s.info}>
-                <Text style={s.name}>{profileMode === "brand" && brandStatus?.brand?.brand_name ? brandStatus.brand.brand_name : displayName}</Text>
-                <Text style={s.handle}>@{me?.username}</Text>
-                {!!profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
-                {!!profileData?.link && (
-                  <Pressable style={s.linkRow} onPress={() => profileData.link && Linking.openURL(profileData.link)}>
-                    <LinkIcon2 color={colors.accent} size={12} />
-                    <Text style={s.link} numberOfLines={1}>{profileData.link}</Text>
-                  </Pressable>
-                )}
-              </View>
-
-              {/* CTA Buttons */}
-              <View style={s.ctaRow}>
-                <Pressable style={s.ctaBtn} onPress={() => router.push("/profile-edit")}>
-                  <Text style={s.ctaText}>Profil bearbeiten</Text>
-                </Pressable>
-                <Pressable style={s.ctaBtn} onPress={async () => {
-                  try { await Share.share({ message: `Schau dir mein Profil auf Vouchmi an:\nhttps://vouchmi.com/@${me?.username}` }); } catch {}
-                }}>
-                  <Text style={s.ctaText}>Teilen</Text>
-                </Pressable>
-              </View>
-
-              {/* Sub Tabs: Reco | Geteilt | Gespeichert */}
-              <View style={s.subTabs}>
-                <Pressable style={[s.subTab, subTab === "reco" && s.subTabOn]} onPress={() => setSubTab("reco")}>
-                  <Compass color={subTab === "reco" ? colors.white : colors.gray} size={18} strokeWidth={1.8} />
-                  <Text style={[s.subTabText, subTab === "reco" && s.subTabTextOn]}>Reco</Text>
-                </Pressable>
-                <Pressable style={[s.subTab, subTab === "shared" && s.subTabOn]} onPress={() => setSubTab("shared")}>
-                  <Repeat2 color={subTab === "shared" ? colors.white : colors.gray} size={18} strokeWidth={1.8} />
-                  <Text style={[s.subTabText, subTab === "shared" && s.subTabTextOn]}>Geteilt</Text>
-                </Pressable>
-                <Pressable style={[s.subTab, subTab === "saved" && s.subTabOn]} onPress={() => setSubTab("saved")}>
-                  <BookmarkIcon color={subTab === "saved" ? colors.white : colors.gray} size={18} strokeWidth={1.8} />
-                  <Text style={[s.subTabText, subTab === "saved" && s.subTabTextOn]}>Gespeichert</Text>
-                </Pressable>
-              </View>
-            </View>
-          }
+          ListHeaderComponent={profileHeader}
           ListEmptyComponent={
             <View style={s.empty}>
               <Text style={s.emptyText}>

@@ -2,10 +2,12 @@
 // app/Http/Controllers/Api/UserController.php
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ProfileLayout;
 use App\Http\Controllers\Controller;
 use App\Services\MatomoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Enum;
 
 class UserController extends Controller
 {
@@ -20,7 +22,7 @@ class UserController extends Controller
         $followingCount = \DB::table('follows')->where('follower_id', $user->id)->count();
 
         return response()->json([
-            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role'),
+            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role', 'profile_layout'),
             'stats' => [
                 'communities_count' => $user->communities()->count(),
                 'posts_count' => $postCount,
@@ -55,6 +57,23 @@ class UserController extends Controller
         $user->update(['avatar_url' => $url]);
 
         return response()->json(['avatar_url' => $url]);
+    }
+
+    public function updateLayout(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'layout' => ['required', new Enum(ProfileLayout::class)],
+        ]);
+
+        $request->user()->update([
+            'profile_layout' => $data['layout'],
+            'profile_layout_updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'layout' => $data['layout'],
+            'updated_at' => now()->toIso8601String(),
+        ]);
     }
 
     public function trackEvent(Request $request): JsonResponse
@@ -119,7 +138,7 @@ class UserController extends Controller
         $isFollowing = \DB::table('follows')->where('follower_id', $request->user()->id)->where('following_id', $userId)->exists();
 
         return response()->json([
-            'profile' => $user->only('id', 'username', 'display_name', 'avatar_url', 'bio', 'link'),
+            'profile' => $user->only('id', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'profile_layout'),
             'stats' => [
                 'posts_count' => $postCount,
                 'followers_count' => $followerCount,

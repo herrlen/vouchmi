@@ -31,19 +31,24 @@ export const api = {
   get: <T>(p: string) => req<T>("GET", p),
   post: <T>(p: string, b?: any) => req<T>("POST", p, b),
   put: <T>(p: string, b?: any) => req<T>("PUT", p, b),
+  patch: <T>(p: string, b?: any) => req<T>("PATCH", p, b),
   del: <T>(p: string) => req<T>("DELETE", p),
 };
 
 export const users = {
-  profile: (userId: string) => api.get<{ profile: User & { bio: string | null; link: string | null }; stats: { posts_count: number; followers_count: number; following_count: number }; is_following: boolean }>(`/users/${userId}/profile`),
+  profile: (userId: string) => api.get<{ profile: User & { bio: string | null; link: string | null; profile_layout: ProfileLayout }; stats: { posts_count: number; followers_count: number; following_count: number }; is_following: boolean }>(`/users/${userId}/profile`),
   follow: (userId: string) => api.post<{ following: boolean; followers_count: number }>(`/users/${userId}/follow`),
   unfollow: (userId: string) => api.del<{ following: boolean; followers_count: number }>(`/users/${userId}/follow`),
 };
 
+export type ProfileLayout = "masonry" | "featured" | "story";
+
 export const profile = {
-  get: () => api.get<{ profile: User & { bio: string | null; link: string | null }; stats: { communities_count: number; posts_count: number; followers_count: number; following_count: number } }>("/user/profile"),
+  get: () => api.get<{ profile: User & { bio: string | null; link: string | null; profile_layout: ProfileLayout }; stats: { communities_count: number; posts_count: number; followers_count: number; following_count: number } }>("/user/profile"),
   update: (d: { display_name?: string; bio?: string; link?: string }) =>
     api.put<{ profile: User }>("/user/profile", d),
+  updateLayout: (layout: ProfileLayout) =>
+    api.put<{ layout: ProfileLayout; updated_at: string }>("/user/profile/layout", { layout }),
   uploadAvatar: async (uri: string) => {
     const form = new FormData();
     const filename = uri.split("/").pop() || "avatar.jpg";
