@@ -1,6 +1,5 @@
-import { View, Text, Pressable, StyleSheet, Linking, Image, Alert, ToastAndroid, Platform } from "react-native";
-import { ExternalLink, Copy, Lock } from "lucide-react-native";
-import * as Clipboard from "expo-clipboard";
+import { View, Text, Pressable, StyleSheet, Linking, Image } from "react-native";
+import { ExternalLink, Lock } from "lucide-react-native";
 import { colors } from "../constants/theme";
 import { links as linksApi, type Post } from "../lib/api";
 
@@ -10,8 +9,6 @@ type Props = {
 
 export default function LinkCard({ post }: Props) {
   const shortUrl = post.link_affiliate_url ?? post.link_url;
-  const shortLabel = shortUrl?.replace(/^https?:\/\//, "") ?? "";
-
   const openShop = async () => {
     if (!shortUrl) return;
     linksApi.trackClick({
@@ -21,16 +18,6 @@ export default function LinkCard({ post }: Props) {
       affiliate_url: shortUrl,
     }).catch(() => {});
     try { await Linking.openURL(shortUrl); } catch {}
-  };
-
-  const copyShort = async () => {
-    if (!shortUrl) return;
-    await Clipboard.setStringAsync(shortUrl);
-    if (Platform.OS === "android") {
-      ToastAndroid.show("Link kopiert", ToastAndroid.SHORT);
-    } else {
-      Alert.alert("Kopiert", "Kurzlink wurde in die Zwischenablage kopiert.");
-    }
   };
 
   return (
@@ -54,19 +41,6 @@ export default function LinkCard({ post }: Props) {
             <Text style={s.price}>{post.link_price.toFixed(2)} €</Text>
           )}
         </Pressable>
-      )}
-
-      {shortUrl && (
-        <View style={s.shortRow}>
-          <Pressable style={s.shortLinkArea} onPress={openShop} accessibilityRole="link" accessibilityLabel={`Empfehlungs-Link ${shortLabel}`}>
-            <ExternalLink color={colors.accent} size={13} strokeWidth={2} />
-            <Text style={s.shortLink} numberOfLines={1}>{shortLabel}</Text>
-          </Pressable>
-          <Pressable style={s.copyBtn} onPress={copyShort} hitSlop={10} accessibilityRole="button" accessibilityLabel="Kurzlink kopieren">
-            <Copy color={colors.indigo} size={14} strokeWidth={2.2} />
-            <Text style={s.copyBtnText}>Kopieren</Text>
-          </Pressable>
-        </View>
       )}
 
       {shortUrl && (
@@ -109,32 +83,4 @@ const s = StyleSheet.create({
   },
   shopBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 
-  shortRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginHorizontal: 12,
-    marginTop: 8,
-  },
-  shortLinkArea: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: colors.bgCard,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    minHeight: 44,
-  },
-  shortLink: { color: colors.accent, fontSize: 13, fontWeight: "700", flexShrink: 1 },
-  copyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    minHeight: 44,
-    borderRadius: 10,
-    backgroundColor: "rgba(79,70,229,0.18)",
-  },
-  copyBtnText: { color: colors.indigo, fontSize: 13, fontWeight: "700" },
 });
