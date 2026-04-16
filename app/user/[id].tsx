@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, Text, StyleSheet, Image, Pressable, FlatList, Dimensions, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, FlatList, Dimensions, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { ChevronLeft, Link as LinkIcon } from "lucide-react-native";
@@ -66,12 +66,8 @@ export default function UserProfileScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      <FlatList
-        data={profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story" ? [] : posts.filter((p) => p.link_image)}
-        keyExtractor={(p) => p.id}
-        numColumns={profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story" ? 1 : 3}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        ListHeaderComponent={
+      {profileLayout === "story" ? (
+        <StoryGallery posts={posts} header={
           <View style={s.profileSection}>
             <View style={s.topRow}>
               {profileData?.avatar_url ? (
@@ -85,40 +81,88 @@ export default function UserProfileScreen() {
                 <Stat label="Folge ich" value={stats.following_count} />
               </View>
             </View>
-
             <Text style={s.name}>{displayName}</Text>
             {profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
             {profileData?.link && (
               <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
             )}
-
             {!isMe && (
               <Pressable style={[s.followBtn, isFollowing && s.followBtnActive]} onPress={toggleFollow}>
                 <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
               </Pressable>
             )}
-
             <View style={s.divider} />
           </View>
-        }
-        ListFooterComponent={
-          profileLayout === "masonry" ? (
-            <MasonryGallery posts={posts} />
-          ) : profileLayout === "featured" ? (
-            <FeaturedGallery posts={posts} />
-          ) : profileLayout === "story" ? (
-            <StoryGallery posts={posts} />
-          ) : null
-        }
-        ListEmptyComponent={
-          profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story"
-            ? null
-            : <Text style={s.emptyText}>Noch keine Posts.</Text>
-        }
-        renderItem={({ item }) => (
-          <Pressable style={s.tile}><Image source={{ uri: item.link_image! }} style={s.tileImg} /></Pressable>
-        )}
-      />
+        } />
+      ) : profileLayout === "masonry" || profileLayout === "featured" ? (
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+          <View style={s.profileSection}>
+            <View style={s.topRow}>
+              {profileData?.avatar_url ? (
+                <Image source={{ uri: profileData.avatar_url }} style={s.avatar} />
+              ) : (
+                <View style={[s.avatar, s.avatarFallback]}><Text style={s.avatarInitial}>{initial}</Text></View>
+              )}
+              <View style={s.statsRow}>
+                <Stat label="Posts" value={stats.posts_count} />
+                <Stat label="Follower" value={stats.followers_count} />
+                <Stat label="Folge ich" value={stats.following_count} />
+              </View>
+            </View>
+            <Text style={s.name}>{displayName}</Text>
+            {profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
+            {profileData?.link && (
+              <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
+            )}
+            {!isMe && (
+              <Pressable style={[s.followBtn, isFollowing && s.followBtnActive]} onPress={toggleFollow}>
+                <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
+              </Pressable>
+            )}
+            <View style={s.divider} />
+          </View>
+          {profileLayout === "masonry" ? <MasonryGallery posts={posts} /> : <FeaturedGallery posts={posts} />}
+        </ScrollView>
+      ) : (
+        <FlatList
+          data={posts.filter((p) => p.link_image)}
+          keyExtractor={(p) => p.id}
+          numColumns={3}
+          columnWrapperStyle={posts.length > 0 ? { gap: 2 } : undefined}
+          contentContainerStyle={{ paddingBottom: 40, gap: 2 }}
+          ListHeaderComponent={
+            <View style={s.profileSection}>
+              <View style={s.topRow}>
+                {profileData?.avatar_url ? (
+                  <Image source={{ uri: profileData.avatar_url }} style={s.avatar} />
+                ) : (
+                  <View style={[s.avatar, s.avatarFallback]}><Text style={s.avatarInitial}>{initial}</Text></View>
+                )}
+                <View style={s.statsRow}>
+                  <Stat label="Posts" value={stats.posts_count} />
+                  <Stat label="Follower" value={stats.followers_count} />
+                  <Stat label="Folge ich" value={stats.following_count} />
+                </View>
+              </View>
+              <Text style={s.name}>{displayName}</Text>
+              {profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
+              {profileData?.link && (
+                <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
+              )}
+              {!isMe && (
+                <Pressable style={[s.followBtn, isFollowing && s.followBtnActive]} onPress={toggleFollow}>
+                  <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
+                </Pressable>
+              )}
+              <View style={s.divider} />
+            </View>
+          }
+          ListEmptyComponent={<Text style={s.emptyText}>Noch keine Posts.</Text>}
+          renderItem={({ item }) => (
+            <Pressable style={s.tile}><Image source={{ uri: item.link_image! }} style={s.tileImg} /></Pressable>
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 }

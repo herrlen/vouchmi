@@ -149,26 +149,23 @@ export default function ProfileTab() {
     </View>
   );
 
-  // Determine if reco tab should use a gallery layout instead of the default grid
-  const useCustomGallery = subTab === "reco" && (profileLayout === "masonry" || profileLayout === "featured" || profileLayout === "story");
-
-  const galleryContent = useCustomGallery ? (
-    profileLayout === "masonry" ? <MasonryGallery posts={myPosts} /> :
-    profileLayout === "featured" ? <FeaturedGallery posts={myPosts} /> :
-    <StoryGallery posts={myPosts} />
-  ) : null;
+  // Determine if reco tab should use a scroll-based gallery (masonry/featured)
+  const useScrollGallery = subTab === "reco" && (profileLayout === "masonry" || profileLayout === "featured");
+  const useStoryFeed = subTab === "reco" && profileLayout === "story";
 
   return (
     <SafeAreaView style={s.container} edges={["top"]}>
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 60 }} />
-      ) : useCustomGallery ? (
+      ) : useStoryFeed ? (
+        <StoryGallery posts={myPosts} refreshing={refreshing} onRefresh={onRefresh} header={profileHeader} />
+      ) : useScrollGallery ? (
         <ScrollView
           contentContainerStyle={{ paddingBottom: 120 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         >
           {profileHeader}
-          {galleryContent}
+          {profileLayout === "masonry" ? <MasonryGallery posts={myPosts} /> : <FeaturedGallery posts={myPosts} />}
         </ScrollView>
       ) : (
         <FlatList
