@@ -126,7 +126,7 @@ export default function SearchTab() {
               <View style={s.topRecoRow}>
                 {topReco.length === 0 ? (
                   <Text style={s.emptyText}>Keine Treffer</Text>
-                ) : topReco.map((p) => (
+                ) : topReco.slice(0, 3).map((p) => (
                   <Pressable key={p.id} style={s.topRecoCard} onPress={() => openReco(p)}>
                     {p.link_image ? (
                       <Image source={{ uri: p.link_image }} style={s.topRecoImg} />
