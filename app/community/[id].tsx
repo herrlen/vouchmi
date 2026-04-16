@@ -9,7 +9,7 @@ import BottomBar from "../../src/components/BottomBar";
 import PostActions from "../../src/components/PostActions";
 import LinkCard from "../../src/components/LinkCard";
 import { colors } from "../../src/constants/theme";
-import { communities as communitiesApi, feed as feedApi, type Post } from "../../src/lib/api";
+import { communities as communitiesApi, feed as feedApi, users as usersApi, type Post } from "../../src/lib/api";
 
 type Tab = "feed" | "chat" | "drops" | "messages";
 
@@ -218,6 +218,29 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
   canModerate: boolean;
   communityId: string;
 }) {
+  const me = useAuth((s) => s.user);
+  const isOwnPost = me?.id === post.author.id;
+  const [following, setFollowing] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  // Check follow status once
+  if (!checked && !isOwnPost) {
+    setChecked(true);
+    usersApi.profile(post.author.id).then((r) => setFollowing(r.is_following)).catch(() => {});
+  }
+
+  const toggleFollow = async () => {
+    try {
+      if (following) {
+        await usersApi.unfollow(post.author.id);
+        setFollowing(false);
+      } else {
+        await usersApi.follow(post.author.id);
+        setFollowing(true);
+      }
+    } catch (e: any) { Alert.alert("Fehler", e.message); }
+  };
+
   const openModMenu = () => {
     const opts = ["Beitrag ausblenden", "Beitrag löschen", "Abbrechen"];
     const handle = async (idx: number) => {
@@ -252,6 +275,17 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
           <Text style={s.postAuthor}>{post.author.display_name ?? post.author.username}</Text>
           <Text style={s.postTime}>@{post.author.username} · {timeAgo(post.created_at)}</Text>
         </Pressable>
+        {!isOwnPost && checked && (
+          <Pressable
+            style={[s.authorFollowBtn, following && s.authorFollowBtnActive]}
+            onPress={toggleFollow}
+            hitSlop={6}
+          >
+            <Text style={[s.authorFollowText, following && s.authorFollowTextActive]}>
+              {following ? "Folgst du" : "Folgen"}
+            </Text>
+          </Pressable>
+        )}
         {canModerate && (
           <Pressable onPress={openModMenu} hitSlop={10} style={s.modBtn}>
             <Text style={s.modDots}>⋯</Text>
@@ -297,6 +331,10 @@ const s = StyleSheet.create({
   postAuthor: { color: colors.white, fontSize: 14, fontWeight: "600" },
   postTime: { color: colors.gray, fontSize: 11, marginTop: 1 },
   postContent: { color: colors.white, fontSize: 14, lineHeight: 19, marginBottom: 4 },
+  authorFollowBtn: { backgroundColor: colors.accent, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, minHeight: 28, justifyContent: "center" },
+  authorFollowBtnActive: { backgroundColor: colors.bgInput },
+  authorFollowText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  authorFollowTextActive: { color: colors.gray },
   modBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "flex-end" },
   modDots: { color: colors.gray, fontSize: 20, lineHeight: 20 },
   muteBanner: { backgroundColor: "#EF444420", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.border },

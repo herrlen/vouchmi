@@ -43,8 +43,7 @@ export default function SearchTab() {
   const onRefresh = () => { setRefreshing(true); load(); };
 
   const openReco = (post: Post) => {
-    useScrollStore.getState().setScrollToPostId(post.id);
-    router.replace("/reco");
+    router.push(`/community/${post.community_id}`);
   };
 
   const toggleFollowComm = async (c: Community) => {
@@ -134,6 +133,7 @@ export default function SearchTab() {
                       <View style={[s.topRecoImg, { backgroundColor: colors.bgCard }]} />
                     )}
                     <Text style={s.topRecoTitle} numberOfLines={2}>{p.link_title ?? p.content}</Text>
+                    {p.community?.name && <Text style={s.topRecoCommunity} numberOfLines={1}>{p.community.name}</Text>}
                     <View style={s.topRecoMeta}>
                       {recoFilter === "likes" && <><Heart size={10} color={colors.gray} /><Text style={s.topRecoMetaText}>{p.like_count}</Text></>}
                       {recoFilter === "comments" && <><MessageCircle size={10} color={colors.gray} /><Text style={s.topRecoMetaText}>{p.comment_count}</Text></>}
@@ -266,6 +266,7 @@ const s = StyleSheet.create({
   topRecoCard: { flex: 1, backgroundColor: colors.bgCard, borderRadius: 12, overflow: "hidden" },
   topRecoImg: { width: "100%", aspectRatio: 1 },
   topRecoTitle: { color: colors.white, fontSize: 11, fontWeight: "600", paddingHorizontal: 8, paddingTop: 6, lineHeight: 14 },
+  topRecoCommunity: { color: colors.accent, fontSize: 10, fontWeight: "600", paddingHorizontal: 8, marginTop: 2 },
   topRecoMeta: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 6 },
   topRecoMetaText: { color: colors.gray, fontSize: 11 },
 
