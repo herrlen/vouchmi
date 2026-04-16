@@ -90,6 +90,11 @@ export default function SettingsScreen() {
         </View>
 
         <View style={s.section}>
+          <Text style={s.sectionTitle}>Hilfe</Text>
+          <Button label="Hilfe & FAQ" onPress={() => router.push("/help")} />
+        </View>
+
+        <View style={s.section}>
           <Button label="Abmelden" onPress={async () => { await logout(); router.replace("/auth"); }} />
           <Pressable style={s.deleteBtn} onPress={handleDelete}>
             <Text style={s.deleteText}>Account löschen</Text>

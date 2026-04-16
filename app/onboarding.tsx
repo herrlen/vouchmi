@@ -209,20 +209,24 @@ function RoleScreen({ onBack, onPick }: { onBack: () => void; onPick: (r: Role) 
 
         <View style={{ marginTop: 28, gap: 12 }}>
           {roles.map((r) => (
-            <Pressable
-              key={r.id}
-              style={[s.roleCard, { borderColor: r.color + "40" }]}
-              onPress={() => onPick(r.id)}
-            >
-              <View style={[s.roleIcon, { backgroundColor: r.color + "22" }]}>
-                {r.icon(r.color)}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.roleLabel}>{r.label}</Text>
-                <Text style={s.roleDesc}>{r.desc}</Text>
-              </View>
-              <Text style={s.roleChev}>›</Text>
-            </Pressable>
+            <View key={r.id}>
+              <Pressable
+                style={[s.roleCard, { borderColor: r.color + "40" }]}
+                onPress={() => onPick(r.id)}
+              >
+                <View style={[s.roleIcon, { backgroundColor: r.color + "22" }]}>
+                  {r.icon(r.color)}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.roleLabel}>{r.label}</Text>
+                  <Text style={s.roleDesc}>{r.desc}</Text>
+                </View>
+                <Text style={s.roleChev}>›</Text>
+              </Pressable>
+              <Pressable style={s.roleHelpLink} onPress={() => router.push(`/help?filter=${r.id}`)} hitSlop={6}>
+                <Text style={[s.roleHelpText, { color: r.color }]}>Was kann ich als {r.label}?</Text>
+              </Pressable>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -503,6 +507,8 @@ const s = StyleSheet.create({
   roleLabel: { color: colors.white, fontSize: 16, fontWeight: "700" },
   roleDesc: { color: colors.gray, fontSize: 12, marginTop: 2 },
   roleChev: { color: colors.grayDark, fontSize: 22 },
+  roleHelpLink: { alignSelf: "flex-end", paddingVertical: 4, paddingHorizontal: 4 },
+  roleHelpText: { fontSize: 12, fontWeight: "600" },
 
   formScroll: { padding: 24, paddingBottom: 40 },
   roleBadge: { flexDirection: "row", alignSelf: "center", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1, marginBottom: 18 },
