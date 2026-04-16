@@ -22,7 +22,7 @@ class UserController extends Controller
         $followingCount = \DB::table('follows')->where('follower_id', $user->id)->count();
 
         return response()->json([
-            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role', 'profile_layout'),
+            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role', 'profile_layout', 'tier', 'tier_badge_opacity'),
             'stats' => [
                 'communities_count' => $user->communities()->count(),
                 'posts_count' => $postCount,
@@ -138,7 +138,7 @@ class UserController extends Controller
         $isFollowing = \DB::table('follows')->where('follower_id', $request->user()->id)->where('following_id', $userId)->exists();
 
         return response()->json([
-            'profile' => $user->only('id', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'profile_layout'),
+            'profile' => $user->only('id', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'profile_layout', 'tier', 'tier_badge_opacity'),
             'stats' => [
                 'posts_count' => $postCount,
                 'followers_count' => $followerCount,

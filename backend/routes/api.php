@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\SponsoredDropController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\ModerationController;
+use App\Http\Controllers\Api\TierController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public ──
@@ -112,6 +113,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Sponsored Drops (Nutzer-Seite: sehen & voten)
     Route::get('/communities/{id}/drops', [SponsoredDropController::class, 'index']);
     Route::post('/drops/{dropId}/vote', [SponsoredDropController::class, 'vote']);
+
+    // Tier-System
+    Route::get('/user/tier', [TierController::class, 'status']);
+    Route::post('/user/upgrade-to-influencer', [TierController::class, 'upgradeToInfluencer']);
+    Route::post('/user/dismiss-upgrade', [TierController::class, 'dismissUpgradePrompt']);
 
     // Tracking
     Route::post('/track/event', [UserController::class, 'trackEvent']);

@@ -10,6 +10,7 @@ import PostActions from "../../src/components/PostActions";
 import LinkCard from "../../src/components/LinkCard";
 import { colors } from "../../src/constants/theme";
 import { communities as communitiesApi, feed as feedApi, users as usersApi, type Post } from "../../src/lib/api";
+import VSeal from "../../src/components/VSeal";
 
 type Tab = "feed" | "chat" | "drops" | "messages";
 
@@ -272,7 +273,12 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
           )}
         </Pressable>
         <Pressable style={s.postMeta} onPress={() => router.push(`/user/${post.author.id}`)}>
-          <Text style={s.postAuthor}>{post.author.display_name ?? post.author.username}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+            <Text style={s.postAuthor}>{post.author.display_name ?? post.author.username}</Text>
+            {post.author.tier && post.author.tier !== "none" && (
+              <VSeal tier={post.author.tier as any} opacity={post.author.tier_badge_opacity ?? 1} size="xs" />
+            )}
+          </View>
           <Text style={s.postTime}>@{post.author.username} · {timeAgo(post.created_at)}</Text>
         </Pressable>
         {!isOwnPost && checked && (

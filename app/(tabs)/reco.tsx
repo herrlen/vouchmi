@@ -5,6 +5,7 @@ import { MoreHorizontal, Plus } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { feed as feedApi, type Post } from "../../src/lib/api";
+import VSeal from "../../src/components/VSeal";
 import { useScrollStore } from "../../src/lib/scroll-store";
 import PostActions from "../../src/components/PostActions";
 import LinkCard from "../../src/components/LinkCard";
@@ -144,7 +145,12 @@ function PostItem({ post, onLikeChange }: { post: Post; onLikeChange: (id: strin
           )}
         </Pressable>
         <Pressable style={{ flex: 1 }} onPress={() => router.push(`/user/${post.author.id}`)}>
-          <Text style={s.authorName}>{post.author.display_name ?? post.author.username}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+            <Text style={s.authorName}>{post.author.display_name ?? post.author.username}</Text>
+            {post.author.tier && post.author.tier !== "none" && (
+              <VSeal tier={post.author.tier as any} opacity={post.author.tier_badge_opacity ?? 1} size="xs" />
+            )}
+          </View>
           <Text style={s.username}>@{post.author.username} · {timeAgo(post.created_at)}</Text>
         </Pressable>
       </View>

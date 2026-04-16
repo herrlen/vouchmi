@@ -8,6 +8,9 @@ import { useAuth } from "../../src/lib/store";
 import { useProfileMode } from "../../src/lib/profile-mode";
 import { useScrollStore } from "../../src/lib/scroll-store";
 import { profile as profileApi, feed as feedApi, type Post, type ProfileLayout } from "../../src/lib/api";
+import { useTierStore } from "../../src/lib/tier-store";
+import VSeal from "../../src/components/VSeal";
+import TierProgressBar from "../../src/components/TierProgressBar";
 import MasonryGallery from "../../src/components/gallery/MasonryGallery";
 import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
 import StoryGallery from "../../src/components/gallery/StoryGallery";
@@ -65,12 +68,17 @@ export default function ProfileTab() {
     <View>
       {/* Compact Header: Avatar + Stats + Menu */}
       <View style={s.topBar}>
-        <Pressable onPress={() => router.push("/profile-edit")}>
+        <Pressable onPress={() => router.push("/profile-edit")} style={{ position: "relative" }}>
           {profileData?.avatar_url ? (
             <Image source={{ uri: profileData.avatar_url }} style={s.avatar} />
           ) : (
             <View style={[s.avatar, s.avatarFallback]}>
               <Text style={s.avatarInitial}>{initial}</Text>
+            </View>
+          )}
+          {profileData?.tier && profileData.tier !== "none" && (
+            <View style={s.sealOverlay}>
+              <VSeal tier={profileData.tier} opacity={profileData.tier_badge_opacity ?? 1} size="sm" />
             </View>
           )}
         </Pressable>
@@ -130,6 +138,13 @@ export default function ProfileTab() {
           <Text style={s.ctaText}>Teilen</Text>
         </Pressable>
       </View>
+
+      {/* Tier Progress */}
+      <TierProgressBar
+        tier={useTierStore.getState().tier}
+        progressToNext={useTierStore.getState().progressToNext}
+        nextTier={useTierStore.getState().nextTier as any}
+      />
 
       {/* Sub Tabs: Reco | Geteilt | Gespeichert */}
       <View style={s.subTabs}>
@@ -219,6 +234,7 @@ const s = StyleSheet.create({
 
   // Compact top bar
   topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingTop: 8, paddingBottom: 4, gap: 12 },
+  sealOverlay: { position: "absolute", bottom: -2, right: -2 },
   avatar: { width: 72, height: 72, borderRadius: 36 },
   avatarFallback: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
   avatarInitial: { color: "#fff", fontSize: 30, fontWeight: "800" },

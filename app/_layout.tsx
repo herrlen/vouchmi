@@ -4,18 +4,22 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../src/lib/store";
 import { useProfileMode } from "../src/lib/profile-mode";
+import { useTierStore } from "../src/lib/tier-store";
+import TierUpgradeModal from "../src/components/TierUpgradeModal";
 import { colors } from "../src/constants/theme";
 
 export default function Layout() {
   const init = useAuth((s) => s.init);
   const user = useAuth((s) => s.user);
   const initProfileMode = useProfileMode((s) => s.init);
+  const fetchTier = useTierStore((s) => s.fetchTierStatus);
   useEffect(() => { init(); }, []);
-  useEffect(() => { if (user) initProfileMode(); }, [user]);
+  useEffect(() => { if (user) { initProfileMode(); fetchTier(); } }, [user]);
 
   return (
     <>
       <StatusBar style="light" />
+      <TierUpgradeModal />
       <Stack screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.accent,
@@ -47,6 +51,8 @@ export default function Layout() {
         <Stack.Screen name="security" options={{ headerShown: false }} />
         <Stack.Screen name="find-friends" options={{ headerShown: false }} />
         <Stack.Screen name="layout-settings" options={{ headerShown: false }} />
+        <Stack.Screen name="upgrade-confirm" options={{ headerShown: false }} />
+        <Stack.Screen name="upgrade-success" options={{ headerShown: false }} />
       </Stack>
     </>
   );

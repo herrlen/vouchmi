@@ -8,6 +8,7 @@ import {
   Dimensions,
   TextInput,
   Alert,
+  Modal,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -116,7 +117,28 @@ export default function OnboardingScreen() {
     }
   };
 
-  if (screen === "role") return <RoleScreen onBack={back} onPick={chooseRole} />;
+  const [showInfluencerSheet, setShowInfluencerSheet] = useState(false);
+
+  const handleRolePick = (r: Role) => {
+    if (r === "influencer") {
+      setShowInfluencerSheet(true);
+    } else {
+      chooseRole(r);
+    }
+  };
+
+  if (screen === "role") return (
+    <>
+      <RoleScreen onBack={back} onPick={handleRolePick} />
+      {showInfluencerSheet && (
+        <InfluencerPathSheet
+          onCreator={() => { setShowInfluencerSheet(false); chooseRole("influencer"); }}
+          onUser={() => { setShowInfluencerSheet(false); chooseRole("user"); }}
+          onClose={() => setShowInfluencerSheet(false)}
+        />
+      )}
+    </>
+  );
   if (screen === "form") return <FormScreen role={role} onBack={back} />;
 
   const slide = slides[slideIndex];
@@ -392,6 +414,45 @@ function FormScreen({ role, onBack }: { role: Role; onBack: () => void }) {
   );
 }
 
+function InfluencerPathSheet({ onCreator, onUser, onClose }: { onCreator: () => void; onUser: () => void; onClose: () => void }) {
+  return (
+    <Modal visible transparent animationType="slide" statusBarTranslucent>
+      <View style={s.sheetBackdrop}>
+        <View style={s.sheetContainer}>
+          <View style={s.sheetHandle} />
+          <Text style={s.sheetTitle}>Wie startest du?</Text>
+
+          <Pressable style={[s.pathCard, { borderColor: "#F472B640" }]} onPress={onCreator}>
+            <View style={[s.pathIcon, { backgroundColor: "#F472B620" }]}>
+              <Text style={{ fontSize: 22 }}>⭐</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.pathLabel}>Ich bin bereits Creator</Text>
+              <Text style={s.pathDesc}>Du hast schon eine Community? Starte direkt mit Telefon-Verifizierung und lege los.</Text>
+              <Text style={s.pathHint}>Startet als Bronze — Tier wird nach 7 Tagen basierend auf deiner Aktivität neu berechnet.</Text>
+            </View>
+          </Pressable>
+
+          <Pressable style={[s.pathCard, { borderColor: "#F59E0B40" }]} onPress={onUser}>
+            <View style={[s.pathIcon, { backgroundColor: "#F59E0B20" }]}>
+              <Text style={{ fontSize: 22 }}>🌱</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.pathLabel}>Als User starten, später aufsteigen</Text>
+              <Text style={s.pathDesc}>Baue erst deine Community auf. Bei 1.000 Followern + 25 Empfehlungen wirst du automatisch zum Bronze-Creator.</Text>
+              <Text style={s.pathHint}>Kein Telefon nötig — einfach mit E-Mail starten.</Text>
+            </View>
+          </Pressable>
+
+          <Pressable style={s.sheetBack} onPress={onClose}>
+            <Text style={s.sheetBackText}>Zurück</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 function Field(props: React.ComponentProps<typeof TextInput> & { label: string }) {
   const { label, style, ...rest } = props;
   return (
@@ -467,4 +528,17 @@ const s = StyleSheet.create({
 
   loginLink: { padding: 14, alignItems: "center" },
   loginLinkText: { color: colors.gray, fontSize: 13 },
+
+  // Influencer Path Sheet
+  sheetBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
+  sheetContainer: { backgroundColor: colors.bgElevated, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.grayDark, alignSelf: "center", marginBottom: 20 },
+  sheetTitle: { color: colors.white, fontSize: 24, fontWeight: "800", textAlign: "center", marginBottom: 20 },
+  pathCard: { flexDirection: "row", gap: 14, backgroundColor: colors.bgCard, borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 12 },
+  pathIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  pathLabel: { color: colors.white, fontSize: 15, fontWeight: "700", marginBottom: 4 },
+  pathDesc: { color: colors.gray, fontSize: 13, lineHeight: 19, marginBottom: 6 },
+  pathHint: { color: colors.grayDark, fontSize: 11, lineHeight: 16, fontStyle: "italic" },
+  sheetBack: { alignItems: "center", paddingVertical: 14, minHeight: 44 },
+  sheetBackText: { color: colors.gray, fontSize: 14, fontWeight: "500" },
 });
