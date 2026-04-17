@@ -149,7 +149,7 @@ export default function CommunityDetail() {
           <FlatList
             data={feed}
             keyExtractor={(i) => i.id}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
             onRefresh={() => id && loadFeed(id)}
             refreshing={false}
             ListEmptyComponent={<Text style={s.emptyText}>Noch keine Posts. Nutze + um etwas zu teilen!</Text>}
