@@ -1,14 +1,13 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, ScrollView, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MoreHorizontal, Plus } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { feed as feedApi, type Post } from "../../src/lib/api";
 import VSeal from "../../src/components/VSeal";
 import { useScrollStore } from "../../src/lib/scroll-store";
 import PostActions from "../../src/components/PostActions";
-import LinkCard from "../../src/components/LinkCard";
 
 function timeAgo(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -67,7 +66,7 @@ export default function RecoTab() {
           ref={listRef}
           data={posts}
           keyExtractor={(p) => p.id}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
           onScrollToIndexFailed={(info) => {
             setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 500);
           }}
@@ -82,7 +81,7 @@ export default function RecoTab() {
               </Pressable>
             </View>
           }
-          renderItem={({ item }) => <PostItem post={item} onLikeChange={handleLikeChange} />}
+          renderItem={({ item }) => <PostCard post={item} onLikeChange={handleLikeChange} />}
         />
       )}
     </SafeAreaView>
@@ -93,15 +92,15 @@ const SB = 62;
 function StoryBar({ posts }: { posts: Post[] }) {
   const authors = posts.map((p) => p.author).filter((a, i, arr) => arr.findIndex((x) => x.id === a.id) === i).slice(0, 10);
   return (
-    <View style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingVertical: 10 }}>
+    <View style={{ borderBottomWidth: 0.5, borderBottomColor: "#1E2235", paddingVertical: 10, marginBottom: 8 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 14 }}>
         <Pressable style={{ alignItems: "center", width: SB + 8 }} onPress={() => router.push("/create-story")}>
-          <View style={{ width: SB + 6, height: SB + 6, borderRadius: (SB + 6) / 2, backgroundColor: colors.bgCard, justifyContent: "center", alignItems: "center" }}>
-            <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: colors.bgInput, justifyContent: "center", alignItems: "center" }}>
+          <View style={{ width: SB + 6, height: SB + 6, borderRadius: (SB + 6) / 2, backgroundColor: "#141926", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: "#1E2235", justifyContent: "center", alignItems: "center" }}>
               <Plus color={colors.accent} size={26} />
             </View>
           </View>
-          <Text style={{ color: colors.gray, fontSize: 11, marginTop: 5 }}>Du</Text>
+          <Text style={{ color: "#64748B", fontSize: 11, marginTop: 5 }}>Du</Text>
         </Pressable>
         {authors.map((a) => (
           <Pressable key={a.id} style={{ alignItems: "center", width: SB + 8 }} onPress={() => router.push(`/user/${a.id}`)}>
@@ -109,12 +108,12 @@ function StoryBar({ posts }: { posts: Post[] }) {
               {a.avatar_url ? (
                 <Image source={{ uri: a.avatar_url }} style={{ width: SB, height: SB, borderRadius: SB / 2 }} />
               ) : (
-                <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: colors.bgInput, justifyContent: "center", alignItems: "center" }}>
-                  <Text style={{ color: colors.white, fontWeight: "700", fontSize: 22 }}>{(a.display_name ?? a.username)[0]?.toUpperCase()}</Text>
+                <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: "#1E2235", justifyContent: "center", alignItems: "center" }}>
+                  <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 22 }}>{(a.display_name ?? a.username)[0]?.toUpperCase()}</Text>
                 </View>
               )}
             </View>
-            <Text style={{ color: colors.gray, fontSize: 11, marginTop: 5, maxWidth: SB + 8, textAlign: "center" }} numberOfLines={1}>{a.username}</Text>
+            <Text style={{ color: "#64748B", fontSize: 11, marginTop: 5, maxWidth: SB + 8, textAlign: "center" }} numberOfLines={1}>{a.username}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -122,85 +121,105 @@ function StoryBar({ posts }: { posts: Post[] }) {
   );
 }
 
-const COLLAPSED_LENGTH = 140;
-
-function PostItem({ post, onLikeChange }: { post: Post; onLikeChange: (id: string, count: number) => void }) {
+function PostCard({ post, onLikeChange }: { post: Post; onLikeChange: (id: string, count: number) => void }) {
   const initial = (post.author.display_name ?? post.author.username)[0]?.toUpperCase() ?? "?";
-  const [expanded, setExpanded] = useState(false);
 
-  const content = post.content ?? "";
-  const isLong = content.length > COLLAPSED_LENGTH;
-  const displayContent = !isLong || expanded ? content : content.slice(0, COLLAPSED_LENGTH).trimEnd() + "…";
+  const role = (post.author as any).role ?? "user";
+  const badgeColor = role === "influencer" ? "#F59E0B" : role === "brand" ? "#6366F1" : "#10B981";
+  const badgeLabel = role === "influencer" ? "Influencer" : role === "brand" ? "Brand" : "Nutzer";
 
   return (
-    <View style={s.post}>
-      <View style={s.postHeader}>
+    <View style={s.card}>
+      {/* Header */}
+      <View style={s.cardHeader}>
         <Pressable onPress={() => router.push(`/user/${post.author.id}`)}>
           {post.author.avatar_url ? (
-            <Image source={{ uri: post.author.avatar_url }} style={s.postAvatar} />
+            <Image source={{ uri: post.author.avatar_url }} style={s.cardAvatar} />
           ) : (
-            <View style={[s.postAvatar, s.avatarPlaceholder]}>
-              <Text style={s.avatarInitial}>{initial}</Text>
+            <View style={[s.cardAvatar, { backgroundColor: badgeColor }]}>
+              <Text style={s.cardAvatarInitial}>{initial}</Text>
             </View>
           )}
         </Pressable>
         <Pressable style={{ flex: 1 }} onPress={() => router.push(`/user/${post.author.id}`)}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-            <Text style={s.authorName}>{post.author.display_name ?? post.author.username}</Text>
+            <Text style={s.cardAuthor}>{post.author.display_name ?? post.author.username}</Text>
             {post.author.tier && post.author.tier !== "none" && (
               <VSeal tier={post.author.tier as any} opacity={post.author.tier_badge_opacity ?? 1} size="xs" />
             )}
           </View>
-          <Text style={s.username}>@{post.author.username} · {timeAgo(post.created_at)}</Text>
+          <Text style={s.cardTime}>{post.community?.name ? `${post.community.name} · ` : ""}{timeAgo(post.created_at)}</Text>
         </Pressable>
+
+        <View style={[s.roleBadge, { backgroundColor: badgeColor + "18" }]}>
+          <View style={[s.roleDot, { backgroundColor: badgeColor }]} />
+          <Text style={[s.roleBadgeText, { color: badgeColor }]}>{badgeLabel}</Text>
+        </View>
       </View>
 
-      <LinkCard post={post} />
+      {/* Product image */}
+      {post.link_image && (
+        <Pressable onPress={() => {
+          const url = post.link_affiliate_url ?? post.link_url;
+          if (url) Linking.openURL(url);
+        }}>
+          <Image source={{ uri: post.link_image }} style={s.cardImage} />
+        </Pressable>
+      )}
+
+      {/* Title + Price */}
+      {(post.link_title || post.link_price != null) && (
+        <View style={s.cardTitleRow}>
+          {post.link_title && <Text style={s.cardTitle} numberOfLines={2}>{post.link_title}</Text>}
+          {post.link_price != null && <Text style={s.cardPrice}>{post.link_price.toFixed(2)} €</Text>}
+        </View>
+      )}
+
+      {/* Description */}
+      {!!post.content && <Text style={s.cardDesc}>{post.content}</Text>}
+
+      {/* Actions */}
       <PostActions post={post} onLikeChange={onLikeChange} />
 
-      {!!content && (
-        <View style={s.descBlock}>
-          <Text style={s.postText}>{displayContent}</Text>
-          {isLong && (
-            <Pressable onPress={() => setExpanded((v) => !v)} hitSlop={6}>
-              <Text style={s.moreText}>{expanded ? "weniger" : "mehr"}</Text>
-            </Pressable>
-          )}
-        </View>
+      {/* Empfehlung button */}
+      {(post.link_affiliate_url || post.link_url) && (
+        <Pressable
+          style={s.recoBtn}
+          onPress={() => {
+            const url = post.link_affiliate_url ?? post.link_url;
+            if (url) Linking.openURL(url);
+          }}
+        >
+          <Text style={s.recoBtnText}>Empfehlung</Text>
+        </Pressable>
       )}
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  header: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 10 },
-  title: { color: colors.accent, fontSize: 26, fontWeight: "900", letterSpacing: -0.5 },
+  container: { flex: 1, backgroundColor: "#0A0E1A" },
   empty: { padding: 40, alignItems: "center", marginTop: 40 },
-  emptyTitle: { color: colors.white, fontSize: 18, fontWeight: "700", marginBottom: 6 },
-  emptyText: { color: colors.gray, fontSize: 14, textAlign: "center", marginBottom: 18 },
-  emptyBtn: { backgroundColor: colors.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 10 },
-  emptyBtnText: { color: "#fff", fontWeight: "700" },
-  post: { marginBottom: 6, borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingBottom: 6 },
-  postHeader: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
-  postAvatar: { width: 36, height: 36, borderRadius: 18 },
-  avatarPlaceholder: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  avatarInitial: { color: "#fff", fontWeight: "800", fontSize: 15 },
-  authorName: { color: colors.white, fontSize: 14, fontWeight: "600" },
-  username: { color: colors.gray, fontSize: 12, marginTop: 1 },
-  postText: { color: colors.white, fontSize: 14, lineHeight: 19 },
-  descBlock: { paddingHorizontal: 12, paddingTop: 4, paddingBottom: 6 },
-  moreText: { color: colors.gray, fontSize: 13, marginTop: 2, fontWeight: "500" },
-  commentsToggle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 10, gap: 6 },
-  commentsToggleText: { color: colors.gray, fontSize: 13, fontWeight: "500" },
-  commentsList: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
-  loadingText: { color: colors.gray, fontSize: 12, paddingVertical: 6 },
-  commentRow: { flexDirection: "row", gap: 8, paddingVertical: 4 },
-  cAvatar: { width: 28, height: 28, borderRadius: 14 },
-  cAvatarFallback: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  cInitial: { color: "#fff", fontWeight: "700", fontSize: 11 },
-  cHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 1 },
-  cName: { color: colors.white, fontSize: 12, fontWeight: "600" },
-  cTime: { color: colors.grayDark, fontSize: 10 },
-  cText: { color: colors.white, fontSize: 13, lineHeight: 17 },
+  emptyTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "700", marginBottom: 6 },
+  emptyText: { color: "#64748B", fontSize: 14, textAlign: "center", marginBottom: 18 },
+  emptyBtn: { backgroundColor: colors.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 14 },
+  emptyBtnText: { color: "#1A1D2E", fontWeight: "700" },
+
+  // Card
+  card: { backgroundColor: "#141926", borderRadius: 24, marginHorizontal: 12, marginBottom: 12, overflow: "hidden" },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, padding: 16, paddingBottom: 10 },
+  cardAvatar: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
+  cardAvatarInitial: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  cardAuthor: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+  cardTime: { color: "#64748B", fontSize: 12, marginTop: 1 },
+  roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
+  roleDot: { width: 8, height: 8, borderRadius: 4 },
+  roleBadgeText: { fontSize: 11, fontWeight: "700" },
+  cardImage: { width: "100%", aspectRatio: 1, backgroundColor: "#2A2D3E", resizeMode: "contain" },
+  cardTitleRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 12, gap: 12 },
+  cardTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "800", flex: 1, lineHeight: 22 },
+  cardPrice: { color: "#F59E0B", fontSize: 16, fontWeight: "800" },
+  cardDesc: { color: "#CBD5E1", fontSize: 14, lineHeight: 20, paddingHorizontal: 16, paddingTop: 6, fontStyle: "italic" },
+  recoBtn: { backgroundColor: "#F59E0B", marginHorizontal: 16, marginBottom: 16, marginTop: 4, paddingVertical: 12, borderRadius: 14, alignItems: "center", minHeight: 44, justifyContent: "center" },
+  recoBtnText: { color: "#1A1D2E", fontSize: 14, fontWeight: "800" },
 });
