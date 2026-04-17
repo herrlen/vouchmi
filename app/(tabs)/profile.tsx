@@ -223,11 +223,11 @@ export default function ProfileTab() {
 
 function StatCard({ value, label, accent }: { value: number; label: string; accent: string }) {
   return (
-    <View style={[s.statCard, { borderColor: accent + "20" }]}>
+    <Pressable style={[s.statCard, { borderColor: accent + "20" }]} onPress={() => router.push("/analytics")}>
       <View style={[s.statCardOverlay, { backgroundColor: accent + "0A" }]} />
       <Text style={[s.statValue, { color: accent }]}>{value.toLocaleString("de-DE")}</Text>
       <Text style={s.statLabel}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }
 

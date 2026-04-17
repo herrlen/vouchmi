@@ -52,6 +52,13 @@ export default function SettingsScreen() {
           <Row label="E-Mail" value={user?.email ?? "-"} />
         </View>
 
+        {(user?.role === "influencer" || user?.role === "brand") && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Creator</Text>
+            <Button label="Analytics & Dashboard" onPress={() => router.push("/analytics")} />
+          </View>
+        )}
+
         <View style={s.section}>
           <Text style={s.sectionTitle}>Social</Text>
           <Button label="Freunde einladen" onPress={() => router.push("/invite")} />

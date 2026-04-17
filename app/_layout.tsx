@@ -52,6 +52,7 @@ export default function Layout() {
         <Stack.Screen name="find-friends" options={{ headerShown: false }} />
         <Stack.Screen name="layout-settings" options={{ headerShown: false }} />
         <Stack.Screen name="help" options={{ headerShown: false }} />
+        <Stack.Screen name="analytics" options={{ headerShown: false }} />
         <Stack.Screen name="upgrade-confirm" options={{ headerShown: false }} />
         <Stack.Screen name="upgrade-success" options={{ headerShown: false }} />
       </Stack>
