@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ScrollView, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { Settings, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2, Edit3 } from "lucide-react-native";
+import { Settings, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2 } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { useAuth } from "../../src/lib/store";
@@ -67,16 +66,8 @@ export default function ProfileTab() {
 
   const profileHeader = (
     <View>
-      {/* Settings icon top right */}
-      <View style={s.topBar}>
-        <View style={{ width: 44 }} />
-        <Pressable style={s.settingsBtn} onPress={() => router.push("/settings")} hitSlop={10}>
-          <Settings color={colors.gray} size={22} strokeWidth={1.8} />
-        </Pressable>
-      </View>
-
-      {/* Avatar centered + seal */}
-      <View style={s.avatarSection}>
+      {/* Top row: Avatar + Info + Settings */}
+      <View style={s.topRow}>
         <Pressable onPress={() => router.push("/profile-edit")} style={s.avatarWrap}>
           {profileData?.avatar_url ? (
             <Image source={{ uri: profileData.avatar_url }} style={s.avatar} />
@@ -87,30 +78,43 @@ export default function ProfileTab() {
           )}
           {profileData?.tier && profileData.tier !== "none" && (
             <View style={s.sealOverlay}>
-              <VSeal tier={profileData.tier} opacity={profileData.tier_badge_opacity ?? 1} size="md" />
+              <VSeal tier={profileData.tier} opacity={profileData.tier_badge_opacity ?? 1} size="sm" />
             </View>
           )}
         </Pressable>
 
-        {/* Name + Handle */}
-        <Text style={s.name}>
-          {profileMode === "brand" && brandStatus?.brand?.brand_name ? brandStatus.brand.brand_name : displayName}
-        </Text>
-        <Text style={s.handle}>@{me?.username}</Text>
+        <View style={s.infoCol}>
+          <Text style={s.name}>
+            {profileMode === "brand" && brandStatus?.brand?.brand_name ? brandStatus.brand.brand_name : displayName}
+          </Text>
+          <Text style={s.handle}>@{me?.username}</Text>
+        </View>
+
+        <Pressable style={s.shareBtn} onPress={async () => {
+          try { await Share.share({ message: `Schau dir mein Profil auf Vouchmi an:\nhttps://vouchmi.com/@${me?.username}` }); } catch {}
+        }} hitSlop={8}>
+          <Share2 color="#6366F1" size={18} strokeWidth={2} />
+        </Pressable>
+
+        <Pressable style={s.settingsBtn} onPress={() => router.push("/settings")} hitSlop={8}>
+          <Settings color="#64748B" size={20} strokeWidth={1.8} />
+        </Pressable>
       </View>
 
-      {/* Bio */}
-      {!!profileData?.bio && (
-        <Text style={s.bio}>{profileData.bio}</Text>
-      )}
-      {!!profileData?.link && (
-        <Pressable style={s.linkRow} onPress={() => profileData.link && Linking.openURL(profileData.link)}>
-          <LinkIcon2 color={colors.indigo} size={13} strokeWidth={2} />
-          <Text style={s.link} numberOfLines={1}>{profileData.link}</Text>
-        </Pressable>
+      {/* Bio + Link */}
+      {(!!profileData?.bio || !!profileData?.link) && (
+        <View style={s.bioSection}>
+          {!!profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
+          {!!profileData?.link && (
+            <Pressable style={s.linkRow} onPress={() => profileData.link && Linking.openURL(profileData.link)}>
+              <LinkIcon2 color="#6366F1" size={12} strokeWidth={2} />
+              <Text style={s.link} numberOfLines={1}>{profileData.link}</Text>
+            </Pressable>
+          )}
+        </View>
       )}
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <View style={s.statsRow}>
         <StatCard value={stats.posts_count} label="Recos" accent="#F59E0B" />
         <StatCard value={stats.followers_count} label="Follower" accent="#6366F1" />
@@ -124,32 +128,18 @@ export default function ProfileTab() {
             style={[s.modePill, profileMode === "personal" && s.modePillOn]}
             onPress={() => setProfileMode("personal")}
           >
-            <UserIcon color={profileMode === "personal" ? "#fff" : colors.gray} size={14} strokeWidth={2} />
+            <UserIcon color={profileMode === "personal" ? "#fff" : "#64748B"} size={14} strokeWidth={2} />
             <Text style={[s.modePillText, profileMode === "personal" && s.modePillTextOn]}>Persönlich</Text>
           </Pressable>
           <Pressable
             style={[s.modePill, profileMode === "brand" && s.modePillOn]}
             onPress={() => setProfileMode("brand")}
           >
-            <Store color={profileMode === "brand" ? "#fff" : colors.gray} size={14} strokeWidth={2} />
+            <Store color={profileMode === "brand" ? "#fff" : "#64748B"} size={14} strokeWidth={2} />
             <Text style={[s.modePillText, profileMode === "brand" && s.modePillTextOn]}>Brand</Text>
           </Pressable>
         </View>
       )}
-
-      {/* CTA Buttons */}
-      <View style={s.ctaRow}>
-        <Pressable style={s.ctaBtn} onPress={() => router.push("/profile-edit")}>
-          <Edit3 color={colors.white} size={14} strokeWidth={2.2} />
-          <Text style={s.ctaText}>Bearbeiten</Text>
-        </Pressable>
-        <Pressable style={s.ctaBtnOutline} onPress={async () => {
-          try { await Share.share({ message: `Schau dir mein Profil auf Vouchmi an:\nhttps://vouchmi.com/@${me?.username}` }); } catch {}
-        }}>
-          <Share2 color={colors.indigo} size={14} strokeWidth={2.2} />
-          <Text style={s.ctaTextOutline}>Teilen</Text>
-        </Pressable>
-      </View>
 
       {/* Tier Progress */}
       <TierProgressBar
@@ -244,23 +234,23 @@ function StatCard({ value, label, accent }: { value: number; label: string; acce
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0A0E1A" },
 
-  // Top bar
-  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 4 },
-  settingsBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "center" },
-
-  // Avatar section
-  avatarSection: { alignItems: "center", paddingTop: 8, paddingBottom: 4 },
-  avatarWrap: { position: "relative", marginBottom: 14 },
-  sealOverlay: { position: "absolute", bottom: -4, right: -4 },
-  avatar: { width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: "#4F46E540" },
+  // Top row
+  topRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 10, gap: 12 },
+  avatarWrap: { position: "relative" },
+  sealOverlay: { position: "absolute", bottom: -2, right: -2 },
+  avatar: { width: 64, height: 64, borderRadius: 32, borderWidth: 2, borderColor: "#4F46E530" },
   avatarFallback: { backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center" },
-  avatarInitial: { color: "#fff", fontSize: 38, fontWeight: "800" },
+  avatarInitial: { color: "#fff", fontSize: 26, fontWeight: "800" },
+  infoCol: { flex: 1 },
+  name: { color: "#FFFFFF", fontSize: 20, fontWeight: "800", letterSpacing: -0.3 },
+  handle: { color: "#64748B", fontSize: 13, marginTop: 1 },
+  shareBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#6366F110", justifyContent: "center", alignItems: "center" },
+  settingsBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
 
-  // Name
-  name: { color: "#FFFFFF", fontSize: 28, fontWeight: "800", letterSpacing: -0.5, textAlign: "center" },
-  handle: { color: "#64748B", fontSize: 14, marginTop: 2, textAlign: "center" },
-  bio: { color: "#94A3B8", fontSize: 14, lineHeight: 20, textAlign: "center", marginTop: 10, paddingHorizontal: 32 },
-  linkRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 6 },
+  // Bio
+  bioSection: { paddingHorizontal: 16, marginTop: 8 },
+  bio: { color: "#94A3B8", fontSize: 14, lineHeight: 20 },
+  linkRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
   link: { color: "#6366F1", fontSize: 13, fontWeight: "600" },
 
   // Stats
@@ -284,35 +274,6 @@ const s = StyleSheet.create({
   modePillOn: { backgroundColor: "#4F46E5" },
   modePillText: { color: "#64748B", fontSize: 13, fontWeight: "600" },
   modePillTextOn: { color: "#FFFFFF" },
-
-  // CTA
-  ctaRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, marginTop: 16 },
-  ctaBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#141926",
-    paddingVertical: 12,
-    borderRadius: 20,
-    minHeight: 44,
-  },
-  ctaText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
-  ctaBtnOutline: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: "#4F46E540",
-    paddingVertical: 12,
-    borderRadius: 20,
-    minHeight: 44,
-  },
-  ctaTextOutline: { color: "#6366F1", fontSize: 14, fontWeight: "700" },
 
   // Sub tabs
   subTabs: { flexDirection: "row", borderTopWidth: 0.5, borderTopColor: "#1E2235", marginTop: 16 },
