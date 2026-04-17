@@ -99,6 +99,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/feed/{postId}/repost', [FeedController::class, 'repost']);
     Route::delete('/feed/{postId}/repost', [FeedController::class, 'unrepost']);
     Route::get('/feed/{postId}/reposters', [FeedController::class, 'reposters']);
+    Route::post('/feed/{postId}/bookmark', [FeedController::class, 'bookmark']);
+    Route::get('/user/bookmarks', [FeedController::class, 'bookmarks']);
+    Route::get('/user/reposts', [FeedController::class, 'myReposts']);
 
     // Chat (Community)
     Route::get('/communities/{id}/messages', [ChatController::class, 'index']);

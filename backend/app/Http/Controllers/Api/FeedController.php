@@ -67,9 +67,15 @@ class FeedController extends Controller
             ->pluck('post_id')
             ->toArray();
 
-        $posts->getCollection()->transform(function ($post) use ($myReposts, $myLikes) {
+        $myBookmarks = DB::table('bookmarks')
+            ->where('user_id', $user->id)
+            ->pluck('post_id')
+            ->toArray();
+
+        $posts->getCollection()->transform(function ($post) use ($myReposts, $myLikes, $myBookmarks) {
             $post->is_reposted = in_array($post->id, $myReposts);
             $post->is_liked = in_array($post->id, $myLikes);
+            $post->is_bookmarked = in_array($post->id, $myBookmarks);
             return $post;
         });
 
@@ -298,5 +304,64 @@ class FeedController extends Controller
             ->get();
 
         return response()->json(['reposters' => $users]);
+    }
+
+    public function bookmark(string $postId, Request $request): JsonResponse
+    {
+        Post::findOrFail($postId);
+        $userId = $request->user()->id;
+
+        $exists = DB::table('bookmarks')
+            ->where('post_id', $postId)
+            ->where('user_id', $userId)
+            ->exists();
+
+        if ($exists) {
+            DB::table('bookmarks')->where('post_id', $postId)->where('user_id', $userId)->delete();
+        } else {
+            DB::table('bookmarks')->insert([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'user_id' => $userId,
+                'post_id' => $postId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return response()->json(['bookmarked' => !$exists]);
+    }
+
+    public function bookmarks(Request $request): JsonResponse
+    {
+        $postIds = DB::table('bookmarks')
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->pluck('post_id');
+
+        $posts = Post::with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
+            ->with('community:id,name,slug')
+            ->whereIn('id', $postIds)
+            ->get()
+            ->sortBy(fn ($p) => $postIds->search($p->id))
+            ->values();
+
+        return response()->json(['data' => $posts]);
+    }
+
+    public function myReposts(Request $request): JsonResponse
+    {
+        $postIds = DB::table('reposts')
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->pluck('original_post_id');
+
+        $posts = Post::with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
+            ->with('community:id,name,slug')
+            ->whereIn('id', $postIds)
+            ->get()
+            ->sortBy(fn ($p) => $postIds->search($p->id))
+            ->values();
+
+        return response()->json(['data' => $posts]);
     }
 }
