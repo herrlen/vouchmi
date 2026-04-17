@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { View, Text, FlatList, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert, Share, Image, ActionSheetIOS } from "react-native";
+import { View, Text, FlatList, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert, Share, Image, ActionSheetIOS, Linking } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronLeft, Menu } from "lucide-react-native";
@@ -260,36 +260,43 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
   };
   const initial = (post.author.display_name ?? post.author.username)[0]?.toUpperCase() ?? "?";
 
+  // Role-based badge color: green=user, orange=influencer, purple=brand
+  const role = (post.author as any).role ?? "user";
+  const badgeColor = role === "influencer" ? "#F59E0B" : role === "brand" ? "#6366F1" : "#10B981";
+  const badgeLabel = role === "influencer" ? "Influencer" : role === "brand" ? "Brand" : "Nutzer";
+
   return (
-    <View style={s.post}>
-      <View style={s.postTop}>
+    <View style={s.card}>
+      {/* Header: Avatar + Name + Badge */}
+      <View style={s.cardHeader}>
         <Pressable onPress={() => router.push(`/user/${post.author.id}`)}>
           {post.author.avatar_url ? (
-            <Image source={{ uri: post.author.avatar_url }} style={s.postAvatar} />
+            <Image source={{ uri: post.author.avatar_url }} style={s.cardAvatar} />
           ) : (
-            <View style={[s.postAvatar, s.postAvatarFallback]}>
-              <Text style={s.postAvatarInitial}>{initial}</Text>
+            <View style={[s.cardAvatar, { backgroundColor: badgeColor }]}>
+              <Text style={s.cardAvatarInitial}>{initial}</Text>
             </View>
           )}
         </Pressable>
-        <Pressable style={s.postMeta} onPress={() => router.push(`/user/${post.author.id}`)}>
+        <Pressable style={{ flex: 1 }} onPress={() => router.push(`/user/${post.author.id}`)}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-            <Text style={s.postAuthor}>{post.author.display_name ?? post.author.username}</Text>
+            <Text style={s.cardAuthor}>{post.author.display_name ?? post.author.username}</Text>
             {post.author.tier && post.author.tier !== "none" && (
               <VSeal tier={post.author.tier as any} opacity={post.author.tier_badge_opacity ?? 1} size="xs" />
             )}
           </View>
-          <Text style={s.postTime}>@{post.author.username} · {timeAgo(post.created_at)}</Text>
+          <Text style={s.cardTime}>{timeAgo(post.created_at)}</Text>
         </Pressable>
+
+        {/* Role badge */}
+        <View style={[s.roleBadge, { backgroundColor: badgeColor + "18" }]}>
+          <View style={[s.roleDot, { backgroundColor: badgeColor }]} />
+          <Text style={[s.roleBadgeText, { color: badgeColor }]}>{badgeLabel}</Text>
+        </View>
+
         {!isOwnPost && checked && (
-          <Pressable
-            style={[s.authorFollowBtn, following && s.authorFollowBtnActive]}
-            onPress={toggleFollow}
-            hitSlop={6}
-          >
-            <Text style={[s.authorFollowText, following && s.authorFollowTextActive]}>
-              {following ? "Folgst du" : "Folgen"}
-            </Text>
+          <Pressable style={[s.cardFollowBtn, following && s.cardFollowBtnActive]} onPress={toggleFollow} hitSlop={6}>
+            <Text style={[s.cardFollowText, following && s.cardFollowTextActive]}>{following ? "Folgst du" : "Folgen"}</Text>
           </Pressable>
         )}
         {canModerate && (
@@ -299,16 +306,48 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
         )}
       </View>
 
-      {!!post.content && <Text style={s.postContent}>{post.content}</Text>}
+      {/* Product image */}
+      {post.link_image && (
+        <Pressable onPress={() => {
+          const url = post.link_affiliate_url ?? post.link_url;
+          if (url) Linking.openURL(url);
+        }}>
+          <Image source={{ uri: post.link_image }} style={s.cardImage} />
+        </Pressable>
+      )}
 
-      <LinkCard post={post} />
+      {/* Title + Price row */}
+      {(post.link_title || post.link_price != null) && (
+        <View style={s.cardTitleRow}>
+          {post.link_title && <Text style={s.cardTitle} numberOfLines={2}>{post.link_title}</Text>}
+          {post.link_price != null && <Text style={s.cardPrice}>{post.link_price.toFixed(2)} €</Text>}
+        </View>
+      )}
+
+      {/* Description */}
+      {!!post.content && <Text style={s.cardDesc}>{post.content}</Text>}
+
+      {/* Actions */}
       <PostActions post={post} />
+
+      {/* Reco button */}
+      {(post.link_affiliate_url || post.link_url) && (
+        <Pressable
+          style={s.recoBtn}
+          onPress={() => {
+            const url = post.link_affiliate_url ?? post.link_url;
+            if (url) Linking.openURL(url);
+          }}
+        >
+          <Text style={s.recoBtnText}>Reco</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: "#0A0E1A" },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, gap: 10 },
   backBtn: { minWidth: 44, minHeight: 44, justifyContent: "center" },
   headerTitle: { flex: 1, color: colors.white, fontSize: 17, fontWeight: "600" },
@@ -327,22 +366,29 @@ const s = StyleSheet.create({
   emptyTitle: { color: colors.white, fontSize: 16, fontWeight: "700" },
   emptyText: { color: colors.gray, textAlign: "center", lineHeight: 20, fontSize: 13 },
 
-  // Posts
-  post: { paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.border },
-  postTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
-  postAvatar: { width: 36, height: 36, borderRadius: 18 },
-  postAvatarFallback: { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
-  postAvatarInitial: { color: "#fff", fontWeight: "800", fontSize: 15 },
-  postMeta: { flex: 1 },
-  postAuthor: { color: colors.white, fontSize: 14, fontWeight: "600" },
-  postTime: { color: colors.gray, fontSize: 11, marginTop: 1 },
-  postContent: { color: colors.white, fontSize: 14, lineHeight: 19, marginBottom: 4 },
-  authorFollowBtn: { backgroundColor: colors.accent, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, minHeight: 28, justifyContent: "center" },
-  authorFollowBtnActive: { backgroundColor: colors.bgInput },
-  authorFollowText: { color: "#fff", fontSize: 12, fontWeight: "700" },
-  authorFollowTextActive: { color: colors.gray },
+  // Card-based Posts
+  card: { backgroundColor: "#141926", borderRadius: 24, marginHorizontal: 12, marginBottom: 12, overflow: "hidden" },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, padding: 16, paddingBottom: 10 },
+  cardAvatar: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
+  cardAvatarInitial: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  cardAuthor: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+  cardTime: { color: "#64748B", fontSize: 12, marginTop: 1 },
+  roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
+  roleDot: { width: 8, height: 8, borderRadius: 4 },
+  roleBadgeText: { fontSize: 11, fontWeight: "700" },
+  cardFollowBtn: { backgroundColor: colors.accent, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, minHeight: 28, justifyContent: "center" },
+  cardFollowBtnActive: { backgroundColor: "#1E2235" },
+  cardFollowText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  cardFollowTextActive: { color: "#64748B" },
+  cardImage: { width: "100%", aspectRatio: 4 / 3, backgroundColor: "#2A2D3E" },
+  cardTitleRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 12, gap: 12 },
+  cardTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "800", flex: 1, lineHeight: 22 },
+  cardPrice: { color: "#F59E0B", fontSize: 16, fontWeight: "800" },
+  cardDesc: { color: "#CBD5E1", fontSize: 14, lineHeight: 20, paddingHorizontal: 16, paddingTop: 6, fontStyle: "italic" },
+  recoBtn: { backgroundColor: "#F59E0B", alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, marginLeft: 16, marginBottom: 14, marginTop: 4, minHeight: 32, justifyContent: "center" },
+  recoBtnText: { color: "#1A1D2E", fontSize: 13, fontWeight: "800" },
   modBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "flex-end" },
-  modDots: { color: colors.gray, fontSize: 20, lineHeight: 20 },
+  modDots: { color: "#64748B", fontSize: 20, lineHeight: 20 },
   muteBanner: { backgroundColor: "#EF444420", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.border },
   muteBannerText: { color: "#EF4444", fontSize: 13, fontWeight: "600", textAlign: "center" },
 

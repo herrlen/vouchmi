@@ -31,7 +31,7 @@ class FeedController extends Controller
         $posts = Post::where('community_id', $communityId)
             ->where('is_hidden', false)
             ->whereNotIn('author_id', $blockedIds)
-            ->with('author:id,username,display_name,avatar_url,tier,tier_badge_opacity')
+            ->with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
             ->latest()
             ->paginate(20);
 
@@ -52,7 +52,7 @@ class FeedController extends Controller
         $posts = Post::whereIn('community_id', $communityIds)
             ->where('is_hidden', false)
             ->whereNotIn('author_id', $blockedIds)
-            ->with('author:id,username,display_name,avatar_url,tier,tier_badge_opacity')
+            ->with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
             ->with('community:id,name,slug')
             ->latest()
             ->paginate(30);
@@ -79,7 +79,7 @@ class FeedController extends Controller
     public function myPosts(Request $request): JsonResponse
     {
         $query = Post::where('author_id', $request->user()->id)
-            ->with('author:id,username,display_name,avatar_url,tier,tier_badge_opacity')
+            ->with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
             ->with('community:id,name,slug');
 
         if ($type = $request->query('type')) {
@@ -102,7 +102,7 @@ class FeedController extends Controller
             default    => 'like_count',
         };
 
-        $posts = Post::with('author:id,username,display_name,avatar_url,tier,tier_badge_opacity')
+        $posts = Post::with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
             ->with('community:id,name,slug')
             ->orderByDesc($column)
             ->latest()
@@ -173,7 +173,7 @@ class FeedController extends Controller
             ...$linkData,
         ]);
 
-        $post->load('author:id,username,display_name,avatar_url,tier,tier_badge_opacity');
+        $post->load('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity');
 
         $this->matomo->trackEvent($request->user()->id, 'community', 'post_created', $communityId);
 
@@ -216,7 +216,7 @@ class FeedController extends Controller
         ]);
 
         $post->increment('comment_count');
-        $comment->load('author:id,username,display_name,avatar_url,tier,tier_badge_opacity');
+        $comment->load('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity');
 
         return response()->json(['comment' => $comment], 201);
     }
@@ -224,7 +224,7 @@ class FeedController extends Controller
     public function comments(string $postId): JsonResponse
     {
         $comments = Comment::where('post_id', $postId)
-            ->with('author:id,username,display_name,avatar_url,tier,tier_badge_opacity')
+            ->with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
             ->oldest()
             ->get();
 
