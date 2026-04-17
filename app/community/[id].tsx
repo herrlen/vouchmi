@@ -339,7 +339,7 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
             if (url) Linking.openURL(url);
           }}
         >
-          <Text style={s.recoBtnText}>Reco</Text>
+          <Text style={s.recoBtnText}>Empfehlung</Text>
         </Pressable>
       )}
     </View>
@@ -385,8 +385,8 @@ const s = StyleSheet.create({
   cardTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "800", flex: 1, lineHeight: 22 },
   cardPrice: { color: "#F59E0B", fontSize: 16, fontWeight: "800" },
   cardDesc: { color: "#CBD5E1", fontSize: 14, lineHeight: 20, paddingHorizontal: 16, paddingTop: 6, fontStyle: "italic" },
-  recoBtn: { backgroundColor: "#F59E0B", alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, marginLeft: 16, marginBottom: 14, marginTop: 4, minHeight: 32, justifyContent: "center" },
-  recoBtnText: { color: "#1A1D2E", fontSize: 13, fontWeight: "800" },
+  recoBtn: { backgroundColor: "#F59E0B", marginHorizontal: 16, marginBottom: 16, marginTop: 4, paddingVertical: 12, borderRadius: 14, alignItems: "center", minHeight: 44, justifyContent: "center" },
+  recoBtnText: { color: "#1A1D2E", fontSize: 14, fontWeight: "800" },
   modBtn: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "flex-end" },
   modDots: { color: "#64748B", fontSize: 20, lineHeight: 20 },
   muteBanner: { backgroundColor: "#EF444420", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: colors.border },
