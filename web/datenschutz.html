@@ -3,200 +3,606 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Datenschutzerklärung von Vouchmi gemäß DSGVO.">
-<meta name="theme-color" content="#1A1D2E">
-<title>Datenschutz — Vouchmi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231A1D2E%22/><text x=%2250%22 y=%2270%22 font-family=%22Arial%22 font-size=%2260%22 font-weight=%22800%22 fill=%22%23F59E0B%22 text-anchor=%22middle%22>V</text></svg>">
+<title>Datenschutzerklärung — Vouchmi</title>
+<meta name="description" content="Datenschutzerklärung von Vouchmi — welche Daten wir sammeln, warum, und welche Rechte du hast.">
+<meta name="robots" content="index, follow">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-deep: #1A1D2E;
+    --brand-primary: #F59E0B;
+    --brand-accent: #4F46E5;
+    --brand-surface: #F8F7F4;
+    --brand-surface-warm: #FFF8ED;
+    --brand-muted: #94A3B8;
+    --brand-text: #1E293B;
+    --brand-text-soft: #475569;
+    --brand-success: #10B981;
+    --brand-border: #E2E8F0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 100px; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--brand-surface);
+    color: var(--brand-text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .site-header {
+    background: var(--brand-deep);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 20px 40px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .site-header-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--brand-primary);
+    color: var(--brand-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+  }
+  .logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+  }
+  .logo-text .mi { opacity: 0.55; }
+  .site-nav a {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .site-nav a:hover { color: white; }
+
+  .hero {
+    background: var(--brand-deep);
+    color: white;
+    padding: 80px 40px 100px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -150px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-label {
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--brand-success);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 56px;
+    font-weight: 400;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .hero p {
+    font-size: 18px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 300;
+    max-width: 650px;
+  }
+  .hero-meta {
+    margin-top: 32px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+  }
+  .hero-meta strong { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+  .content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 60px;
+  }
+
+  .toc {
+    position: sticky;
+    top: 100px;
+    align-self: start;
+    padding: 28px 0;
+  }
+  .toc-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--brand-muted);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc li { counter-increment: toc; margin-bottom: 2px; }
+  .toc a {
+    display: block;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--brand-text-soft);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: 12px;
+    margin-left: -12px;
+    transition: all 0.15s;
+  }
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero) '.';
+    color: var(--brand-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    margin-right: 8px;
+    font-size: 11px;
+  }
+  .toc a:hover { color: var(--brand-deep); border-left-color: var(--brand-primary); }
+
+  .main { max-width: 720px; }
+
+  .disclaimer {
+    background: var(--brand-surface-warm);
+    border-left: 3px solid var(--brand-primary);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 48px;
+    font-size: 14px;
+    color: var(--brand-text-soft);
+  }
+  .disclaimer strong { color: var(--brand-deep); font-weight: 700; }
+
+  section { margin-bottom: 56px; scroll-margin-top: 100px; }
+  section h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--brand-deep);
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+  section .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--brand-primary);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+  section h3 { font-size: 17px; font-weight: 700; color: var(--brand-deep); margin-top: 28px; margin-bottom: 10px; }
+  section h4 { font-size: 14px; font-weight: 700; color: var(--brand-deep); margin-top: 20px; margin-bottom: 6px; }
+  section p { margin-bottom: 14px; color: var(--brand-text-soft); }
+  section p:last-child { margin-bottom: 0; }
+  section ul { margin: 10px 0 14px 20px; color: var(--brand-text-soft); }
+  section li { margin-bottom: 6px; }
+  section li::marker { color: var(--brand-primary); }
+  section a { color: var(--brand-accent); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+  section a:hover { color: var(--brand-deep); }
+  section strong { color: var(--brand-deep); font-weight: 600; }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--brand-border);
+  }
+  .data-table th {
+    background: var(--brand-deep);
+    color: white;
+    text-align: left;
+    padding: 14px 18px;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .data-table td {
+    padding: 14px 18px;
+    border-top: 1px solid var(--brand-border);
+    vertical-align: top;
+    color: var(--brand-text-soft);
+  }
+  .data-table td:first-child { font-weight: 600; color: var(--brand-deep); width: 30%; }
+
+  .info-box {
+    background: white;
+    border: 1px solid var(--brand-border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .info-box.success { background: #ECFDF5; border-color: #A7F3D0; }
+  .info-box h4 { margin-top: 0; margin-bottom: 8px; font-size: 14px; color: var(--brand-deep); }
+  .info-box.success h4 { color: #065F46; }
+  .info-box p { color: var(--brand-text-soft); font-size: 14px; }
+  .info-box.success p { color: #065F46; }
+
+  .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(79,70,229,0.1);
+    color: var(--brand-accent);
+    border-radius: 4px;
+    font-weight: 500;
+    margin: 0 2px;
+  }
+
+  .site-footer {
+    background: var(--brand-deep);
+    color: rgba(255,255,255,0.5);
+    padding: 48px 40px;
+    text-align: center;
+    font-size: 13px;
+    margin-top: 80px;
+  }
+  .site-footer a { color: rgba(255,255,255,0.7); text-decoration: none; margin: 0 12px; }
+  .site-footer a:hover { color: white; }
+
+  .placeholder {
+    background: #FEF3C7;
+    color: #92400E;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    font-weight: 500;
+  }
+
+  @media (max-width: 900px) {
+    .content { grid-template-columns: 1fr; gap: 24px; padding: 24px; }
+    .toc { position: static; padding: 16px 0; border-bottom: 1px solid var(--brand-border); margin-bottom: 24px; }
+    .hero { padding: 48px 24px 60px; }
+    .hero h1 { font-size: 36px; }
+    section h2 { font-size: 26px; }
+    .data-table { font-size: 13px; }
+    .data-table td, .data-table th { padding: 10px 12px; }
+  }
+</style>
 </head>
 <body>
 
-<nav class="nav">
-  <div class="container nav-inner">
-    <a href="index.html" class="nav-logo">
-      <span class="nav-logo-mark">V</span>
-      <span>Vouch<span class="mi">mi</span></span>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a href="/" class="logo-link">
+      <div class="logo-mark">V</div>
+      <div class="logo-text">Vouch<span class="mi">mi</span></div>
     </a>
-    <div class="nav-links">
-      <a href="index.html#benefits" data-i18n="nav.benefits">Benefits</a>
-      <a href="index.html#features" data-i18n="nav.features">Features</a>
-      <a href="index.html#pricing" data-i18n="nav.pricing">Preise</a>
-      <a href="index.html#press" data-i18n="nav.press">Presse</a>
-      <a href="kontakt.html" data-i18n="nav.contact">Kontakt</a>
-    </div>
-    <div class="nav-actions">
-      <div class="lang-switch">
-        <button data-lang-btn="de" class="active">DE</button>
-        <button data-lang-btn="en">EN</button>
-      </div>
-      <a href="index.html#download" class="btn btn-dark" data-i18n="nav.download">App laden</a>
-      <button class="nav-mobile-toggle" aria-label="Menu">☰</button>
+    <nav class="site-nav">
+      <a href="/">Zurück zur Startseite</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Privacy First</div>
+    <h1>Datenschutzerklärung</h1>
+    <p>Wir erheben nur, was wir brauchen — und sagen dir transparent, was damit passiert. Keine Bots. Keine Drittanbieter-Werbung. Kein Weiterverkauf. Punkt.</p>
+    <div class="hero-meta">
+      <div><strong>Version:</strong> 1.0</div>
+      <div><strong>Stand:</strong> <span class="placeholder">17. April 2026</span></div>
+      <div><strong>Gilt für:</strong> vouchmi.com &amp; Vouchmi iOS/Android-App</div>
     </div>
   </div>
-</nav>
+</section>
 
-<main class="legal-page">
-  <div class="container">
-    <div class="legal-content">
-      <h1>Datenschutzerklärung</h1>
-      <p class="legal-meta">Stand: April 2026 — gemäß DSGVO und BDSG</p>
+<div class="content">
 
-      <h2>1. Verantwortlicher</h2>
-      <p>
-        Verantwortlich für die Datenverarbeitung auf dieser Website ist:<br>
-        Vouchmi GmbH, Beispielstraße 1, 20095 Hamburg<br>
-        E-Mail: <a href="mailto:datenschutz@vouchmi.com">datenschutz@vouchmi.com</a>
-      </p>
+<aside class="toc">
+  <div class="toc-label">Inhalt</div>
+  <ol>
+    <li><a href="#verantwortlicher">Verantwortlicher</a></li>
+    <li><a href="#grundsaetze">Grundsätze</a></li>
+    <li><a href="#datenarten">Datenarten &amp; Zwecke</a></li>
+    <li><a href="#rechtsgrundlagen">Rechtsgrundlagen</a></li>
+    <li><a href="#whatsapp">WhatsApp-Verifizierung</a></li>
+    <li><a href="#paypal">PayPal (Brand-Abo)</a></li>
+    <li><a href="#affiliate">Affiliate-Links</a></li>
+    <li><a href="#apple">Apple &amp; Google Stores</a></li>
+    <li><a href="#hosting">Hosting</a></li>
+    <li><a href="#speicherdauer">Speicherdauer</a></li>
+    <li><a href="#empfaenger">Empfänger</a></li>
+    <li><a href="#drittland">Drittland-Übermittlung</a></li>
+    <li><a href="#rechte">Deine Rechte</a></li>
+    <li><a href="#kontakt">Kontakt &amp; Beschwerde</a></li>
+    <li><a href="#aenderungen">Änderungen</a></li>
+  </ol>
+</aside>
 
-      <h2>2. Erhebung allgemeiner Informationen</h2>
-      <p>
-        Beim Besuch unserer Website erfasst unser Webserver automatisch Informationen allgemeiner Natur (Browsertyp, verwendetes Betriebssystem, Domainname, IP-Adresse, Datum und Uhrzeit des Zugriffs). Diese Daten werden ausschließlich zur Sicherstellung eines störungsfreien Betriebs unserer Website sowie zur Verbesserung unseres Angebots ausgewertet.
-      </p>
-      <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).</p>
+<main class="main">
 
-      <h2>3. Cookies</h2>
-      <p>
-        Unsere Website nutzt nur technisch notwendige Cookies sowie — nach deiner Einwilligung — optionale Analyse-Cookies. Du kannst deine Einwilligung jederzeit über das Cookie-Banner anpassen.
-      </p>
-      <h3>Essenzielle Cookies</h3>
-      <p>Diese Cookies sind für den Betrieb der Website notwendig (z.B. Speicherung deiner Spracheinstellung).</p>
-      <h3>Optionale Cookies (mit Einwilligung)</h3>
-      <p>Wir nutzen optional Analyse-Tools, um die Nutzung unserer Website besser zu verstehen. Diese werden nur nach deiner ausdrücklichen Einwilligung gesetzt.</p>
-
-      <h2>4. Kontaktformular</h2>
-      <p>
-        Wenn du uns über das Kontaktformular eine Nachricht zusendest, werden deine Angaben aus dem Anfrageformular inklusive der von dir dort angegebenen Kontaktdaten zwecks Bearbeitung der Anfrage und für den Fall von Anschlussfragen bei uns gespeichert.
-      </p>
-      <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragsanbahnung) bzw. Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).</p>
-      <p>Speicherdauer: Wir speichern deine Anfrage so lange, wie es zur Bearbeitung erforderlich ist, längstens jedoch 12 Monate.</p>
-
-      <h2>5. Newsletter</h2>
-      <p>
-        Wenn du den Newsletter abonnierst, verarbeiten wir deine E-Mail-Adresse zum Zweck des Versands. Die Anmeldung erfolgt im Double-Opt-In-Verfahren — du erhältst eine Bestätigungsmail mit einem Link, den du klicken musst, um die Anmeldung zu bestätigen.
-      </p>
-      <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Eine Abmeldung ist jederzeit über den Link am Ende jeder Newsletter-Mail oder per E-Mail möglich.</p>
-
-      <h2>6. Hosting</h2>
-      <p>
-        Unsere Website und App werden bei Mittwald (Mittwald CM Service GmbH &amp; Co. KG, Königsberger Straße 4-6, 32339 Espelkamp) gehostet. Server stehen in Deutschland. Mit dem Hoster wurde ein Auftragsverarbeitungsvertrag (AVV) gemäß Art. 28 DSGVO geschlossen.
-      </p>
-
-      <h2>6a. Vouchmi App — Datenverarbeitung</h2>
-      <p>Bei Nutzung der Vouchmi App verarbeiten wir folgende Daten:</p>
-      <h3>Registrierung &amp; Account</h3>
-      <ul>
-        <li><strong>Name, E-Mail, Passwort:</strong> Für die Account-Erstellung (alle Nutzer). Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.</li>
-        <li><strong>Telefonnummer:</strong> Nur bei Influencern, für die Zwei-Faktor-Authentifizierung via WhatsApp. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.</li>
-        <li><strong>Firmenname, PayPal-E-Mail:</strong> Nur bei Brands, für die Abo-Verwaltung. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.</li>
-      </ul>
-      <h3>Nutzung der App</h3>
-      <ul>
-        <li><strong>Empfehlungen, Kommentare, Profilbilder:</strong> Von dir erstellte Inhalte. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.</li>
-        <li><strong>Likes, Follows, Saves, Community-Beitritte:</strong> Für Feed-Sortierung und Personalisierung. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</li>
-        <li><strong>Klick-Tracking auf Empfehlungslinks:</strong> UTM-Parameter für Marken-Attribution. Es werden keine persönlichen Daten an Dritte übermittelt. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</li>
-        <li><strong>Push-Notifications (Device-Token):</strong> Für Benachrichtigungen über neue Empfehlungen und Tier-Aufstiege. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).</li>
-      </ul>
-      <h3>Was wir NICHT tun</h3>
-      <ul>
-        <li>Kein App-Tracking-Transparency (ATT) — kein Cross-App-Tracking</li>
-        <li>Keine Weitergabe persönlicher Daten an Dritte</li>
-        <li>Kein Zugriff auf Standort, Kontakte oder Browsing-History</li>
-        <li>Kein Fingerprinting oder Device-Fingerprinting</li>
-      </ul>
-      <h3>Datenexport &amp; Löschung</h3>
-      <p>Du kannst jederzeit einen Export aller deiner Daten anfordern oder deinen Account vollständig löschen. Details findest du auf unserer <a href="datenschutz-kontrolle.html">Datenschutz-Kontrollseite</a>.</p>
-
-      <h2>7. Google Fonts</h2>
-      <p>
-        Diese Website lädt Schriften von Google Fonts (Google Ireland Limited). Beim Aufruf einer Seite werden die Schriften von Google-Servern geladen, wobei deine IP-Adresse an Google übertragen wird.
-      </p>
-      <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer einheitlichen Darstellung).</p>
-      <p>Hinweis: Falls gewünscht, können Google Fonts auch lokal gehostet werden, um die Übertragung an Google zu vermeiden.</p>
-
-      <h2>8. Deine Rechte</h2>
-      <p>Du hast als betroffene Person folgende Rechte:</p>
-      <ul>
-        <li><strong>Recht auf Auskunft</strong> über die zu deiner Person gespeicherten Daten (Art. 15 DSGVO)</li>
-        <li><strong>Recht auf Berichtigung</strong> unrichtiger Daten (Art. 16 DSGVO)</li>
-        <li><strong>Recht auf Löschung</strong> (Art. 17 DSGVO)</li>
-        <li><strong>Recht auf Einschränkung</strong> der Verarbeitung (Art. 18 DSGVO)</li>
-        <li><strong>Recht auf Datenübertragbarkeit</strong> (Art. 20 DSGVO) — <a href="datenschutz-kontrolle.html">Daten exportieren</a></li>
-        <li><strong>Widerspruchsrecht</strong> (Art. 21 DSGVO)</li>
-        <li><strong>Recht auf Widerruf</strong> einer Einwilligung (Art. 7 Abs. 3 DSGVO)</li>
-        <li><strong>Beschwerderecht bei einer Aufsichtsbehörde</strong> (Art. 77 DSGVO)</li>
-      </ul>
-
-      <h2>9. SSL-Verschlüsselung</h2>
-      <p>
-        Diese Seite nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher Inhalte eine SSL-Verschlüsselung. Eine verschlüsselte Verbindung erkennst du daran, dass die Adresszeile des Browsers von „http://" auf „https://" wechselt und am Schloss-Symbol in deiner Browserzeile.
-      </p>
-
-      <h2>10. Änderungen dieser Datenschutzerklärung</h2>
-      <p>
-        Wir behalten uns vor, diese Datenschutzerklärung anzupassen, damit sie stets den aktuellen rechtlichen Anforderungen entspricht oder um Änderungen unserer Leistungen umzusetzen.
-      </p>
-
-      <p style="margin-top: 40px; padding: 20px; background: #FFF8ED; border-radius: 12px; font-size: 13px; color: var(--brand-muted);">
-        ⚠️ <strong>Platzhalter-Text:</strong> Diese Datenschutzerklärung ist eine Vorlage und muss an deine konkrete Datenverarbeitung angepasst werden. Bei Verarbeitung weiterer Dienste (z.B. Mailchimp, Meta Ads, Analytics-Tools) müssen diese ergänzt werden. Empfehlung: Generator von <a href="https://www.e-recht24.de/datenschutzerklaerung-generator.html" target="_blank" rel="noopener">eRecht24</a> oder anwaltliche Prüfung.
-      </p>
-    </div>
-  </div>
-</main>
-
-<footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div>
-        <div class="footer-brand">
-          <span class="nav-logo-mark">V</span>
-          <span>Vouch<span class="mi">mi</span></span>
-        </div>
-        <p class="footer-tagline" data-i18n="footer.tagline">Community-Empfehlungsmarketing.</p>
-      </div>
-      <div class="footer-col">
-        <h4 data-i18n="footer.product">Produkt</h4>
-        <ul>
-          <li><a href="index.html#benefits" data-i18n="footer.product.benefits">Benefits</a></li>
-          <li><a href="index.html#features" data-i18n="footer.product.features">Features</a></li>
-          <li><a href="index.html#pricing" data-i18n="footer.product.pricing">Preise</a></li>
-          <li><a href="index.html#download" data-i18n="footer.product.download">Download</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4 data-i18n="footer.company">Unternehmen</h4>
-        <ul>
-          <li><a href="presse.html" data-i18n="footer.company.press">Presse</a></li>
-          <li><a href="kontakt.html" data-i18n="footer.company.contact">Kontakt</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4 data-i18n="footer.legal">Rechtliches</h4>
-        <ul>
-          <li><a href="impressum.html" data-i18n="footer.legal.imprint">Impressum</a></li>
-          <li><a href="datenschutz.html" data-i18n="footer.legal.privacy">Datenschutz</a></li>
-          <li><a href="agb.html" data-i18n="footer.legal.terms">AGB</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span data-i18n="footer.copyright">© 2026 Vouchmi. Alle Rechte vorbehalten.</span>
-      <span data-i18n="footer.made">Made in Hamburg</span>
-    </div>
-  </div>
-</footer>
-
-<div class="cookie-banner">
-  <h4 data-i18n="cookie.title">Cookies</h4>
-  <p data-i18n="cookie.body">Wir nutzen nur essenzielle Cookies.</p>
-  <div class="cookie-banner-actions">
-    <button class="cookie-decline" data-i18n="cookie.decline">Nur essenziell</button>
-    <button class="cookie-accept" data-i18n="cookie.accept">Alle akzeptieren</button>
-  </div>
+<div class="disclaimer">
+  <strong>Hinweis:</strong> Diese Datenschutzerklärung wurde mit Sorgfalt erstellt und an die aktuellen Features von Vouchmi angepasst. Sie ersetzt keine anwaltliche Beratung. Bei rechtlichen Fragen wende dich bitte an die unter Punkt 14 genannten Kontakte.
 </div>
 
-<script src="assets/js/main.js"></script>
+<section id="verantwortlicher">
+  <span class="section-number">01 / 15</span>
+  <h2>Verantwortlicher</h2>
+  <p>Verantwortlich für die Datenverarbeitung im Sinne von Art. 4 Nr. 7 DSGVO ist:</p>
+  <div class="info-box">
+    <p>
+      <span class="placeholder">[Vor- und Nachname / Firmierung]</span><br>
+      <span class="placeholder">[Straße und Hausnummer]</span><br>
+      <span class="placeholder">[PLZ und Ort]</span><br>
+      Deutschland<br><br>
+      <strong>E-Mail:</strong> <a href="mailto:hallo@vouchmi.com">hallo@vouchmi.com</a><br>
+      <strong>Datenschutz-Anfragen:</strong> <a href="mailto:datenschutz@vouchmi.com">datenschutz@vouchmi.com</a>
+    </p>
+  </div>
+  <p>Ein Datenschutzbeauftragter ist gesetzlich nicht erforderlich.</p>
+</section>
+
+<section id="grundsaetze">
+  <span class="section-number">02 / 15</span>
+  <h2>Unsere Grundsätze</h2>
+  <p>Vouchmi ist als Community-Plattform konzipiert, in der echte Menschen echte Produkte empfehlen. Unser Umgang mit deinen Daten folgt vier Prinzipien:</p>
+  <ul>
+    <li><strong>Datenminimierung:</strong> Wir erheben nur, was zur Funktion der App notwendig ist.</li>
+    <li><strong>Kein Tracking:</strong> Wir setzen keine Tracking-Pixel, keine Werbe-IDs, keine Cross-App-Tracker.</li>
+    <li><strong>Kein Datenverkauf:</strong> Wir teilen deine Daten niemals mit Data Brokern oder Werbenetzwerken.</li>
+    <li><strong>Transparenz:</strong> Diese Erklärung listet vollständig auf, was wir sammeln und warum.</li>
+  </ul>
+  <div class="info-box success">
+    <h4>Kein AppTrackingTransparency-Dialog</h4>
+    <p>Weil wir kein Tracking im Sinne von Apple betreiben, erscheint in der App kein „App möchte dich über andere Apps hinweg verfolgen"-Dialog.</p>
+  </div>
+</section>
+
+<section id="datenarten">
+  <span class="section-number">03 / 15</span>
+  <h2>Welche Daten wir verarbeiten &amp; wofür</h2>
+  <p>Die folgende Übersicht entspricht 1:1 dem Privacy-Label, das wir im Apple App Store und Google Play Store ausgeben.</p>
+
+  <h3>Registrierung &amp; Account</h3>
+  <table class="data-table">
+    <thead><tr><th>Datum</th><th>Zweck &amp; Rolle</th></tr></thead>
+    <tbody>
+      <tr><td>Name</td><td>Anzeige in deinem Profil und bei Empfehlungen (User, Influencer, Brand)</td></tr>
+      <tr><td>E-Mail-Adresse</td><td>Login, Account-Verifizierung, wichtige Service-Nachrichten (alle Rollen)</td></tr>
+      <tr><td>Passwort</td><td>Authentifizierung. Wir speichern nur einen Hash (bcrypt), nie im Klartext.</td></tr>
+      <tr><td>Telefonnummer</td><td>Zwei-Faktor-Verifizierung per WhatsApp (nur Influencer)</td></tr>
+      <tr><td>Firmenname</td><td>Anzeige des Unternehmens-Profils (nur Brand)</td></tr>
+      <tr><td>PayPal-E-Mail</td><td>Zuordnung des Brand-Abos zum Account (nur Brand)</td></tr>
+      <tr><td>User-UUID</td><td>Interne eindeutige Zuordnung aller zum Account gehörenden Inhalte</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Community-Inhalte</h3>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Empfehlungstexte</td><td>Produkttipps, Quotes, Kommentare, die du aktiv postest</td></tr>
+      <tr><td>Fotos (optional)</td><td>Profilbild und Produktbilder, falls du welche hochlädst</td></tr>
+      <tr><td>Community-Mitgliedschaften</td><td>Welchen Communities du beigetreten bist</td></tr>
+      <tr><td>Follow-Beziehungen</td><td>Wem du folgst und wer dir folgt</td></tr>
+      <tr><td>Gespeicherte Tipps</td><td>Deine persönliche Bookmark-Liste (nur für dich sichtbar)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Nutzungsdaten</h3>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Interaktionen</td><td>Likes, Saves, Community-Beitritte — für Feed-Sortierung &amp; persönliche Empfehlungen</td></tr>
+      <tr><td>Abo-Status (Brand)</td><td>Ob dein Brand-Abo aktiv, pausiert oder gekündigt ist</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Technische Daten</h3>
+  <table class="data-table">
+    <tbody>
+      <tr><td>Crash-Protokolle</td><td>Anonyme Absturzberichte zur Fehlerbehebung. Keine User-ID enthalten.</td></tr>
+      <tr><td>Performance-Daten</td><td>Anonyme Messwerte zu Ladezeiten &amp; Stabilität</td></tr>
+      <tr><td>IP-Adresse</td><td>Temporär in Server-Logs zur Missbrauchsabwehr. Nach 7 Tagen gelöscht.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <h4>Was wir <em>nicht</em> erheben</h4>
+    <p>Keine Standortdaten, keine Kontaktlisten, keine Gesundheitsdaten, keine biometrischen Daten, keine Browsing-Historie außerhalb der App, keine Werbe-Identifier, keine Suchhistorie.</p>
+  </div>
+</section>
+
+<section id="rechtsgrundlagen">
+  <span class="section-number">04 / 15</span>
+  <h2>Rechtsgrundlagen</h2>
+  <p>Jede Verarbeitung stützt sich auf eine konkrete Rechtsgrundlage nach Art. 6 DSGVO:</p>
+  <ul>
+    <li><span class="tag">Art. 6 Abs. 1 lit. b</span> <strong>Vertragserfüllung:</strong> Account-Verwaltung, Registrierung, Bereitstellung der Kern-Features, Brand-Abo-Abwicklung</li>
+    <li><span class="tag">Art. 6 Abs. 1 lit. a</span> <strong>Einwilligung:</strong> Optionale Features (z.B. Push-Benachrichtigungen, Marketing-Mails)</li>
+    <li><span class="tag">Art. 6 Abs. 1 lit. f</span> <strong>Berechtigtes Interesse:</strong> IT-Sicherheit, Missbrauchsabwehr, anonyme Crash-Logs, Fraud-Prävention</li>
+    <li><span class="tag">Art. 6 Abs. 1 lit. c</span> <strong>Rechtliche Verpflichtung:</strong> Steuerrechtliche Aufbewahrung von Rechnungsdaten (Brand-Abos) nach §147 AO</li>
+  </ul>
+</section>
+
+<section id="whatsapp">
+  <span class="section-number">05 / 15</span>
+  <h2>Zwei-Faktor-Verifizierung per WhatsApp</h2>
+  <p>Influencer-Accounts werden aus Sicherheitsgründen zusätzlich per WhatsApp verifiziert. Dabei:</p>
+  <ul>
+    <li>Übermittelst du bei der Registrierung freiwillig deine Telefonnummer.</li>
+    <li>Wir generieren einen 6-stelligen Einmalcode, dessen Hash wir kurzzeitig (5 Min.) speichern.</li>
+    <li>Wir senden die Nachricht über die <strong>WhatsApp Business Cloud API</strong> von <strong>Meta Platforms Ireland Limited</strong>, 4 Grand Canal Square, Grand Canal Harbour, Dublin 2, Irland.</li>
+    <li>Meta verarbeitet dabei deine Telefonnummer und den Nachrichteninhalt. Details: <a href="https://www.whatsapp.com/legal/business-privacy-policy" target="_blank" rel="noopener">WhatsApp Business Privacy Policy</a>.</li>
+  </ul>
+  <p>Rechtsgrundlage: <span class="tag">Art. 6 Abs. 1 lit. b DSGVO</span> in Verbindung mit <span class="tag">Art. 6 Abs. 1 lit. f DSGVO</span> (berechtigtes Interesse an Account-Sicherheit).</p>
+</section>
+
+<section id="paypal">
+  <span class="section-number">06 / 15</span>
+  <h2>PayPal-Zahlungen (Brand-Abo)</h2>
+  <p>Brand-Accounts zahlen 0,99 €/Monat per PayPal. Die Zahlungsabwicklung erfolgt vollständig bei:</p>
+  <div class="info-box">
+    <p><strong>PayPal (Europe) S.à r.l. et Cie, S.C.A.</strong><br>22-24 Boulevard Royal, L-2449 Luxembourg<br>Datenschutzerklärung: <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener">paypal.com/de/privacy</a></p>
+  </div>
+  <ul>
+    <li>Wir <strong>speichern keine Zahlungsdaten</strong> (keine Kreditkartennummern, keine Bankverbindungen).</li>
+    <li>Wir speichern ausschließlich deine PayPal-E-Mail sowie die PayPal-Abo-ID.</li>
+    <li>Der Status deines Abos wird via PayPal-Webhook an uns zurückgemeldet.</li>
+  </ul>
+  <p>Rechtsgrundlage: <span class="tag">Art. 6 Abs. 1 lit. b DSGVO</span> in Verbindung mit <span class="tag">Art. 6 Abs. 1 lit. c DSGVO</span>.</p>
+</section>
+
+<section id="affiliate">
+  <span class="section-number">07 / 15</span>
+  <h2>Externe Produkt-Links (Affiliate)</h2>
+  <p>Empfehlungen in Vouchmi verweisen häufig auf externe Shops. Wenn du auf einen solchen Link tippst:</p>
+  <ul>
+    <li>Öffnet sich der Link extern in deinem Browser oder der jeweiligen Shop-App.</li>
+    <li>An den Link wird ein Affiliate-Identifier von Vouchmi angehängt, der <strong>Vouchmi als Empfehler</strong> identifiziert, nicht dich als User.</li>
+    <li>Sobald du die Vouchmi-App verlassen hast, gelten die Datenschutzbestimmungen des jeweiligen Shops.</li>
+  </ul>
+  <p>Rechtsgrundlage: <span class="tag">Art. 6 Abs. 1 lit. f DSGVO</span> (berechtigtes Interesse an Finanzierung der Plattform).</p>
+</section>
+
+<section id="apple">
+  <span class="section-number">08 / 15</span>
+  <h2>Apple App Store &amp; Google Play Store</h2>
+  <p>Beim Download und der Nutzung der App erhalten Apple bzw. Google eigenständig bestimmte Daten. Wir haben darauf keinen Einfluss.</p>
+  <ul>
+    <li><strong>Apple:</strong> <a href="https://www.apple.com/legal/privacy/de-ww/" target="_blank" rel="noopener">apple.com/legal/privacy</a></li>
+    <li><strong>Google:</strong> <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a></li>
+  </ul>
+</section>
+
+<section id="hosting">
+  <span class="section-number">09 / 15</span>
+  <h2>Hosting &amp; technische Infrastruktur</h2>
+  <p>Die Vouchmi-Backend-Server sowie die Website werden gehostet bei:</p>
+  <div class="info-box">
+    <p><strong>Mittwald CM Service GmbH &amp; Co. KG</strong><br>Königsberger Straße 4-6, 32339 Espelkamp<br>Deutschland<br>Rechenzentrum-Standort: Deutschland<br>Datenschutzerklärung: <a href="https://www.mittwald.de/datenschutz" target="_blank" rel="noopener">mittwald.de/datenschutz</a></p>
+  </div>
+  <p>Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO. Alle User-Daten bleiben in Deutschland.</p>
+</section>
+
+<section id="speicherdauer">
+  <span class="section-number">10 / 15</span>
+  <h2>Wie lange wir Daten speichern</h2>
+  <table class="data-table">
+    <thead><tr><th>Datenart</th><th>Speicherdauer</th></tr></thead>
+    <tbody>
+      <tr><td>Account-Daten</td><td>Solange dein Account aktiv ist</td></tr>
+      <tr><td>Nach Account-Löschung</td><td>30 Tage Kulanz-Frist, dann vollständige Löschung</td></tr>
+      <tr><td>Empfehlungen &amp; Inhalte</td><td>Bis zur Löschung durch dich oder bei Account-Löschung</td></tr>
+      <tr><td>OTP-Codes</td><td>5 Minuten, dann automatische Löschung</td></tr>
+      <tr><td>PayPal-Rechnungsdaten</td><td>10 Jahre nach §147 AO</td></tr>
+      <tr><td>Server-Log-IP-Adressen</td><td>7 Tage</td></tr>
+      <tr><td>Crash- &amp; Performance-Logs</td><td>90 Tage, anonym</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="empfaenger">
+  <span class="section-number">11 / 15</span>
+  <h2>Empfänger deiner Daten</h2>
+  <ul>
+    <li><strong>Hosting-Anbieter</strong> (Mittwald CM Service) — technische Infrastruktur</li>
+    <li><strong>Meta Platforms Ireland Ltd.</strong> — WhatsApp-2FA (nur Influencer)</li>
+    <li><strong>PayPal (Europe) S.à r.l.</strong> — Zahlungsabwicklung (nur Brands)</li>
+    <li><strong>Apple Inc. / Google LLC</strong> — App-Store-Distribution</li>
+  </ul>
+  <p><strong>Wir verkaufen deine Daten nicht.</strong> Wir geben sie nicht an Werbetreibende, Data Broker oder Analytik-Dienstleister weiter.</p>
+</section>
+
+<section id="drittland">
+  <span class="section-number">12 / 15</span>
+  <h2>Übermittlung in Drittländer</h2>
+  <p>Die Kerninfrastruktur läuft innerhalb der EU. Bei Meta, Apple und Google kann es zu US-Verarbeitung kommen — alle sind unter dem <a href="https://www.dataprivacyframework.gov/" target="_blank" rel="noopener">EU-US Data Privacy Framework</a> zertifiziert (Art. 45 DSGVO).</p>
+</section>
+
+<section id="rechte">
+  <span class="section-number">13 / 15</span>
+  <h2>Deine Rechte</h2>
+  <h4>Auskunft — Art. 15 DSGVO</h4>
+  <p>Du kannst jederzeit erfahren, welche Daten wir über dich gespeichert haben.</p>
+  <h4>Berichtigung — Art. 16 DSGVO</h4>
+  <p>Du kannst falsche Daten korrigieren lassen — die meisten direkt in der App.</p>
+  <h4>Löschung — Art. 17 DSGVO</h4>
+  <p>Du kannst deinen Account jederzeit in der App (Einstellungen → Konto löschen) löschen. Nach 30 Tagen werden alle Daten unwiderruflich entfernt.</p>
+  <h4>Datenübertragbarkeit — Art. 20 DSGVO</h4>
+  <p>Du kannst deine Daten als ZIP-Export abrufen — in der App oder auf unserer <a href="datenschutz-kontrolle.html">Datenschutz-Kontrollseite</a>.</p>
+  <h4>Widerspruch — Art. 21 DSGVO</h4>
+  <p>Gegen Verarbeitungen auf Grundlage berechtigter Interessen kannst du Widerspruch einlegen.</p>
+  <h4>Widerruf — Art. 7 Abs. 3 DSGVO</h4>
+  <p>Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen.</p>
+</section>
+
+<section id="kontakt">
+  <span class="section-number">14 / 15</span>
+  <h2>Kontakt &amp; Beschwerderecht</h2>
+  <div class="info-box">
+    <p><strong>E-Mail:</strong> <a href="mailto:datenschutz@vouchmi.com">datenschutz@vouchmi.com</a></p>
+  </div>
+  <p>Beschwerderecht bei der zuständigen Aufsichtsbehörde:</p>
+  <div class="info-box">
+    <p><strong>Der Hamburgische Beauftragte für Datenschutz und Informationsfreiheit</strong><br>Ludwig-Erhard-Straße 22, 20459 Hamburg<br>Telefon: +49 40 428 54-4040<br><a href="https://datenschutz-hamburg.de" target="_blank" rel="noopener">datenschutz-hamburg.de</a></p>
+  </div>
+</section>
+
+<section id="aenderungen">
+  <span class="section-number">15 / 15</span>
+  <h2>Änderungen dieser Erklärung</h2>
+  <p>Wir behalten uns vor, diese Datenschutzerklärung anzupassen. Über wesentliche Änderungen informieren wir dich per E-Mail oder direkt in der App.</p>
+  <p>Die aktuelle Fassung ist immer unter <a href="https://vouchmi.com/datenschutz">vouchmi.com/datenschutz</a> abrufbar.</p>
+  <p style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--brand-border); font-size: 13px; color: var(--brand-muted);">Letzte Aktualisierung: <span class="placeholder">17. April 2026</span> · Version 1.0</p>
+</section>
+
+</main>
+</div>
+
+<footer class="site-footer">
+  <div>
+    <a href="/">Startseite</a>
+    <a href="/datenschutz">Datenschutz</a>
+    <a href="/datenschutz/kontrolle">Datenschutz-Kontrolle</a>
+    <a href="/impressum">Impressum</a>
+    <a href="/kontakt">Kontakt</a>
+  </div>
+  <div style="margin-top: 16px;">© 2026 Vouchmi · Made with ♥ in Hamburg</div>
+</footer>
+
 </body>
 </html>
