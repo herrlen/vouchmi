@@ -74,8 +74,8 @@ export default function SettingsScreen() {
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>Datenschutz</Text>
+          <Button label="Privatsphäre & Datenschutz" onPress={() => router.push("/privacy-settings")} />
           <Button label="Kontaktzugriff verwalten" onPress={() => router.push("/find-friends")} />
-          <Button label="Meine Daten herunterladen" onPress={() => Alert.alert("Datenexport", "Wir stellen deine Daten zusammen und senden sie dir per E-Mail zu. Dies kann bis zu 48 Stunden dauern.", [{ text: "Anfordern", onPress: () => Alert.alert("Angefordert", "Du erhältst eine E-Mail sobald dein Export bereit ist.") }, { text: "Abbrechen", style: "cancel" }])} />
         </View>
 
         <View style={s.section}>

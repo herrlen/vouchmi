@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ScrollView, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2 } from "lucide-react-native";
+import { Settings, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2, Shield } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { useAuth } from "../../src/lib/store";
@@ -89,6 +89,10 @@ export default function ProfileTab() {
           </Text>
           <Text style={s.handle}>@{me?.username}</Text>
         </View>
+
+        <Pressable style={s.privacyBtn} onPress={() => router.push("/privacy-settings")} hitSlop={8}>
+          <Shield color="#10B981" size={18} strokeWidth={2} />
+        </Pressable>
 
         <Pressable style={s.shareBtn} onPress={async () => {
           try { await Share.share({ message: `Schau dir mein Profil auf Vouchmi an:\nhttps://vouchmi.com/@${me?.username}` }); } catch {}
@@ -244,6 +248,7 @@ const s = StyleSheet.create({
   infoCol: { flex: 1 },
   name: { color: "#FFFFFF", fontSize: 20, fontWeight: "800", letterSpacing: -0.3 },
   handle: { color: "#64748B", fontSize: 13, marginTop: 1 },
+  privacyBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#10B98110", justifyContent: "center", alignItems: "center" },
   shareBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#6366F110", justifyContent: "center", alignItems: "center" },
   settingsBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
 
