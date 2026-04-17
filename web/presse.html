@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Pressebereich von Vouchmi — Press Kit, Brand-Statement, Fact Sheet und Pressekontakt.">
+<meta name="theme-color" content="#1A1D2E">
+<title>Presse — Vouchmi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231A1D2E%22/><text x=%2250%22 y=%2270%22 font-family=%22Arial%22 font-size=%2260%22 font-weight=%22800%22 fill=%22%23F59E0B%22 text-anchor=%22middle%22>V</text></svg>">
+<style>
+  .press-hero { padding: 160px 0 80px; background: var(--brand-deep); color: white; position: relative; overflow: hidden; }
+  .press-hero::before { content: ''; position: absolute; top: -30%; right: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 60%); border-radius: 50%; pointer-events: none; }
+  .press-hero h1 { font-family: var(--font-display); font-size: clamp(40px, 6vw, 72px); font-weight: 400; line-height: 1.05; margin-bottom: 20px; letter-spacing: -1px; position: relative; }
+  .press-hero h1 em { color: var(--brand-primary); font-style: italic; }
+  .press-hero p { font-size: 18px; color: rgba(255,255,255,0.7); max-width: 640px; line-height: 1.7; position: relative; }
+
+  .press-content { padding: 100px 0; background: var(--brand-surface); }
+  .press-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 80px; }
+  @media (max-width: 900px) { .press-row { grid-template-columns: 1fr; } }
+
+  .press-asset-card { background: white; border-radius: var(--radius-md); padding: 32px; border: 1px solid rgba(26,29,46,0.06); transition: all 0.3s ease; }
+  .press-asset-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .press-asset-icon { width: 56px; height: 56px; border-radius: 16px; background: var(--brand-deep); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; }
+  .press-asset-card h3 { font-family: var(--font-display); font-size: 22px; color: var(--brand-deep); margin-bottom: 8px; }
+  .press-asset-card p { font-size: 14px; color: var(--brand-muted); margin-bottom: 20px; line-height: 1.7; }
+
+  .fact-sheet { background: white; border-radius: var(--radius-lg); padding: 60px; border: 1px solid rgba(26,29,46,0.06); margin-bottom: 80px; }
+  @media (max-width: 768px) { .fact-sheet { padding: 32px 24px; } }
+  .fact-sheet h2 { font-family: var(--font-display); font-size: 36px; font-weight: 400; color: var(--brand-deep); margin-bottom: 32px; }
+  .fact-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
+  @media (max-width: 600px) { .fact-grid { grid-template-columns: 1fr; } }
+  .fact-item { padding: 20px 0; border-bottom: 1px solid rgba(26,29,46,0.08); }
+  .fact-item:last-child, .fact-item:nth-last-child(2) { border-bottom: none; }
+  .fact-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #B45309; margin-bottom: 6px; }
+  .fact-value { font-size: 16px; color: var(--brand-deep); font-weight: 500; }
+
+  .statement { background: var(--brand-deep); color: white; padding: 60px; border-radius: var(--radius-lg); margin-bottom: 80px; position: relative; overflow: hidden; }
+  @media (max-width: 768px) { .statement { padding: 32px 24px; } }
+  .statement::before { content: '"'; position: absolute; top: 20px; left: 40px; font-family: var(--font-display); font-size: 180px; color: var(--brand-primary); opacity: 0.2; line-height: 1; }
+  .statement blockquote { font-family: var(--font-display); font-size: clamp(22px, 3vw, 32px); font-weight: 400; line-height: 1.4; position: relative; z-index: 2; margin-bottom: 24px; }
+  .statement cite { font-size: 14px; color: var(--brand-primary); font-style: normal; position: relative; z-index: 2; }
+  .statement cite strong { display: block; font-size: 16px; color: white; font-weight: 600; margin-bottom: 4px; }
+
+  .press-contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; background: white; border-radius: var(--radius-lg); padding: 48px; border: 1px solid rgba(26,29,46,0.06); }
+  @media (max-width: 768px) { .press-contact-row { grid-template-columns: 1fr; padding: 32px 24px; } }
+  .press-contact-row h3 { font-family: var(--font-display); font-size: 26px; color: var(--brand-deep); margin-bottom: 12px; }
+  .press-contact-row p { font-size: 14px; color: var(--brand-muted); margin-bottom: 16px; }
+  .press-contact-email { font-size: 18px; font-weight: 600; color: var(--brand-accent); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-mark">V</span>
+      <span>Vouch<span class="mi">mi</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html#benefits" data-i18n="nav.benefits">Benefits</a>
+      <a href="index.html#features" data-i18n="nav.features">Features</a>
+      <a href="index.html#pricing" data-i18n="nav.pricing">Preise</a>
+      <a href="presse.html" data-i18n="nav.press">Presse</a>
+      <a href="kontakt.html" data-i18n="nav.contact">Kontakt</a>
+    </div>
+    <div class="nav-actions">
+      <div class="lang-switch">
+        <button data-lang-btn="de" class="active">DE</button>
+        <button data-lang-btn="en">EN</button>
+      </div>
+      <a href="index.html#download" class="btn btn-dark" data-i18n="nav.download">App laden</a>
+      <button class="nav-mobile-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<section class="press-hero">
+  <div class="container">
+    <div class="section-eyebrow" style="color: var(--brand-primary); margin-bottom: 20px;">Presse & Medien</div>
+    <h1>Vouchmi in <em>den Medien.</em></h1>
+    <p>Alles, was Journalist:innen, Blogger:innen und Medienvertreter:innen über Vouchmi wissen müssen — Assets, Fact Sheet, Zitate und Pressekontakt auf einen Blick.</p>
+  </div>
+</section>
+
+<section class="press-content">
+  <div class="container">
+
+    <!-- Press Assets -->
+    <div class="section-header reveal" style="text-align: left; max-width: 100%; margin-bottom: 40px;">
+      <h2 class="section-title" style="font-size: 36px;">Press <em>Kit.</em></h2>
+      <p class="section-sub">Alles zum Download — Logos, Screenshots, Brand-Assets.</p>
+    </div>
+
+    <div class="press-row">
+      <div class="press-asset-card reveal">
+        <div class="press-asset-icon">🎨</div>
+        <h3>Logos & Branding</h3>
+        <p>Vouchmi-Logo in verschiedenen Varianten (SVG, PNG). Light und Dark Mode. Brand Guidelines als PDF.</p>
+        <a href="#" class="btn btn-ghost">Logo-Paket herunterladen</a>
+      </div>
+      <div class="press-asset-card reveal">
+        <div class="press-asset-icon">📱</div>
+        <h3>App Screenshots</h3>
+        <p>Hochauflösende iPhone- und Android-Screenshots der wichtigsten App-Screens. Für Print und Online.</p>
+        <a href="#" class="btn btn-ghost">Screenshots (ZIP)</a>
+      </div>
+      <div class="press-asset-card reveal">
+        <div class="press-asset-icon">📄</div>
+        <h3>Fact Sheet & Bilder</h3>
+        <p>Kompaktes PDF mit allen wichtigen Zahlen, Fakten und Founder-Fotos für eure Recherche.</p>
+        <a href="#" class="btn btn-ghost">Fact Sheet (PDF)</a>
+      </div>
+    </div>
+
+    <!-- Fact Sheet -->
+    <div class="fact-sheet reveal">
+      <h2>Fact Sheet</h2>
+      <div class="fact-grid">
+        <div class="fact-item">
+          <div class="fact-label">Name</div>
+          <div class="fact-value">Vouchmi</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-label">Gründung</div>
+          <div class="fact-value">2025, Hamburg</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-label">Kategorie</div>
+          <div class="fact-value">Community · Empfehlungsmarketing · Social Commerce</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-label">Plattformen</div>
+          <div class="fact-value">iOS · Android · Web</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-label">Geschäftsmodell</div>
+          <div class="fact-value">Freemium — kostenlos für User & Influencer, Brand-Abo 0,99 €/Monat</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-label">Hauptsitz</div>
+          <div class="fact-value">Hamburg, Deutschland</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-label">Zielgruppe</div>
+          <div class="fact-value">User, Influencer, Brands im DACH-Raum</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-label">Website</div>
+          <div class="fact-value">vouchmi.com</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand Statement / Quote -->
+    <div class="statement reveal">
+      <blockquote>Vouchmi ist die Antwort auf eine Werbe-Welt, die den Kontakt zur Realität verloren hat. Statt gekaufter Reviews vertrauen wir echten Menschen — denn Empfehlungen funktionieren nur, wenn sie ehrlich sind.</blockquote>
+      <cite>
+        <strong>[Vor- und Nachname]</strong>
+        Gründer:in & Geschäftsführer:in, Vouchmi
+      </cite>
+    </div>
+
+    <!-- Press Contact -->
+    <div class="press-contact-row">
+      <div>
+        <h3>Pressekontakt</h3>
+        <p>Interview-Anfragen, Statements, Hintergrundgespräche. Antwort in der Regel innerhalb eines Werktags.</p>
+        <a href="mailto:presse@vouchmi.com" class="press-contact-email">presse@vouchmi.com</a>
+      </div>
+      <div>
+        <h3>Kooperation & Brand</h3>
+        <p>Für Kooperationsanfragen oder Brand-Partnerschaften nutze bitte unsere Kontaktseite oder schreib direkt an hello@vouchmi.com.</p>
+        <a href="kontakt.html" class="btn btn-primary">Zum Kontaktformular</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <span class="nav-logo-mark">V</span>
+          <span>Vouch<span class="mi">mi</span></span>
+        </div>
+        <p class="footer-tagline" data-i18n="footer.tagline">Community-Empfehlungsmarketing.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/vouchmi" aria-label="Instagram">📷</a>
+          <a href="https://tiktok.com/@vouchmi" aria-label="TikTok">🎵</a>
+          <a href="https://twitter.com/vouchmi" aria-label="X">✕</a>
+          <a href="https://linkedin.com/company/vouchmi" aria-label="LinkedIn">in</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.product">Produkt</h4>
+        <ul>
+          <li><a href="index.html#benefits" data-i18n="footer.product.benefits">Benefits</a></li>
+          <li><a href="index.html#features" data-i18n="footer.product.features">Features</a></li>
+          <li><a href="index.html#pricing" data-i18n="footer.product.pricing">Preise</a></li>
+          <li><a href="index.html#download" data-i18n="footer.product.download">Download</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.company">Unternehmen</h4>
+        <ul>
+          <li><a href="presse.html" data-i18n="footer.company.press">Presse</a></li>
+          <li><a href="kontakt.html" data-i18n="footer.company.contact">Kontakt</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.legal">Rechtliches</h4>
+        <ul>
+          <li><a href="impressum.html" data-i18n="footer.legal.imprint">Impressum</a></li>
+          <li><a href="datenschutz.html" data-i18n="footer.legal.privacy">Datenschutz</a></li>
+          <li><a href="agb.html" data-i18n="footer.legal.terms">AGB</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footer.copyright">© 2026 Vouchmi. Alle Rechte vorbehalten.</span>
+      <span data-i18n="footer.made">Made in Hamburg</span>
+    </div>
+  </div>
+</footer>
+
+<div class="cookie-banner">
+  <h4 data-i18n="cookie.title">Cookies</h4>
+  <p data-i18n="cookie.body">Wir nutzen nur essenzielle Cookies.</p>
+  <div class="cookie-banner-actions">
+    <button class="cookie-decline" data-i18n="cookie.decline">Nur essenziell</button>
+    <button class="cookie-accept" data-i18n="cookie.accept">Alle akzeptieren</button>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

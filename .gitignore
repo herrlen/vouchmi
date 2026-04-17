@@ -21,3 +21,7 @@ backend/storage/logs/*.log
 backend/database/database.sqlite
 backend/storage/app/public/avatars/*
 !backend/storage/app/public/avatars/.gitkeep
+
+# Web (Marketing-Website)
+web/newsletter_data/
+web/rate_limits/
