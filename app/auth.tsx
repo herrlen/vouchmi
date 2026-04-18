@@ -1,12 +1,13 @@
-import { useState, useMemo } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import { Check, Eye, EyeOff, Mail, Lock, User as UserIcon } from "lucide-react-native";
+import { useState, useMemo, useEffect } from "react";
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Check, Eye, EyeOff, Mail, Lock, User as UserIcon, CheckCircle, ChevronLeft } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 import { useAuth } from "../src/lib/store";
 import { auth as authApi } from "../src/lib/api";
 import { colors } from "../src/constants/theme";
 
-type Mode = "login" | "register" | "forgot";
+type Mode = "login" | "register" | "forgot" | "forgot-sent";
 
 function validatePassword(pw: string) {
   return {
@@ -22,6 +23,7 @@ function validateEmail(e: string) {
 }
 
 export default function Auth() {
+  const params = useLocalSearchParams<{ reset?: string }>();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,11 +31,28 @@ export default function Auth() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [showResetBanner, setShowResetBanner] = useState(params.reset === "success");
   const { login, register } = useAuth();
   const router = useRouter();
 
   const pwCheck = useMemo(() => validatePassword(password), [password]);
   const emailValid = useMemo(() => validateEmail(email), [email]);
+
+  // Reset success banner auto-hide
+  useEffect(() => {
+    if (showResetBanner) {
+      const t = setTimeout(() => setShowResetBanner(false), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [showResetBanner]);
+
+  // Cooldown timer for resend
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   const handleSubmit = async () => {
     if (mode === "forgot") {
@@ -41,13 +60,13 @@ export default function Auth() {
       setLoading(true);
       try {
         await authApi.forgotPassword(email);
-        Alert.alert(
-          "E-Mail gesendet",
-          "Falls ein Konto mit dieser Adresse existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Schau auch im Spam-Ordner nach."
-        );
-        setMode("login");
-      } catch (e: any) {
-        Alert.alert("Fehler", e.message);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setMode("forgot-sent");
+        setCooldown(60);
+      } catch {
+        // Always show success (user enumeration protection)
+        setMode("forgot-sent");
+        setCooldown(60);
       } finally { setLoading(false); }
       return;
     }
@@ -59,6 +78,7 @@ export default function Auth() {
     }
     setLoading(true);
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       if (mode === "register") await register(email, password, username, acceptTerms);
       else await login(email, password);
       router.replace("/");
@@ -67,55 +87,105 @@ export default function Auth() {
     } finally { setLoading(false); }
   };
 
-  const heading = mode === "login"
-    ? "Anmeldung"
-    : mode === "register"
-    ? "Account erstellen"
-    : "Passwort vergessen";
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+    setLoading(true);
+    try {
+      await authApi.forgotPassword(email);
+      setCooldown(60);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {} finally { setLoading(false); }
+  };
 
-  const submitLabel = loading
-    ? "Moment..."
-    : mode === "login"
-    ? "Einloggen"
-    : mode === "register"
-    ? "Registrieren"
-    : "Link per E-Mail senden";
+  // Forgot-sent success state
+  if (mode === "forgot-sent") {
+    return (
+      <KeyboardAvoidingView style={s.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+          <View style={s.successIcon}>
+            <CheckCircle color="#10B981" size={40} strokeWidth={1.8} />
+          </View>
+          <Text style={s.title}>Check deinen Posteingang</Text>
+          <Text style={s.body}>
+            Wenn ein Konto mit <Text style={{ color: "#FFFFFF", fontWeight: "600" }}>{email}</Text> existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Der Link ist 60 Minuten gültig.
+          </Text>
+          <Pressable style={s.btn} onPress={() => { setMode("login"); setPassword(""); }}>
+            <Text style={s.btnText}>Zurück zur Anmeldung</Text>
+          </Pressable>
+          <Pressable style={s.secondaryBtn} onPress={handleResend} disabled={cooldown > 0}>
+            <Text style={[s.secondaryText, { color: cooldown > 0 ? "#4A5068" : colors.accent }]}>
+              {cooldown > 0 ? `Erneut senden in ${cooldown}s` : "Keine Mail erhalten? Erneut senden"}
+            </Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  const heading = mode === "login" ? "Anmeldung" : mode === "register" ? "Account erstellen" : "Passwort vergessen?";
+  const submitLabel = mode === "login" ? "Einloggen" : mode === "register" ? "Registrieren" : "Link senden";
 
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={s.logo}>Vouchmi</Text>
+
+        {/* Reset success banner */}
+        {showResetBanner && (
+          <View style={s.resetBanner}>
+            <CheckCircle color="#10B981" size={18} strokeWidth={2} />
+            <Text style={s.resetBannerText}>Passwort erfolgreich geändert. Jetzt anmelden.</Text>
+          </View>
+        )}
+
+        {/* Logo */}
+        <View style={s.logoWrap}>
+          <View style={s.logoMark}><Text style={s.logoV}>V</Text></View>
+        </View>
+        <Text style={s.logo}>Vouch<Text style={{ opacity: 0.5 }}>mi</Text></Text>
         <Text style={s.tagline}>Community Commerce</Text>
+
+        {/* Back button for forgot mode */}
+        {mode === "forgot" && (
+          <Pressable style={s.backRow} onPress={() => setMode("login")}>
+            <ChevronLeft color="#94A3B8" size={18} />
+            <Text style={s.backText}>Zurück zur Anmeldung</Text>
+          </Pressable>
+        )}
+
         <Text style={s.subtitle}>{heading}</Text>
+        {mode === "forgot" && (
+          <Text style={s.forgotBody}>Kein Problem. Gib deine E-Mail ein und wir senden dir einen Link zum Zurücksetzen.</Text>
+        )}
 
         <View style={s.form}>
           {mode === "register" && (
             <View style={s.inputWrap}>
-              <UserIcon color={colors.grayDark} size={18} style={s.inputIcon} />
-              <TextInput style={s.inputField} placeholder="Username" placeholderTextColor={colors.grayDark}
+              <UserIcon color="#4A5068" size={18} style={s.inputIcon} />
+              <TextInput style={s.inputField} placeholder="Username" placeholderTextColor="#4A5068"
                 value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} />
               {username.length >= 3 && <Check color={colors.accent} size={18} />}
             </View>
           )}
 
           <View style={s.inputWrap}>
-            <Mail color={colors.grayDark} size={18} style={s.inputIcon} />
-            <TextInput style={s.inputField} placeholder="E-Mail" placeholderTextColor={colors.grayDark}
-              value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
+            <Mail color="#4A5068" size={18} style={s.inputIcon} />
+            <TextInput style={s.inputField} placeholder="E-Mail" placeholderTextColor="#4A5068"
+              value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none"
+              autoCorrect={false} textContentType="emailAddress" />
             {email.length > 3 && emailValid && <Check color={colors.accent} size={18} />}
           </View>
 
           {(mode === "login" || mode === "register") && (
             <View>
               <View style={s.inputWrap}>
-                <Lock color={colors.grayDark} size={18} style={s.inputIcon} />
-                <TextInput style={s.inputField} placeholder="Passwort" placeholderTextColor={colors.grayDark}
-                  value={password} onChangeText={setPassword} secureTextEntry={!showPw} />
+                <Lock color="#4A5068" size={18} style={s.inputIcon} />
+                <TextInput style={s.inputField} placeholder="Passwort" placeholderTextColor="#4A5068"
+                  value={password} onChangeText={setPassword} secureTextEntry={!showPw}
+                  textContentType={mode === "register" ? "newPassword" : "password"} />
                 <Pressable onPress={() => setShowPw(!showPw)} hitSlop={10}>
-                  {showPw ? <EyeOff color={colors.gray} size={18} /> : <Eye color={colors.gray} size={18} />}
+                  {showPw ? <EyeOff color="#64748B" size={18} /> : <Eye color="#64748B" size={18} />}
                 </Pressable>
               </View>
-
               {mode === "register" && password.length > 0 && (
                 <View style={s.pwChecks}>
                   <PwRule ok={pwCheck.length} label="Min. 8 Zeichen" />
@@ -129,7 +199,7 @@ export default function Auth() {
           {mode === "register" && (
             <Pressable style={s.termsRow} onPress={() => setAcceptTerms((v) => !v)}>
               <View style={[s.checkbox, acceptTerms && s.checkboxOn]}>
-                {acceptTerms && <Text style={s.checkmark}>✓</Text>}
+                {acceptTerms && <Check color="#fff" size={14} strokeWidth={3} />}
               </View>
               <Text style={s.termsText}>
                 Ich akzeptiere die{" "}
@@ -141,18 +211,12 @@ export default function Auth() {
           )}
 
           <Pressable style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
-            <Text style={s.btnText}>{submitLabel}</Text>
+            {loading ? <ActivityIndicator color="#1A1D2E" /> : <Text style={s.btnText}>{submitLabel}</Text>}
           </Pressable>
 
           {mode === "login" && (
             <Pressable onPress={() => setMode("forgot")} style={s.secondaryBtn}>
-              <Text style={s.secondaryText}>Passwort vergessen?</Text>
-            </Pressable>
-          )}
-
-          {mode === "forgot" && (
-            <Pressable onPress={() => setMode("login")} style={s.secondaryBtn}>
-              <Text style={s.secondaryText}>Zurück zur Anmeldung</Text>
+              <Text style={[s.secondaryText, { color: colors.accent }]}>Passwort vergessen?</Text>
             </Pressable>
           )}
 
@@ -172,45 +236,64 @@ export default function Auth() {
 function PwRule({ ok, label }: { ok: boolean; label: string }) {
   return (
     <View style={s.pwRule}>
-      <Check color={ok ? colors.accent : colors.grayDark} size={14} strokeWidth={ok ? 2.5 : 1.5} />
+      <Check color={ok ? colors.accent : "#4A5068"} size={14} strokeWidth={ok ? 2.5 : 1.5} />
       <Text style={[s.pwRuleText, ok && { color: colors.accent }]}>{label}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: "#0A0E1A" },
   scroll: { flexGrow: 1, justifyContent: "center", padding: 32 },
-  logo: { color: colors.accent, fontSize: 42, fontWeight: "900", textAlign: "center", letterSpacing: -1 },
-  tagline: { color: colors.gray, fontSize: 14, textAlign: "center", marginTop: 4, letterSpacing: 2, textTransform: "uppercase" },
-  subtitle: { color: colors.white, fontSize: 22, fontWeight: "bold", textAlign: "center", marginTop: 40, marginBottom: 32 },
-  form: { gap: 14 },
+
+  // Reset success banner
+  resetBanner: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: "#10B98112", borderWidth: 1, borderColor: "#10B98125",
+    borderRadius: 12, padding: 14, marginBottom: 24,
+  },
+  resetBannerText: { color: "#10B981", fontSize: 13, fontWeight: "600", flex: 1 },
+
+  // Logo
+  logoWrap: { alignSelf: "center", marginBottom: 12 },
+  logoMark: { width: 48, height: 48, borderRadius: 14, backgroundColor: "#F59E0B", justifyContent: "center", alignItems: "center" },
+  logoV: { color: "#1A1D2E", fontSize: 24, fontWeight: "800" },
+  logo: { color: "#FFFFFF", fontSize: 28, fontWeight: "800", textAlign: "center", letterSpacing: -0.5 },
+  tagline: { color: "#64748B", fontSize: 12, textAlign: "center", marginTop: 2, letterSpacing: 2, textTransform: "uppercase" },
+
+  // Back
+  backRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 20 },
+  backText: { color: "#94A3B8", fontSize: 13 },
+
+  subtitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "800", textAlign: "center", marginTop: 32, marginBottom: 8 },
+  forgotBody: { color: "#94A3B8", fontSize: 15, textAlign: "center", lineHeight: 22, marginBottom: 24 },
+
+  // Success state
+  successIcon: { alignSelf: "center", width: 64, height: 64, borderRadius: 32, backgroundColor: "#10B98118", justifyContent: "center", alignItems: "center", marginBottom: 20 },
+  title: { color: "#FFFFFF", fontSize: 24, fontWeight: "800", textAlign: "center", marginBottom: 12 },
+  body: { color: "#94A3B8", fontSize: 15, lineHeight: 22, textAlign: "center", marginBottom: 28 },
+
+  // Form
+  form: { gap: 14, marginTop: 8 },
   inputWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.bgInput,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 52,
-    gap: 10,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: "#141926", borderRadius: 14, paddingHorizontal: 14,
+    borderWidth: 1, borderColor: "#1E2235", height: 52,
   },
   inputIcon: { opacity: 0.7 },
-  inputField: { flex: 1, color: colors.white, fontSize: 16 },
+  inputField: { flex: 1, color: "#FFFFFF", fontSize: 16 },
   pwChecks: { marginTop: 8, gap: 4, paddingLeft: 4 },
   pwRule: { flexDirection: "row", alignItems: "center", gap: 6 },
-  pwRuleText: { color: colors.grayDark, fontSize: 12 },
-  btn: { backgroundColor: colors.accent, borderRadius: 12, padding: 16, alignItems: "center", marginTop: 4 },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-  secondaryBtn: { padding: 10, alignItems: "center" },
-  secondaryText: { color: colors.gray, fontSize: 13 },
+  pwRuleText: { color: "#4A5068", fontSize: 12 },
+  btn: { backgroundColor: "#F59E0B", borderRadius: 14, height: 54, alignItems: "center", justifyContent: "center", marginTop: 4 },
+  btnText: { color: "#1A1D2E", fontSize: 16, fontWeight: "800" },
+  secondaryBtn: { padding: 12, alignItems: "center" },
+  secondaryText: { color: "#64748B", fontSize: 13 },
   toggle: { padding: 12 },
-  toggleText: { color: colors.accent, textAlign: "center", fontSize: 14 },
+  toggleText: { color: "#F59E0B", textAlign: "center", fontSize: 14, fontWeight: "600" },
   termsRow: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 6, gap: 10 },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: colors.border, marginTop: 2, justifyContent: "center", alignItems: "center" },
-  checkboxOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  checkmark: { color: "#fff", fontWeight: "bold", fontSize: 14 },
-  termsText: { flex: 1, color: colors.gray, fontSize: 13, lineHeight: 19 },
-  link: { color: colors.accent, textDecorationLine: "underline" },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: "#1E2235", marginTop: 2, justifyContent: "center", alignItems: "center" },
+  checkboxOn: { backgroundColor: "#F59E0B", borderColor: "#F59E0B" },
+  termsText: { flex: 1, color: "#94A3B8", fontSize: 13, lineHeight: 19 },
+  link: { color: "#F59E0B", textDecorationLine: "underline" },
 });
