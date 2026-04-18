@@ -11,7 +11,23 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: "vouchmi",
   userInterfaceStyle: "dark",
   splash: { backgroundColor: "#1A1D2E" },
-  plugins: ["expo-router", "expo-secure-store", "expo-asset"],
+  plugins: [
+    "expo-router",
+    "expo-secure-store",
+    "expo-asset",
+    [
+      "expo-share-intent",
+      {
+        iosActivationRules: {
+          NSExtensionActivationSupportsWebURLWithMaxCount: 1,
+          NSExtensionActivationSupportsWebPageWithMaxCount: 1,
+          NSExtensionActivationSupportsText: true,
+        },
+        androidIntentFilters: ["text/*"],
+        iosAppGroupIdentifier: "group.com.vouchmi.app",
+      },
+    ],
+  ],
   experiments: { typedRoutes: true },
   ios: {
     bundleIdentifier: "com.vouchmi.app",

@@ -1,20 +1,50 @@
 // app/_layout.tsx
 import { useEffect } from "react";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { ShareIntentProvider, useShareIntent } from "expo-share-intent";
 import { useAuth } from "../src/lib/store";
 import { useProfileMode } from "../src/lib/profile-mode";
 import { useTierStore } from "../src/lib/tier-store";
+import { useSharePending } from "../src/lib/share-pending-store";
 import TierUpgradeModal from "../src/components/TierUpgradeModal";
 import { colors } from "../src/constants/theme";
 
-export default function Layout() {
+function RootLayout() {
   const init = useAuth((s) => s.init);
   const user = useAuth((s) => s.user);
   const initProfileMode = useProfileMode((s) => s.init);
   const fetchTier = useTierStore((s) => s.fetchTierStatus);
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
+
   useEffect(() => { init(); }, []);
   useEffect(() => { if (user) { initProfileMode(); fetchTier(); } }, [user]);
+
+  // Handle share intent
+  useEffect(() => {
+    if (hasShareIntent && shareIntent) {
+      const url = shareIntent.webUrl ?? shareIntent.text ?? "";
+      if (url) {
+        resetShareIntent();
+        if (user) {
+          router.push({ pathname: "/share/create", params: { url } });
+        } else {
+          useSharePending.getState().setPendingUrl(url);
+          router.push("/auth");
+        }
+      }
+    }
+  }, [hasShareIntent, shareIntent, user]);
+
+  // After login, check for pending share
+  useEffect(() => {
+    if (user) {
+      const pending = useSharePending.getState().pendingUrl;
+      if (pending) {
+        router.push({ pathname: "/share/create", params: { url: pending } });
+      }
+    }
+  }, [user]);
 
   return (
     <>
@@ -56,7 +86,16 @@ export default function Layout() {
         <Stack.Screen name="privacy-settings" options={{ headerShown: false }} />
         <Stack.Screen name="upgrade-confirm" options={{ headerShown: false }} />
         <Stack.Screen name="upgrade-success" options={{ headerShown: false }} />
+        <Stack.Screen name="share/create" options={{ headerShown: false, presentation: "modal" }} />
       </Stack>
     </>
+  );
+}
+
+export default function Layout() {
+  return (
+    <ShareIntentProvider>
+      <RootLayout />
+    </ShareIntentProvider>
   );
 }
