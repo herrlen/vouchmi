@@ -296,6 +296,25 @@ export const tier = {
   dismissUpgrade: () => api.post<{ dismissed: boolean }>("/user/dismiss-upgrade"),
 };
 
+export type WidgetDaily = {
+  uuid: string;
+  communityUuid: string;
+  communityName: string;
+  communityEmoji: string;
+  communityAccentColor: string;
+  productTitle: string;
+  productImageUrl: string | null;
+  domain: string;
+  voucherName: string;
+  voucherAvatarUrl: string | null;
+  voucherCount: number;
+  deepLinkUrl: string;
+};
+
+export const widget = {
+  daily: () => api.get<WidgetDaily>("/widget/daily"),
+};
+
 export const moderation = {
   report: (d: { target_type: "post" | "comment" | "user" | "community"; target_id: string; reason: "spam" | "abuse" | "illegal" | "sexual" | "other"; details?: string }) =>
     api.post<{ message: string }>("/reports", d),

@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\ModerationController;
 use App\Http\Controllers\Api\TierController;
+use App\Http\Controllers\Api\WidgetController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public ──
@@ -121,6 +122,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/tier', [TierController::class, 'status']);
     Route::post('/user/upgrade-to-influencer', [TierController::class, 'upgradeToInfluencer']);
     Route::post('/user/dismiss-upgrade', [TierController::class, 'dismissUpgradePrompt']);
+
+    // Widget
+    Route::get('/widget/daily', [WidgetController::class, 'daily']);
 
     // Tracking
     Route::post('/track/event', [UserController::class, 'trackEvent']);

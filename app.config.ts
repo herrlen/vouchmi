@@ -32,6 +32,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     bundleIdentifier: "com.vouchmi.app",
     supportsTablet: true,
+    entitlements: {
+      "com.apple.security.application-groups": ["group.com.vouchmi.app"],
+    },
     privacyManifests: {
       NSPrivacyTracking: false,
       NSPrivacyTrackingDomains: [],

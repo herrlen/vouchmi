@@ -2,12 +2,14 @@
 import { useEffect } from "react";
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { AppState } from "react-native";
 import { ShareIntentProvider, useShareIntent } from "expo-share-intent";
 import { useAuth } from "../src/lib/store";
 import { useProfileMode } from "../src/lib/profile-mode";
 import { useTierStore } from "../src/lib/tier-store";
 import { useSharePending } from "../src/lib/share-pending-store";
 import TierUpgradeModal from "../src/components/TierUpgradeModal";
+import { syncDailyRecommendation } from "../src/lib/widget-sync";
 import { colors } from "../src/constants/theme";
 
 function RootLayout() {
@@ -18,7 +20,21 @@ function RootLayout() {
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
 
   useEffect(() => { init(); }, []);
-  useEffect(() => { if (user) { initProfileMode(); fetchTier(); } }, [user]);
+  useEffect(() => {
+    if (user) {
+      initProfileMode();
+      fetchTier();
+      syncDailyRecommendation();
+    }
+  }, [user]);
+
+  // Sync widget when app comes to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active" && user) syncDailyRecommendation();
+    });
+    return () => sub.remove();
+  }, [user]);
 
   // Handle share intent
   useEffect(() => {
