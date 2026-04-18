@@ -126,6 +126,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Widget
     Route::get('/widget/daily', [WidgetController::class, 'daily']);
 
+    // Live Activity tokens
+    Route::post('/drops/{id}/activity-token', [SponsoredDropController::class, 'registerActivityToken']);
+
     // Tracking
     Route::post('/track/event', [UserController::class, 'trackEvent']);
     Route::post('/track/click', [LinkPreviewController::class, 'trackClick']);
@@ -177,6 +180,8 @@ Route::middleware(['auth:sanctum', 'brand'])->prefix('brand')->group(function ()
     Route::post('/drops', [SponsoredDropController::class, 'store']);
     Route::get('/drops', [SponsoredDropController::class, 'brandDrops']);
     Route::get('/drops/{id}/stats', [SponsoredDropController::class, 'stats']);
+    Route::post('/drops/{id}/start', [SponsoredDropController::class, 'startDrop']);
+    Route::post('/drops/{id}/end', [SponsoredDropController::class, 'endDrop']);
 
     // Product Seeding
     Route::post('/seeding', [BrandController::class, 'createSeeding']);

@@ -5,5 +5,6 @@ import SwiftUI
 struct VouchmiWidgetBundle: WidgetBundle {
     var body: some Widget {
         VouchmiDailyWidget()
+        BrandDropLiveActivity()
     }
 }

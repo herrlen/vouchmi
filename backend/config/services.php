@@ -69,4 +69,10 @@ return [
         'webhook_id'    => env('PAYPAL_WEBHOOK_ID'),
     ],
 
+    'apns' => [
+        'team_id'  => env('APNS_TEAM_ID', ''),
+        'key_id'   => env('APNS_KEY_ID', ''),
+        'key_path' => env('APNS_KEY_PATH', ''),
+    ],
+
 ];

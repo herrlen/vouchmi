@@ -10,6 +10,6 @@ module.exports = {
   entitlements: {
     "com.apple.security.application-groups": ["group.com.vouchmi.app"],
   },
-  deploymentTarget: "16.1",
-  frameworks: ["SwiftUI", "WidgetKit"],
+  deploymentTarget: "16.2",
+  frameworks: ["SwiftUI", "WidgetKit", "ActivityKit"],
 };

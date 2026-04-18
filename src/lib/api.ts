@@ -327,6 +327,11 @@ export const moderation = {
 export const drops = {
   list: (cid: string) => api.get<{ drops: Drop[] }>(`/communities/${cid}/drops`),
   vote: (did: string, vote: boolean) => api.post(`/drops/${did}/vote`, { vote }),
+  start: (did: string, d: { duration_minutes: number; original_price?: number; drop_price?: number; stock_limit?: number }) =>
+    api.post<{ drop: Drop; message: string }>(`/drops/${did}/start`, d),
+  end: (did: string) => api.post<{ message: string }>(`/drops/${did}/end`),
+  registerActivityToken: (did: string, pushToken: string) =>
+    api.post<{ registered: boolean }>(`/drops/${did}/activity-token`, { push_token: pushToken }),
 };
 
 // Types

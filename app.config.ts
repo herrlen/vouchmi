@@ -35,6 +35,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     entitlements: {
       "com.apple.security.application-groups": ["group.com.vouchmi.app"],
     },
+    infoPlist: {
+      NSSupportsLiveActivities: true,
+      NSSupportsLiveActivitiesFrequentUpdates: true,
+    },
     privacyManifests: {
       NSPrivacyTracking: false,
       NSPrivacyTrackingDomains: [],
