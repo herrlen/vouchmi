@@ -215,7 +215,7 @@ const s = StyleSheet.create({
   roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
   roleDot: { width: 8, height: 8, borderRadius: 4 },
   roleBadgeText: { fontSize: 11, fontWeight: "700" },
-  cardImage: { width: "100%", aspectRatio: 1, backgroundColor: "#2A2D3E", resizeMode: "contain" },
+  cardImage: { width: "100%", aspectRatio: 4 / 5, backgroundColor: "#FFFFFF", resizeMode: "contain", overflow: "hidden" },
   cardTitleRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 12, gap: 12 },
   cardTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "800", flex: 1, lineHeight: 22 },
   cardPrice: { color: "#F59E0B", fontSize: 16, fontWeight: "800" },

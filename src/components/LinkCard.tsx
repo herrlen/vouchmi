@@ -54,7 +54,7 @@ export default function LinkCard({ post }: Props) {
 }
 
 const s = StyleSheet.create({
-  image: { width: "100%", aspectRatio: 1, backgroundColor: colors.bgCard },
+  image: { width: "100%", aspectRatio: 4 / 5, backgroundColor: "#FFFFFF", resizeMode: "contain", overflow: "hidden" },
   meta: {
     flexDirection: "row",
     alignItems: "center",

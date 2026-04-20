@@ -380,7 +380,7 @@ const s = StyleSheet.create({
   cardFollowBtnActive: { backgroundColor: "#1E2235" },
   cardFollowText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   cardFollowTextActive: { color: "#64748B" },
-  cardImage: { width: "100%", aspectRatio: 1, backgroundColor: "#2A2D3E", resizeMode: "contain" },
+  cardImage: { width: "100%", aspectRatio: 4 / 5, backgroundColor: "#FFFFFF", resizeMode: "contain", borderRadius: 0, overflow: "hidden" },
   cardTitleRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 12, gap: 12 },
   cardTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "800", flex: 1, lineHeight: 22 },
   cardPrice: { color: "#F59E0B", fontSize: 16, fontWeight: "800" },
