@@ -18,13 +18,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-share-intent",
       {
-        iosActivationRules: {
+        disableIOS: true,
+        androidIntentFilters: ["text/*"],
+        iosAppGroupIdentifier: "group.com.vouchmi.app",
+      },
+    ],
+    [
+      "expo-share-extension",
+      {
+        backgroundColor: { red: 26, green: 29, blue: 46, alpha: 0.95 },
+        height: 620,
+        activationRules: {
           NSExtensionActivationSupportsWebURLWithMaxCount: 1,
           NSExtensionActivationSupportsWebPageWithMaxCount: 1,
           NSExtensionActivationSupportsText: true,
         },
-        androidIntentFilters: ["text/*"],
-        iosAppGroupIdentifier: "group.com.vouchmi.app",
       },
     ],
   ],
@@ -34,6 +42,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     entitlements: {
       "com.apple.security.application-groups": ["group.com.vouchmi.app"],
+      "keychain-access-groups": ["$(AppIdentifierPrefix)com.vouchmi.app"],
     },
     infoPlist: {
       NSSupportsLiveActivities: true,

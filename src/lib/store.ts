@@ -1,8 +1,14 @@
 // src/lib/store.ts
 import { create } from "zustand";
+import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import * as api from "./api";
 import type { User, Community, Post, Msg } from "./api";
+
+// Shared Keychain options so the Share Extension can read the auth token
+const KEYCHAIN_OPTS: SecureStore.SecureStoreOptions | undefined = Platform.OS === "ios"
+  ? { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK, keychainService: "group.com.vouchmi.app" }
+  : undefined;
 
 interface AuthState {
   user: User | null;
@@ -23,13 +29,13 @@ export const useAuth = create<AuthState>((set) => ({
   user: null,
   isLoading: true,
   init: async () => {
-    const token = await SecureStore.getItemAsync("token");
+    const token = await SecureStore.getItemAsync("token", KEYCHAIN_OPTS);
     if (token) {
       try {
         const { user } = await api.auth.me();
         set({ user, isLoading: false });
       } catch {
-        await SecureStore.deleteItemAsync("token");
+        await SecureStore.deleteItemAsync("token", KEYCHAIN_OPTS);
         set({ isLoading: false });
       }
     } else {
@@ -38,7 +44,7 @@ export const useAuth = create<AuthState>((set) => ({
   },
   login: async (email, password) => {
     const { user, token } = await api.auth.login(email, password);
-    await SecureStore.setItemAsync("token", token);
+    await SecureStore.setItemAsync("token", token, KEYCHAIN_OPTS);
     set({ user });
   },
   register: async (email, password, username, acceptTerms, extras) => {
@@ -50,12 +56,12 @@ export const useAuth = create<AuthState>((set) => ({
       ...(extras?.role ? { role: extras.role } : {}),
       ...(extras?.phone ? { phone: extras.phone } : {}),
     });
-    await SecureStore.setItemAsync("token", token);
+    await SecureStore.setItemAsync("token", token, KEYCHAIN_OPTS);
     set({ user });
   },
   logout: async () => {
     try { await api.auth.logout(); } catch {}
-    await SecureStore.deleteItemAsync("token");
+    await SecureStore.deleteItemAsync("token", KEYCHAIN_OPTS);
     set({ user: null });
   },
 }));
