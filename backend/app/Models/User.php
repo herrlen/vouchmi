@@ -7,7 +7,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable {
     use HasApiTokens, HasUuids;
-    protected $fillable = ['email','phone','username','password','display_name','avatar_url','bio','link','role','profile_layout','profile_layout_updated_at','tier','tier_achieved_at','tier_badge_opacity','tier_below_threshold_since','terms_accepted_at','terms_version'];
+    protected $fillable = ['email','phone','username','password','display_name','avatar_url','bio','link','role','profile_layout','profile_layout_updated_at','tier','tier_achieved_at','tier_badge_opacity','tier_below_threshold_since','terms_accepted_at','terms_version','is_seed'];
     protected $hidden = ['password','remember_token'];
     protected function casts(): array
     {
