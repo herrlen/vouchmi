@@ -114,7 +114,7 @@ export default function CreatePostScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10} style={s.headerBtn}>
           <X color="#FFFFFF" size={22} strokeWidth={2} />
         </Pressable>
-        <Text style={s.headerTitle}>Empfehlung teilen</Text>
+        <Text style={s.headerTitle}>Empfehlen</Text>
         <Pressable onPress={submit} disabled={!canSubmit} hitSlop={10} style={s.headerBtn}>
           <Text style={[s.postBtn, !canSubmit && { opacity: 0.3 }]}>{submitting ? "..." : "Posten"}</Text>
         </Pressable>
@@ -147,7 +147,7 @@ export default function CreatePostScreen() {
           </View>
           {urlError && <Text style={s.errorText}>{urlError}</Text>}
           {!urlError && !preview && !loadingPreview && (
-            <Text style={s.hintText}>Amazon- und eBay-Links sind nicht erlaubt. Nutze den Direktlink vom Shop.</Text>
+            <Text style={s.hintText}>Keine Affiliate-Links erlaubt.</Text>
           )}
 
           {/* Loading */}
