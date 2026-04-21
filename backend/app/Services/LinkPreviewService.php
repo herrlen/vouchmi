@@ -49,6 +49,8 @@ class LinkPreviewService
             'title' => null,
             'description' => null,
             'image' => null,
+            'image_width' => null,
+            'image_height' => null,
             'price' => null,
             'currency' => 'EUR',
             'site_name' => null,
@@ -78,6 +80,20 @@ class LinkPreviewService
         foreach ($ogPatternsAlt as $key => $pattern) {
             if (!$data[$key] && preg_match($pattern, $html, $match)) {
                 $data[$key] = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
+            }
+        }
+
+        // OG image dimensions (for aspect-ratio placeholders, prevents layout shift)
+        $dimPatterns = [
+            'image_width'  => ['/<meta\s+property=["\']og:image:width["\']\s+content=["\'](\d+)["\']/i', '/<meta\s+content=["\'](\d+)["\']\s+property=["\']og:image:width["\']/i'],
+            'image_height' => ['/<meta\s+property=["\']og:image:height["\']\s+content=["\'](\d+)["\']/i', '/<meta\s+content=["\'](\d+)["\']\s+property=["\']og:image:height["\']/i'],
+        ];
+        foreach ($dimPatterns as $key => $patterns) {
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $html, $match)) {
+                    $data[$key] = (int) $match[1];
+                    break;
+                }
             }
         }
 
