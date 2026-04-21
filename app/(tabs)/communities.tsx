@@ -152,35 +152,37 @@ export default function CommunitiesTab() {
 
 function CommunityCard({ community: c }: { community: Community }) {
   const accent = getCategoryColor(c);
-  const emoji = getCategoryEmoji(c);
-  const isMember = c.is_member || c.my_role === "owner" || c.role === "owner";
+  const isOwner = c.my_role === "owner" || c.role === "owner";
+  const isMember = c.is_member || isOwner;
+  const initial = c.name[0]?.toUpperCase() ?? "?";
 
   return (
     <Pressable style={s.card} onPress={() => router.push(`/community/${c.id}`)}>
-      {/* Colored overlay */}
       <View style={[s.cardOverlay, { backgroundColor: accent + "14" }]} />
 
-      {/* Emoji icon */}
+      {/* Icon: Bild oder Buchstabe mit Farbhintergrund */}
       <View style={[s.emojiBox, { backgroundColor: accent + "30" }]}>
-        <Text style={s.emoji}>{c.image_url ? "" : emoji}</Text>
-        {c.image_url && <Image source={{ uri: c.image_url }} style={s.emojiImg} />}
+        {c.image_url ? (
+          <Image source={{ uri: c.image_url }} style={s.emojiImg} />
+        ) : (
+          <Text style={[s.emojiInitial, { color: accent }]}>{initial}</Text>
+        )}
       </View>
 
-      {/* Name */}
       <Text style={s.cardName} numberOfLines={1}>{c.name}</Text>
-
-      {/* Member count */}
       <Text style={s.cardMeta}>{c.member_count.toLocaleString("de-DE")} Mitglieder</Text>
 
-      {/* Join / Beigetreten */}
-      {isMember ? (
-        <View style={[s.joinBtn, s.joinedBtn, { borderColor: accent }]}>
-          <Text style={[s.joinBtnText, { color: accent }]}>Beigetreten</Text>
-        </View>
-      ) : (
-        <View style={[s.joinBtn, { backgroundColor: accent }]}>
-          <Text style={[s.joinBtnText, { color: accent === "#F59E0B" ? "#1A1D2E" : "#FFFFFF" }]}>Join</Text>
-        </View>
+      {/* Kein Button bei eigenen Communities */}
+      {!isOwner && (
+        isMember ? (
+          <View style={[s.joinBtn, s.joinedBtn, { borderColor: accent }]}>
+            <Text style={[s.joinBtnText, { color: accent }]}>Beigetreten</Text>
+          </View>
+        ) : (
+          <View style={[s.joinBtn, { backgroundColor: accent }]}>
+            <Text style={[s.joinBtnText, { color: accent === "#F59E0B" ? "#1A1D2E" : "#FFFFFF" }]}>Join</Text>
+          </View>
+        )
       )}
     </Pressable>
   );
@@ -213,6 +215,7 @@ const s = StyleSheet.create({
   cardOverlay: { ...StyleSheet.absoluteFillObject, borderRadius: 20 },
   emojiBox: { width: 48, height: 48, borderRadius: 14, justifyContent: "center", alignItems: "center", marginBottom: 12, overflow: "hidden" },
   emoji: { fontSize: 26 },
+  emojiInitial: { fontSize: 22, fontWeight: "800" },
   emojiImg: { width: 48, height: 48, borderRadius: 14, position: "absolute" },
   cardName: { color: "#FFFFFF", fontSize: 17, fontWeight: "800", marginBottom: 4 },
   cardMeta: { color: "#94A3B8", fontSize: 12, marginBottom: 10 },
