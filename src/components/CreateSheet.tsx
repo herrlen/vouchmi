@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { View, Text, Pressable, StyleSheet, Animated, Modal, TouchableWithoutFeedback, Platform } from "react-native";
 import { router } from "expo-router";
-import { Link as LinkIcon, Camera } from "lucide-react-native";
+import { Link as LinkIcon } from "lucide-react-native";
 import { colors } from "../constants/theme";
 
 type Props = {
@@ -46,14 +46,6 @@ export default function CreateSheet({ visible, onClose, communityId }: Props) {
                 <View style={{ flex: 1 }}>
                   <Text style={s.optionTitle}>Reco erstellen</Text>
                   <Text style={s.optionSub}>Produkt-Link teilen mit Preview</Text>
-                </View>
-              </Pressable>
-
-              <Pressable style={s.option} onPress={() => pick("/create-story")}>
-                <View style={s.icon}><Camera color={colors.accent} size={22} strokeWidth={1.8} /></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.optionTitle}>Story erstellen</Text>
-                  <Text style={s.optionSub}>Bild oder Video (max. 30 Sek.)</Text>
                 </View>
               </Pressable>
 

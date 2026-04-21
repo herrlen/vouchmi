@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, ScrollView, Linking } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { feed as feedApi, type Post } from "../../src/lib/api";
@@ -71,7 +70,7 @@ export default function RecoTab() {
             setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 500);
           }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
-          ListHeaderComponent={<StoryBar posts={posts} />}
+          ListHeaderComponent={null}
           ListEmptyComponent={
             <View style={s.empty}>
               <Text style={s.emptyTitle}>Noch keine Posts</Text>
@@ -85,39 +84,6 @@ export default function RecoTab() {
         />
       )}
     </SafeAreaView>
-  );
-}
-
-const SB = 62;
-function StoryBar({ posts }: { posts: Post[] }) {
-  const authors = posts.map((p) => p.author).filter((a, i, arr) => arr.findIndex((x) => x.id === a.id) === i).slice(0, 10);
-  return (
-    <View style={{ borderBottomWidth: 0.5, borderBottomColor: "#1E2235", paddingVertical: 10, marginBottom: 8 }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 14 }}>
-        <Pressable style={{ alignItems: "center", width: SB + 8 }} onPress={() => router.push("/create-story")}>
-          <View style={{ width: SB + 6, height: SB + 6, borderRadius: (SB + 6) / 2, backgroundColor: "#141926", justifyContent: "center", alignItems: "center" }}>
-            <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: "#1E2235", justifyContent: "center", alignItems: "center" }}>
-              <Plus color={colors.accent} size={26} />
-            </View>
-          </View>
-          <Text style={{ color: "#64748B", fontSize: 11, marginTop: 5 }}>Du</Text>
-        </Pressable>
-        {authors.map((a) => (
-          <Pressable key={a.id} style={{ alignItems: "center", width: SB + 8 }} onPress={() => router.push(`/user/${a.id}`)}>
-            <View style={{ width: SB + 6, height: SB + 6, borderRadius: (SB + 6) / 2, borderWidth: 2, borderColor: colors.accent, justifyContent: "center", alignItems: "center" }}>
-              {a.avatar_url ? (
-                <Image source={{ uri: a.avatar_url }} style={{ width: SB, height: SB, borderRadius: SB / 2 }} />
-              ) : (
-                <View style={{ width: SB, height: SB, borderRadius: SB / 2, backgroundColor: "#1E2235", justifyContent: "center", alignItems: "center" }}>
-                  <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 22 }}>{(a.display_name ?? a.username)[0]?.toUpperCase()}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={{ color: "#64748B", fontSize: 11, marginTop: 5, maxWidth: SB + 8, textAlign: "center" }} numberOfLines={1}>{a.username}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-    </View>
   );
 }
 

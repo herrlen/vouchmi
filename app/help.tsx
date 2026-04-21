@@ -86,7 +86,7 @@ const FAQ: { section: string; items: FaqItem[] }[] = [
     items: [
       {
         q: "Was sind Galerie-Layouts?",
-        a: "Du kannst wählen, wie deine Empfehlungen auf deinem Profil dargestellt werden:\n\n• Masonry: Zwei Spalten mit unterschiedlichen Höhen, wie eine Pinnwand.\n• Featured: Ein großes Hauptbild oben, darunter kleinere Bilder im Grid.\n• Story: Ein vertikaler Feed wie im Reco-Bereich.",
+        a: "Du kannst wählen, wie deine Empfehlungen auf deinem Profil dargestellt werden:\n\n• Masonry: Zwei Spalten mit unterschiedlichen Höhen, wie eine Pinnwand.\n• Featured: Ein großes Hauptbild oben, darunter kleinere Bilder im Grid.",
       },
       {
         q: "Wie ändere ich mein Galerie-Layout?",

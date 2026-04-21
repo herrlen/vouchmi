@@ -13,7 +13,6 @@ import VSeal from "../../src/components/VSeal";
 import TierProgressBar from "../../src/components/TierProgressBar";
 import MasonryGallery from "../../src/components/gallery/MasonryGallery";
 import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
-import StoryGallery from "../../src/components/gallery/StoryGallery";
 
 const { width } = Dimensions.get("window");
 const NUM_COLS = 3;
@@ -171,14 +170,11 @@ export default function ProfileTab() {
   );
 
   const useScrollGallery = subTab === "reco" && (profileLayout === "masonry" || profileLayout === "featured");
-  const useStoryFeed = subTab === "reco" && profileLayout === "story";
 
   return (
     <SafeAreaView style={s.container} edges={["top"]}>
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 60 }} />
-      ) : useStoryFeed ? (
-        <StoryGallery posts={myPosts} refreshing={refreshing} onRefresh={onRefresh} header={profileHeader} />
       ) : useScrollGallery ? (
         <ScrollView
           contentContainerStyle={{ paddingBottom: 120 }}

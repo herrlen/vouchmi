@@ -8,7 +8,6 @@ import { users as usersApi, feed as feedApi, type Post, type User, type ProfileL
 import { useAuth } from "../../src/lib/store";
 import MasonryGallery from "../../src/components/gallery/MasonryGallery";
 import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
-import StoryGallery from "../../src/components/gallery/StoryGallery";
 
 const { width } = Dimensions.get("window");
 const TILE = (width - 4) / 3;
@@ -66,35 +65,7 @@ export default function UserProfileScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      {profileLayout === "story" ? (
-        <StoryGallery posts={posts} header={
-          <View style={s.profileSection}>
-            <View style={s.topRow}>
-              {profileData?.avatar_url ? (
-                <Image source={{ uri: profileData.avatar_url }} style={s.avatar} />
-              ) : (
-                <View style={[s.avatar, s.avatarFallback]}><Text style={s.avatarInitial}>{initial}</Text></View>
-              )}
-              <View style={s.statsRow}>
-                <Stat label="Posts" value={stats.posts_count} />
-                <Stat label="Follower" value={stats.followers_count} />
-                <Stat label="Folge ich" value={stats.following_count} />
-              </View>
-            </View>
-            <Text style={s.name}>{displayName}</Text>
-            {profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
-            {profileData?.link && (
-              <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
-            )}
-            {!isMe && (
-              <Pressable style={[s.followBtn, isFollowing && s.followBtnActive]} onPress={toggleFollow}>
-                <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
-              </Pressable>
-            )}
-            <View style={s.divider} />
-          </View>
-        } />
-      ) : profileLayout === "masonry" || profileLayout === "featured" ? (
+      {profileLayout === "masonry" || profileLayout === "featured" ? (
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
           <View style={s.profileSection}>
             <View style={s.topRow}>

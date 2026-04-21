@@ -109,7 +109,7 @@ Bei der Nutzung von Vouchmi verarbeiten wir folgende Daten:
 - **Account-Daten:** E-Mail-Adresse, Username, Anzeigename,
   optionales Profilbild, verschlüsseltes Passwort.
 - **Inhalte:** Posts (inkl. geteilter Produkt-Links),
-  Kommentare, Likes, Reposts, Stories, Direkt- und
+  Kommentare, Likes, Reposts, Direkt- und
   Community-Nachrichten.
 - **Community-Mitgliedschaften:** welche Communities du
   erstellst, beitrittst oder verlässt, sowie deine Rolle.
@@ -198,7 +198,7 @@ Diese AGB regeln das Verhältnis zwischen {$c}
 ## 2. Leistung
 
 Vouchmi stellt eine Community-Plattform bereit, auf der Nutzer
-Produktempfehlungen, Links, Stories und Nachrichten teilen
+Produktempfehlungen, Links und Nachrichten teilen
 können. Vouchmi betreibt selbst keinen Shop und ist nicht
 Vertragspartner beim Kauf eines empfohlenen Produkts.
 

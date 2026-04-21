@@ -16,7 +16,6 @@ use App\Http\Controllers\Api\LinkPreviewController;
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\SponsoredDropController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\ModerationController;
 use App\Http\Controllers\Api\TierController;
 use App\Http\Controllers\Api\WidgetController;
@@ -79,13 +78,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities/{id}/posts/{postId}/hide', [CommunityController::class, 'hidePost']);
     Route::delete('/communities/{id}/posts/{postId}', [CommunityController::class, 'deletePost']);
     Route::get('/communities/{id}/mute-status', [CommunityController::class, 'myMuteStatus']);
-
-    // Stories
-    Route::get('/stories', [StoryController::class, 'feed']);
-    Route::get('/user/stories', [StoryController::class, 'mine']);
-    Route::get('/communities/{id}/stories', [StoryController::class, 'index']);
-    Route::post('/communities/{id}/stories', [StoryController::class, 'store']);
-    Route::delete('/stories/{storyId}', [StoryController::class, 'destroy']);
 
     // Feed (Posts mit Produkt-Links)
     Route::get('/feed', [FeedController::class, 'allMyFeed']);

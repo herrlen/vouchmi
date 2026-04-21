@@ -41,7 +41,7 @@ export const users = {
   unfollow: (userId: string) => api.del<{ following: boolean; followers_count: number }>(`/users/${userId}/follow`),
 };
 
-export type ProfileLayout = "masonry" | "featured" | "story";
+export type ProfileLayout = "masonry" | "featured";
 
 export const profile = {
   get: () => api.get<{ profile: User & { bio: string | null; link: string | null; profile_layout: ProfileLayout }; stats: { communities_count: number; posts_count: number; followers_count: number; following_count: number } }>("/user/profile"),
@@ -259,25 +259,6 @@ export const brand = {
   },
 };
 
-export type Story = { id: string; community_id: string; media_url: string; media_type: "image" | "video"; duration: number | null; caption: string | null; view_count: number; expires_at: string | null; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
-
-export const stories = {
-  feed: () => api.get<{ stories: Story[] }>("/stories"),
-  mine: (page = 1) => api.get<{ data: Story[] }>(`/user/stories?page=${page}`),
-  list: (cid: string) => api.get<{ data: Story[] }>(`/communities/${cid}/stories`),
-  create: async (cid: string, uri: string, mediaType: "image" | "video", caption?: string, duration?: number) => {
-    const form = new FormData();
-    const filename = uri.split("/").pop() || (mediaType === "video" ? "story.mp4" : "story.jpg");
-    const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
-    const type = mediaType === "video" ? (ext === "mov" ? "video/quicktime" : "video/mp4") : (ext === "png" ? "image/png" : "image/jpeg");
-    // @ts-expect-error RN FormData file
-    form.append("media", { uri, name: filename, type });
-    if (caption) form.append("caption", caption);
-    if (duration) form.append("duration", String(Math.round(duration)));
-    return req<{ story: Story }>("POST", `/communities/${cid}/stories`, form);
-  },
-  destroy: (id: string) => req<{ message: string }>("DELETE", `/stories/${id}`),
-};
 
 export type TierProgress = { current: number; required: number; percent: number };
 export type TierStatus = {

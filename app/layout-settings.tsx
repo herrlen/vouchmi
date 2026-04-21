@@ -24,11 +24,6 @@ const LAYOUTS: LayoutOption[] = [
     label: "Featured",
     description: "Ein großes Hauptbild oben, darunter kleinere Bilder im Grid. Lenkt den Blick auf dein Highlight.",
   },
-  {
-    value: "story",
-    label: "Story",
-    description: "Vertikal swipebar im Vollbild — wie Instagram Stories. Maximale Immersion für jedes Bild.",
-  },
 ];
 
 type Props = {
@@ -179,18 +174,7 @@ function LayoutPreview({ type }: { type: ProfileLayout }) {
     );
   }
 
-  // Story
-  return (
-    <View style={[s.previewBox, { alignItems: "center", justifyContent: "center" }]}>
-      <View style={s.storyPhone}>
-        <View style={s.storyPhoneInner} />
-      </View>
-      <View style={s.storyArrows}>
-        <Text style={s.storyArrow}>▲</Text>
-        <Text style={s.storyArrow}>▼</Text>
-      </View>
-    </View>
-  );
+  return null;
 }
 
 const s = StyleSheet.create({
@@ -230,20 +214,6 @@ const s = StyleSheet.create({
   previewRow: { flexDirection: "row", gap: 6, flex: 1 },
   previewCol: { flex: 1, gap: 6 },
   previewBlock: { backgroundColor: colors.bgInput, borderRadius: 6, flex: 0 },
-
-  // Story preview
-  storyPhone: {
-    width: 70,
-    height: 130,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.grayDark,
-    overflow: "hidden",
-    padding: 3,
-  },
-  storyPhoneInner: { flex: 1, backgroundColor: colors.bgInput, borderRadius: 8 },
-  storyArrows: { position: "absolute", right: 24, alignItems: "center", gap: 80 },
-  storyArrow: { color: colors.grayDark, fontSize: 16 },
 
   // Bottom bar
   bottomBar: { backgroundColor: colors.bg, borderTopWidth: 0.5, borderTopColor: colors.border, paddingHorizontal: 16, paddingTop: 12 },

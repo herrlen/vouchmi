@@ -82,7 +82,6 @@ function RootLayout() {
         <Stack.Screen name="links/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="create-community" options={{ title: "Neue Community", presentation: "modal" }} />
         <Stack.Screen name="create-post" options={{ headerShown: false, presentation: "modal" }} />
-        <Stack.Screen name="create-story" options={{ headerShown: false, presentation: "modal" }} />
         <Stack.Screen name="discover" options={{ title: "Entdecken" }} />
         <Stack.Screen name="community/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="community-settings" options={{ headerShown: false }} />

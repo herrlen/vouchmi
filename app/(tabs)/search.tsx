@@ -16,7 +16,7 @@ export default function SearchTab() {
   const [query, setQuery] = useState("");
   const [communities, setCommunities] = useState<Community[]>([]);
   const [topReco, setTopReco] = useState<Post[]>([]);
-  const [storyPosts, setStoryPosts] = useState<Post[]>([]);
+  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [recoFilter, setRecoFilter] = useState<RecoFilter>("likes");
@@ -31,7 +31,7 @@ export default function SearchTab() {
       ]);
       setCommunities(cRes.communities);
       setTopReco(tRes.posts);
-      setStoryPosts(fRes.data);
+      setFeedPosts(fRes.data);
     } catch (e: any) {
       Alert.alert("Fehler", e.message);
     }
@@ -62,12 +62,12 @@ export default function SearchTab() {
     ? communities.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
     : communities;
 
-  const uniqueAuthors = storyPosts
+  const uniqueAuthors = feedPosts
     .map((p) => p.author)
     .filter((a, i, arr) => arr.findIndex((x) => x.id === a.id) === i)
     .slice(0, 10);
 
-  const postsWithImages = storyPosts.filter((p) => !!p.link_image);
+  const postsWithImages = feedPosts.filter((p) => !!p.link_image);
 
   return (
     <SafeAreaView style={s.container} edges={["top"]}>
@@ -87,31 +87,6 @@ export default function SearchTab() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         >
             <View>
-              {/* Stories */}
-              <View style={s.storiesWrap}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.storiesRow}>
-                  <Pressable style={s.storyItem} onPress={() => router.push("/create-story")}>
-                    <View style={[s.storyRing, s.storyRingMine]}>
-                      <View style={s.storyPlus}><Plus color={colors.accent} size={26} /></View>
-                    </View>
-                    <Text style={s.storyLabel}>Du</Text>
-                  </Pressable>
-                  {uniqueAuthors.map((author) => (
-                    <Pressable key={author.id} style={s.storyItem} onPress={() => router.push(`/user/${author.id}`)}>
-                      <View style={[s.storyRing, s.storyRingActive]}>
-                        {author.avatar_url ? (
-                          <Image source={{ uri: author.avatar_url }} style={s.storyAvatar} />
-                        ) : (
-                          <View style={[s.storyAvatar, s.storyAvatarPlaceholder]}>
-                            <Text style={s.storyAvatarInitial}>{(author.display_name ?? author.username)[0]?.toUpperCase()}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={s.storyLabel} numberOfLines={1}>{author.username}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
 
               {/* Top 3 Reco with filter */}
               <View style={s.sectionHead}>
@@ -242,17 +217,6 @@ const s = StyleSheet.create({
   searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: colors.bgInput, marginHorizontal: 12, marginBottom: 8, borderRadius: 10, paddingHorizontal: 12, height: 40, gap: 8 },
   searchInput: { flex: 1, color: colors.white, fontSize: 14 },
 
-  storiesWrap: { borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingVertical: 10 },
-  storiesRow: { paddingHorizontal: 12, gap: 14 },
-  storyItem: { alignItems: "center", width: BUBBLE_SIZE + 8 },
-  storyRing: { width: BUBBLE_SIZE + 6, height: BUBBLE_SIZE + 6, borderRadius: (BUBBLE_SIZE + 6) / 2, justifyContent: "center", alignItems: "center", borderWidth: 2 },
-  storyRingActive: { borderColor: colors.accent },
-  storyRingMine: { borderColor: "transparent", backgroundColor: colors.bgCard },
-  storyAvatar: { width: BUBBLE_SIZE, height: BUBBLE_SIZE, borderRadius: BUBBLE_SIZE / 2 },
-  storyAvatarPlaceholder: { backgroundColor: colors.bgInput, justifyContent: "center", alignItems: "center" },
-  storyAvatarInitial: { color: colors.white, fontWeight: "700", fontSize: 22 },
-  storyPlus: { width: BUBBLE_SIZE, height: BUBBLE_SIZE, borderRadius: BUBBLE_SIZE / 2, backgroundColor: colors.bgInput, justifyContent: "center", alignItems: "center" },
-  storyLabel: { color: colors.gray, fontSize: 11, marginTop: 5, maxWidth: BUBBLE_SIZE + 8, textAlign: "center" },
 
   sectionHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 14, marginBottom: 10, paddingHorizontal: 16 },
   sectionTitle: { color: colors.white, fontSize: 15, fontWeight: "600" },
