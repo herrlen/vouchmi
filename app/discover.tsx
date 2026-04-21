@@ -114,7 +114,7 @@ export default function DiscoverScreen() {
           }
           renderItem={({ item }) => {
             const accent = getAccent(item);
-            const emoji = getEmoji(item);
+            const initial = item.name[0]?.toUpperCase() ?? "?";
             const isMember = item.is_member || item.my_role === "owner";
             return (
               <Pressable style={s.card} onPress={() => router.push(`/community/${item.id}`)}>
@@ -124,7 +124,7 @@ export default function DiscoverScreen() {
                     {item.image_url ? (
                       <Image source={{ uri: item.image_url }} style={s.emojiImg} />
                     ) : (
-                      <Text style={{ fontSize: 24 }}>{emoji}</Text>
+                      <Text style={{ fontSize: 20, fontWeight: "800", color: accent }}>{initial}</Text>
                     )}
                   </View>
                   <View style={{ flex: 1 }}>
