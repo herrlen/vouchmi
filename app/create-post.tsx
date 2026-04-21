@@ -277,9 +277,9 @@ function StepItem({ number, icon, title, desc }: { number: string; icon: React.R
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0A0E1A" },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: "#1E2235" },
-  headerBtn: { width: 50, minHeight: 44, justifyContent: "center" },
+  headerBtn: { minWidth: 50, minHeight: 44, justifyContent: "center" },
   headerTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
-  postBtn: { color: "#F59E0B", fontSize: 16, fontWeight: "800", textAlign: "right" },
+  postBtn: { color: "#F59E0B", fontSize: 16, fontWeight: "800", textAlign: "right", flexShrink: 0 },
 
   label: { color: "#94A3B8", fontSize: 11, fontWeight: "600", letterSpacing: 1.5, marginTop: 20, marginBottom: 8 },
   labelOpt: { fontWeight: "400", letterSpacing: 0 },
