@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hilfe & Support — Vouchmi</title>
+<meta name="description" content="Vouchmi Hilfe-Center: Anleitungen zu Tracking, Analytics, Account-Verwaltung und mehr.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231A1D2E%22/><text x=%2250%22 y=%2270%22 font-family=%22Arial%22 font-size=%2260%22 font-weight=%22800%22 fill=%22%23F59E0B%22 text-anchor=%22middle%22>V</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#F8F7F4;color:#1A1D2E}
+a{text-decoration:none;color:inherit}
+
+.nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #E2E8F0;padding:14px 24px}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800;color:#1A1D2E}
+.nav-logo-mark{background:#1A1D2E;color:#F59E0B;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px}
+.mi{color:#F59E0B}
+.nav-links{display:flex;gap:20px;font-size:14px;font-weight:500}
+.nav-links a{color:#64748B}
+.nav-links a.active{color:#1A1D2E;font-weight:600}
+
+.hero-section{max-width:1100px;margin:0 auto;padding:80px 24px 40px}
+.hero-section h1{font-family:'DM Serif Display',serif;font-size:48px;color:#1A1D2E;margin-bottom:12px}
+.hero-section p{font-size:18px;color:#64748B;max-width:600px}
+
+.categories{max-width:1100px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+@media(max-width:640px){.categories{grid-template-columns:1fr}}
+
+.cat-card{background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:28px;transition:box-shadow .2s}
+.cat-card:not(.disabled):hover{box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.cat-card h3{font-size:18px;font-weight:700;margin-bottom:6px}
+.cat-card p{font-size:14px;color:#64748B}
+.cat-card.disabled{opacity:.5}
+.cat-card .badge{display:inline-block;font-size:11px;font-weight:600;color:#64748B;background:#F8F7F4;padding:4px 10px;border-radius:6px;margin-top:10px}
+.cat-card .cat-icon{font-size:28px;margin-bottom:12px}
+
+.footer-help{max-width:1100px;margin:0 auto;padding:40px 24px;text-align:center;border-top:1px solid #E2E8F0}
+.footer-help p{color:#64748B;font-size:14px}
+.footer-help a{color:#4F46E5;font-weight:600}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="nav-logo-mark">V</span>
+      <span>Vouch<span class="mi">mi</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="../index.html">Startseite</a>
+      <a href="." class="active">Hilfe</a>
+    </div>
+  </div>
+</nav>
+
+<div class="hero-section">
+  <h1>Hilfe & Support</h1>
+  <p>Anleitungen, Tipps und Antworten auf die häufigsten Fragen rund um Vouchmi.</p>
+</div>
+
+<div class="categories">
+  <a href="utm-tracking-ga4/" class="cat-card">
+    <div class="cat-icon">&#128202;</div>
+    <h3>Tracking & Analytics</h3>
+    <p>UTM-Parameter, GA4-Integration, Klick-Tracking und Performance-Auswertung.</p>
+  </a>
+
+  <div class="cat-card disabled">
+    <div class="cat-icon">&#128100;</div>
+    <h3>Account & Profil</h3>
+    <p>Profil bearbeiten, Passwort ändern, E-Mail verifizieren.</p>
+    <span class="badge">Bald verfügbar</span>
+  </div>
+
+  <div class="cat-card disabled">
+    <div class="cat-icon">&#127963;</div>
+    <h3>Brand-Abo</h3>
+    <p>Brand-Profil erstellen, PayPal-Abo verwalten, Analytics für Marken.</p>
+    <span class="badge">Bald verfügbar</span>
+  </div>
+
+  <div class="cat-card disabled">
+    <div class="cat-icon">&#11088;</div>
+    <h3>Influencer-Abo</h3>
+    <p>Creator-Status, Analytics-Dashboard, Brands kontaktieren.</p>
+    <span class="badge">Bald verfügbar</span>
+  </div>
+
+  <div class="cat-card disabled">
+    <div class="cat-icon">&#128220;</div>
+    <h3>Community-Regeln</h3>
+    <p>Verhaltensregeln, Moderation, Inhalte melden.</p>
+    <span class="badge">Bald verfügbar</span>
+  </div>
+</div>
+
+<div class="footer-help">
+  <p>Deine Frage ist nicht dabei? Schreibe an <a href="mailto:support@vouchmi.com">support@vouchmi.com</a></p>
+</div>
+
+</body>
+</html>

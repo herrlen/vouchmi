@@ -86,7 +86,7 @@ export default function BrandScreen() {
         <ScrollView contentContainerStyle={s.formContent} keyboardShouldPersistTaps="handled">
           <Text style={s.emoji}>🏷️</Text>
           <Text style={s.headline}>Brand-Profil erstellen</Text>
-          <Text style={s.body}>Für 0,99 €/Monat erhältst du einen Brand-Account neben deinem persönlichen — umschaltbar über den Profil-Tab.</Text>
+          <Text style={s.body}>Für 1,99 €/Monat erhältst du einen Brand-Account neben deinem persönlichen — umschaltbar über den Profil-Tab.</Text>
 
           <LabeledInput label="Firmenname *" value={form.brand_name} onChangeText={(t) => setForm({ ...form, brand_name: t })} />
           <LabeledInput label="Firmen-E-Mail *" value={form.company_email} onChangeText={(t) => setForm({ ...form, company_email: t })} keyboardType="email-address" autoCapitalize="none" />
@@ -94,7 +94,7 @@ export default function BrandScreen() {
           <LabeledInput label="Branche" value={form.industry} onChangeText={(t) => setForm({ ...form, industry: t })} placeholder="z. B. Mode, Beauty, Sport" />
           <LabeledInput label="Kurzbeschreibung" value={form.description} onChangeText={(t) => setForm({ ...form, description: t })} multiline />
 
-          <Pressable style={[s.btn, submitting && { opacity: 0.6 }]} onPress={submitRegister} disabled={submitting}>
+          <Pressable style={[s.btn, submitting && { opacity: 0.6 }]} onPress={submitRegister} disabled={submitting} accessibilityRole="button" accessibilityLabel="Weiter zum Abo" accessibilityState={{ disabled: submitting }}>
             <Text style={s.btnText}>{submitting ? "Moment..." : "Weiter zum Abo"}</Text>
           </Pressable>
           <Text style={s.footnote}>Der Abo-Abschluss erfolgt im nächsten Schritt über PayPal.</Text>
@@ -111,7 +111,7 @@ export default function BrandScreen() {
             <CheckCircle2 color={colors.accent} size={32} strokeWidth={2} />
             <View style={{ flex: 1 }}>
               <Text style={s.statusTitle}>Abo aktiv</Text>
-              <Text style={s.statusSub}>0,99 €/Monat · PayPal</Text>
+              <Text style={s.statusSub}>1,99 €/Monat · PayPal</Text>
             </View>
           </View>
           <View style={s.brandCard}>
@@ -120,7 +120,7 @@ export default function BrandScreen() {
             {b.industry && <Text style={s.brandMeta}>{b.industry}</Text>}
             {b.website_url && <Text style={s.brandLink}>{b.website_url}</Text>}
           </View>
-          <Pressable style={s.cancelBtn} onPress={() => {
+          <Pressable style={s.cancelBtn} accessibilityRole="button" accessibilityLabel="Abo kuendigen" onPress={() => {
             Alert.alert("Abo kündigen?", "Dein Brand-Status endet am Ende des laufenden Abrechnungszeitraums.", [
               { text: "Abbrechen", style: "cancel" },
               { text: "Kündigen", style: "destructive", onPress: async () => {
@@ -143,7 +143,7 @@ export default function BrandScreen() {
           Firmenname und E-Mail sind gespeichert. Jetzt nur noch das Abo über PayPal aktivieren.
         </Text>
         <View style={s.priceCard}>
-          <Text style={s.priceAmount}>0,99 €</Text>
+          <Text style={s.priceAmount}>1,99 €</Text>
           <Text style={s.pricePeriod}>pro Monat · monatlich kündbar</Text>
         </View>
         <Pressable style={[s.btn, submitting && { opacity: 0.6 }]} onPress={startCheckout} disabled={submitting}>
@@ -159,10 +159,10 @@ export default function BrandScreen() {
     <SafeAreaView style={s.container} edges={["top"]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck">
           <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
-        <Text style={s.title}>Brand-Profil</Text>
+        <Text style={s.title} accessibilityRole="header">Brand-Profil</Text>
         <View style={s.iconBtn} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>

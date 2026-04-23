@@ -23,14 +23,21 @@ export default function LinkEmbed({ postId, communityId, url, affiliateUrl, titl
   };
 
   return (
-    <Pressable style={[s.card, compact && s.compact]} onPress={handlePress}>
-      {image && <Image source={{ uri: image }} style={compact ? s.imgS : s.img} contentFit="cover" />}
+    <Pressable
+      style={[s.card, compact && s.compact]}
+      onPress={handlePress}
+      accessibilityRole="link"
+      accessibilityLabel={`${title ?? "Produkt"} auf ${domain?.replace("www.", "") ?? "externer Seite"} oeffnen${price != null ? `, ${price.toFixed(2)} Euro` : ""}. Anzeige`}
+      accessibilityHint="Oeffnet den Link im Browser"
+    >
+      {image && <Image source={{ uri: image }} style={compact ? s.imgS : s.img} contentFit="cover" accessibilityLabel={`Produktbild: ${title ?? "Produkt"}`} />}
       <View style={s.info}>
         {domain && <Text style={s.domain}>{domain.replace("www.", "")}</Text>}
         <Text style={s.title} numberOfLines={compact ? 1 : 2}>{title ?? "Link öffnen"}</Text>
         {price != null && <Text style={s.price}>€{price.toFixed(2)}</Text>}
+        <Text style={s.disclosure}>Anzeige</Text>
       </View>
-      <View style={s.arrow}><Text style={s.arrowText}>→</Text></View>
+      <View style={s.arrow} accessibilityElementsHidden><Text style={s.arrowText}>→</Text></View>
     </Pressable>
   );
 }
@@ -44,6 +51,7 @@ const s = StyleSheet.create({
   domain: { color: colors.gray, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8 },
   title: { color: colors.white, fontSize: 14, fontWeight: "600", marginTop: 2 },
   price: { color: colors.accent, fontSize: 16, fontWeight: "bold", marginTop: 3 },
+  disclosure: { color: colors.gray, fontSize: 10, fontWeight: "600", letterSpacing: 0.5, marginTop: 3, textTransform: "uppercase" },
   arrow: { paddingRight: 14 },
   arrowText: { color: colors.accent, fontSize: 18 },
 });

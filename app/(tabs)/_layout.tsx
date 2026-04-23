@@ -1,13 +1,9 @@
-import { useState } from "react";
-import { Tabs } from "expo-router";
-import { Compass, Search, Users, User, Plus } from "lucide-react-native";
+import { Tabs, router } from "expo-router";
+import { Compass, Search, Users, User, Plus, MessageCircle } from "lucide-react-native";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { colors } from "../../src/constants/theme";
-import CreateSheet from "../../src/components/CreateSheet";
 
 export default function TabsLayout() {
-  const [sheetOpen, setSheetOpen] = useState(false);
-
   return (
     <View style={{ flex: 1 }}>
       <Tabs
@@ -29,19 +25,19 @@ export default function TabsLayout() {
       >
         <Tabs.Screen name="search" options={{ title: "Suche", tabBarIcon: ({ color, size }) => <Search color={color} size={size} strokeWidth={1.8} /> }} />
         <Tabs.Screen name="communities" options={{ title: "Community", tabBarIcon: ({ color, size }) => <Users color={color} size={size} strokeWidth={1.8} /> }} />
+        <Tabs.Screen name="messages" options={{ title: "Nachrichten", tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} strokeWidth={1.8} /> }} />
         <Tabs.Screen name="reco" options={{ title: "Reco", tabBarIcon: ({ color, size }) => <Compass color={color} size={size} strokeWidth={1.8} /> }} />
         <Tabs.Screen name="profile" options={{ title: "Profil", tabBarIcon: ({ color, size }) => <User color={color} size={size} strokeWidth={1.8} /> }} />
       </Tabs>
 
       <Pressable
         style={({ pressed }) => [s.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.94 }] }]}
-        onPress={() => setSheetOpen(true)}
+        onPress={() => router.push("/create-post")}
         accessibilityLabel="Neuen Beitrag erstellen"
+        accessibilityRole="button"
       >
         <Plus color="#fff" size={30} strokeWidth={2.6} />
       </Pressable>
-
-      <CreateSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} />
     </View>
   );
 }

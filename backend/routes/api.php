@@ -4,12 +4,15 @@
 // Vouchmi API – Community Commerce Platform
 // Kein eigener Shop. Nutzer teilen Links. Marken zahlen.
 
+use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AppleIapController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\DirectMessageController;
 use App\Http\Controllers\Api\BrandProfileController;
+use App\Http\Controllers\Api\InfluencerController;
 use App\Http\Controllers\Api\LegalController;
 use App\Http\Controllers\Api\SharedLinkController;
 use App\Http\Controllers\Api\LinkPreviewController;
@@ -35,6 +38,9 @@ Route::get('/legal/imprint', [LegalController::class, 'imprint']);
 
 // ── PayPal Webhook (öffentlich, von PayPal aufgerufen) ──
 Route::post('/webhooks/paypal', [BrandController::class, 'webhook']);
+
+// ── Apple App Store Server Notifications V2 (öffentlich, von Apple aufgerufen) ──
+Route::post('/v1/iap/server-notification', [AppleIapController::class, 'serverNotification']);
 
 // ── Link Preview (öffentlich, gecached) ──
 Route::get('/link-preview', [LinkPreviewController::class, 'preview']);
@@ -155,6 +161,38 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{userId}/block', [ModerationController::class, 'unblock']);
     Route::get('/users/blocked', [ModerationController::class, 'blockedUsers']);
     Route::delete('/account', [ModerationController::class, 'deleteAccount']);
+
+    // Influencer — Registrierung & Abo-Verwaltung
+    Route::post('/influencer/register', [InfluencerController::class, 'register']);
+    Route::post('/influencer/subscribe', [InfluencerController::class, 'subscribe']);
+    Route::post('/influencer/cancel', [InfluencerController::class, 'cancel']);
+    Route::get('/influencer/status', [InfluencerController::class, 'status']);
+
+    // Apple IAP — Receipt-Validierung (authentifiziert)
+    Route::post('/v1/iap/verify-receipt', [AppleIapController::class, 'verifyReceipt']);
+
+    // Subscription-Status (generisch für beide Plan-Typen)
+    Route::get('/subscription/status', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        $sub = $user->subscriptions()->latest()->first();
+        return response()->json([
+            'role'             => $user->role,
+            'has_active'       => $user->hasActiveSubscription(),
+            'plan_type'        => $sub?->plan_type,
+            'payment_provider' => $sub?->payment_provider,
+            'status'           => $sub?->status,
+            'auto_renew'       => $sub?->auto_renew,
+            'expires_at'       => $sub?->expires_at?->toIso8601String(),
+            'paypal_status'    => $sub?->paypal_status,
+        ]);
+    });
+});
+
+// ── Influencer Analytics (aktives Influencer-Abo erforderlich) ──
+Route::middleware(['auth:sanctum', 'subscription.active:influencer'])->prefix('v1/analytics')->group(function () {
+    Route::get('/overview', [AnalyticsController::class, 'overview']);
+    Route::get('/links', [AnalyticsController::class, 'linkPerformance']);
+    Route::get('/audience', [AnalyticsController::class, 'audience']);
 });
 
 // ── Brand API (nur für zahlende Marken) ──

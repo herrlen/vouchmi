@@ -162,8 +162,10 @@ export default function Auth() {
             <View style={s.inputWrap}>
               <UserIcon color="#4A5068" size={18} style={s.inputIcon} />
               <TextInput style={s.inputField} placeholder="Username" placeholderTextColor="#4A5068"
-                value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} />
-              {username.length >= 3 && <Check color={colors.accent} size={18} />}
+                value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false}
+                textContentType="username" autoComplete="username-new"
+                accessibilityLabel="Benutzername" accessibilityHint="Mindestens 3 Zeichen" />
+              {username.length >= 3 && <Check color={colors.accent} size={18} accessibilityElementsHidden />}
             </View>
           )}
 
@@ -171,8 +173,9 @@ export default function Auth() {
             <Mail color="#4A5068" size={18} style={s.inputIcon} />
             <TextInput style={s.inputField} placeholder="E-Mail" placeholderTextColor="#4A5068"
               value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none"
-              autoCorrect={false} textContentType="emailAddress" />
-            {email.length > 3 && emailValid && <Check color={colors.accent} size={18} />}
+              autoCorrect={false} textContentType="emailAddress" autoComplete="email"
+              accessibilityLabel="E-Mail-Adresse" />
+            {email.length > 3 && emailValid && <Check color={colors.accent} size={18} accessibilityElementsHidden />}
           </View>
 
           {(mode === "login" || mode === "register") && (
@@ -181,8 +184,10 @@ export default function Auth() {
                 <Lock color="#4A5068" size={18} style={s.inputIcon} />
                 <TextInput style={s.inputField} placeholder="Passwort" placeholderTextColor="#4A5068"
                   value={password} onChangeText={setPassword} secureTextEntry={!showPw}
-                  textContentType={mode === "register" ? "newPassword" : "password"} />
-                <Pressable onPress={() => setShowPw(!showPw)} hitSlop={10}>
+                  textContentType={mode === "register" ? "newPassword" : "password"}
+                  autoComplete={mode === "register" ? "password-new" : "password"}
+                  accessibilityLabel="Passwort" accessibilityHint={mode === "register" ? "Mindestens 8 Zeichen, 1 Grossbuchstabe, 1 Zahl" : undefined} />
+                <Pressable onPress={() => setShowPw(!showPw)} hitSlop={10} accessibilityRole="button" accessibilityLabel={showPw ? "Passwort verbergen" : "Passwort anzeigen"}>
                   {showPw ? <EyeOff color="#64748B" size={18} /> : <Eye color="#64748B" size={18} />}
                 </Pressable>
               </View>
@@ -197,7 +202,13 @@ export default function Auth() {
           )}
 
           {mode === "register" && (
-            <Pressable style={s.termsRow} onPress={() => setAcceptTerms((v) => !v)}>
+            <Pressable
+              style={s.termsRow}
+              onPress={() => setAcceptTerms((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: acceptTerms }}
+              accessibilityLabel="Nutzungsbedingungen und Datenschutzerklaerung akzeptieren"
+            >
               <View style={[s.checkbox, acceptTerms && s.checkboxOn]}>
                 {acceptTerms && <Check color="#fff" size={14} strokeWidth={3} />}
               </View>
@@ -210,18 +221,25 @@ export default function Auth() {
             </Pressable>
           )}
 
-          <Pressable style={[s.btn, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
+          <Pressable
+            style={[s.btn, loading && { opacity: 0.6 }]}
+            onPress={handleSubmit}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel={submitLabel}
+            accessibilityState={{ disabled: loading }}
+          >
             {loading ? <ActivityIndicator color="#1A1D2E" /> : <Text style={s.btnText}>{submitLabel}</Text>}
           </Pressable>
 
           {mode === "login" && (
-            <Pressable onPress={() => setMode("forgot")} style={s.secondaryBtn}>
+            <Pressable onPress={() => setMode("forgot")} style={s.secondaryBtn} accessibilityRole="button" accessibilityLabel="Passwort vergessen">
               <Text style={[s.secondaryText, { color: colors.accent }]}>Passwort vergessen?</Text>
             </Pressable>
           )}
 
           {(mode === "login" || mode === "register") && (
-            <Pressable onPress={() => setMode(mode === "register" ? "login" : "register")} style={s.toggle}>
+            <Pressable onPress={() => setMode(mode === "register" ? "login" : "register")} style={s.toggle} accessibilityRole="button" accessibilityLabel={mode === "register" ? "Zur Anmeldung wechseln" : "Zur Registrierung wechseln"}>
               <Text style={s.toggleText}>
                 {mode === "register" ? "Bereits dabei? Einloggen" : "Noch kein Account? Registrieren"}
               </Text>

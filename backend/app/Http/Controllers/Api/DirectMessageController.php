@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\DirectMessage;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,21 @@ class DirectMessageController extends Controller
 
         if ($data['receiver_id'] === $me->id) {
             return response()->json(['message' => 'Du kannst dir nicht selbst schreiben.'], 422);
+        }
+
+        $receiver = User::findOrFail($data['receiver_id']);
+
+        // Prüfe ob schon eine Konversation existiert (dann darf jeder antworten)
+        $hasExisting = Conversation::query()
+            ->where(function ($q) use ($me, $receiver) {
+                [$one, $two] = $me->id < $receiver->id ? [$me->id, $receiver->id] : [$receiver->id, $me->id];
+                $q->where('user_one_id', $one)->where('user_two_id', $two);
+            })
+            ->whereHas('messages')
+            ->exists();
+
+        if (!$hasExisting && !$me->canInitiateMessage($receiver)) {
+            return response()->json(['message' => 'Du kannst diese Person nicht anschreiben.'], 403);
         }
 
         $message = DB::transaction(function () use ($data, $me) {
@@ -64,8 +80,8 @@ class DirectMessageController extends Controller
                 $q->where('user_one_id', $meId)->orWhere('user_two_id', $meId);
             })
             ->with([
-                'userOne:id,username,display_name,avatar_url',
-                'userTwo:id,username,display_name,avatar_url',
+                'userOne:id,username,display_name,avatar_url,role',
+                'userTwo:id,username,display_name,avatar_url,role',
             ])
             ->orderByDesc('last_message_at')
             ->limit(100)
@@ -98,12 +114,19 @@ class DirectMessageController extends Controller
             ->pluck('c', 'conversation_id');
 
         $payload = $conversations->map(function (Conversation $c) use ($meId, $lastMessages, $unreadCounts) {
-            $other = $c->user_one_id === $meId ? $c->userTwo : $c->userOne;
+            $otherUser = $c->user_one_id === $meId ? $c->userTwo : $c->userOne;
             $last = $lastMessages->get($c->id);
 
             return [
                 'id'              => $c->id,
-                'other_user'      => $other,
+                'other_user'      => [
+                    'id'           => $otherUser->id,
+                    'username'     => $otherUser->username,
+                    'display_name' => $otherUser->display_name,
+                    'avatar_url'   => $otherUser->avatar_url,
+                    'role'         => $otherUser->role,
+                    'is_active'    => $otherUser->hasActiveSubscription(),
+                ],
                 'last_message'    => $last ? [
                     'id'         => $last->id,
                     'content'    => $last->content,

@@ -136,15 +136,23 @@ class UserController extends Controller
         $followerCount = \DB::table('follows')->where('following_id', $user->id)->count();
         $followingCount = \DB::table('follows')->where('follower_id', $user->id)->count();
         $isFollowing = \DB::table('follows')->where('follower_id', $request->user()->id)->where('following_id', $userId)->exists();
+        $isFollowingMe = \DB::table('follows')->where('follower_id', $userId)->where('following_id', $request->user()->id)->exists();
 
         return response()->json([
-            'profile' => $user->only('id', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'profile_layout', 'tier', 'tier_badge_opacity'),
+            'profile' => array_merge(
+                $user->only('id', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'profile_layout', 'tier', 'tier_badge_opacity'),
+                [
+                    'role'       => $user->role,
+                    'is_creator' => $user->isCreator(),
+                ]
+            ),
             'stats' => [
                 'posts_count' => $postCount,
                 'followers_count' => $followerCount,
                 'following_count' => $followingCount,
             ],
             'is_following' => $isFollowing,
+            'is_following_me' => $isFollowingMe,
         ]);
     }
 }

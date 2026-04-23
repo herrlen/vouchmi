@@ -296,6 +296,101 @@ export const widget = {
   daily: () => api.get<WidgetDaily>("/widget/daily"),
 };
 
+// Influencer
+export type InfluencerStatus = {
+  is_influencer: boolean;
+  is_active: boolean;
+  paypal_status: string | null;
+  started_at: string | null;
+};
+
+export const influencer = {
+  register: () => api.post<{ message: string; user: User }>("/influencer/register"),
+  subscribe: () => api.post<{ approval_url: string | null; subscription_id: string | null; configured: boolean }>("/influencer/subscribe"),
+  cancel: () => api.post<{ cancelled: boolean }>("/influencer/cancel"),
+  status: () => api.get<InfluencerStatus>("/influencer/status"),
+};
+
+// Subscription (generisch)
+export type SubscriptionStatus = {
+  role: string;
+  has_active: boolean;
+  plan_type: string | null;
+  payment_provider: "paypal" | "apple_iap" | null;
+  status: string | null;
+  auto_renew: boolean | null;
+  expires_at: string | null;
+  paypal_status: string | null;
+};
+
+export const subscription = {
+  status: () => api.get<SubscriptionStatus>("/subscription/status"),
+  verifyAppleReceipt: (d: { receipt_data: string; transaction_id: string; product_id: string }) =>
+    api.post<{ verified: boolean }>("/v1/iap/verify-receipt", d),
+};
+
+// Influencer Analytics
+export type AnalyticsOverview = {
+  clicks: { total: number; '7d': number; '30d': number };
+  followers: number;
+  posts: number;
+  engagement: { likes: number; comments: number };
+};
+
+export type AnalyticsLink = {
+  id: string;
+  content: string;
+  link_url: string;
+  link_title: string | null;
+  link_domain: string | null;
+  click_count: number;
+  like_count: number;
+  comment_count: number;
+  created_at: string;
+};
+
+export type AnalyticsAudience = {
+  id: string;
+  name: string;
+  member_count: number;
+  clicks: number;
+};
+
+export const analytics = {
+  overview: () => api.get<AnalyticsOverview>("/v1/analytics/overview"),
+  links: () => api.get<{ posts: AnalyticsLink[] }>("/v1/analytics/links"),
+  audience: () => api.get<{ communities: AnalyticsAudience[] }>("/v1/analytics/audience"),
+};
+
+// Direct Messages
+export type DmConversation = {
+  id: string;
+  other_user: { id: string; username: string; display_name: string | null; avatar_url: string | null; role: string; is_active: boolean };
+  last_message: { id: string; content: string; sender_id: string; read_at: string | null; created_at: string } | null;
+  last_message_at: string;
+  unread_count: number;
+};
+
+export type DmMessage = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  post_id: string | null;
+  read_at: string | null;
+  created_at: string;
+  sender: { id: string; username: string; display_name: string | null; avatar_url: string | null };
+  post?: Post | null;
+};
+
+export const dm = {
+  conversations: () => api.get<{ conversations: DmConversation[] }>("/dm/conversations"),
+  thread: (userId: string, perPage = 30) => api.get<{ conversation_id: string; messages: { data: DmMessage[] } }>(`/dm/conversations/${userId}?per_page=${perPage}`),
+  send: (receiverId: string, content: string, postId?: string) => api.post<{ message: DmMessage }>("/dm/send", { receiver_id: receiverId, content, ...(postId ? { post_id: postId } : {}) }),
+  markRead: (userId: string) => api.patch<{ marked_read: number }>(`/dm/read/${userId}`),
+};
+
 export const moderation = {
   report: (d: { target_type: "post" | "comment" | "user" | "community"; target_id: string; reason: "spam" | "abuse" | "illegal" | "sexual" | "other"; details?: string }) =>
     api.post<{ message: string }>("/reports", d),
@@ -319,8 +414,14 @@ export const drops = {
 export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string; email_verified_at?: string | null };
 export type Community = { id: string; name: string; slug: string; description: string | null; image_url: string | null; category: string | null; tags?: string[] | null; member_count: number; follower_count?: number; is_followed?: boolean; is_private: boolean; role?: string; is_member?: boolean; my_role?: string; owner_id?: string };
 export type CommunityMember = { id: string; username: string; display_name: string | null; avatar_url: string | null; role: string; muted_until?: string | null };
-export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; repost_count: number; click_count: number; is_liked?: boolean; is_reposted?: boolean; is_bookmarked?: boolean; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null; tier?: string; tier_badge_opacity?: number }; community?: { id: string; name: string; slug: string } | null };
-export type Comment = { id: string; content: string; created_at: string; parent_id?: string | null; like_count?: number; is_liked?: boolean; replies?: Comment[]; author: { id: string; username: string; display_name: string; avatar_url: string | null } };
+export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; repost_count: number; click_count: number; is_liked?: boolean; is_reposted?: boolean; is_bookmarked?: boolean; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null; role?: string; tier?: string; tier_badge_opacity?: number }; community?: { id: string; name: string; slug: string } | null };
+export type Comment = { id: string; content: string; created_at: string; parent_id?: string | null; like_count?: number; is_liked?: boolean; replies?: Comment[]; author: { id: string; username: string; display_name: string; avatar_url: string | null; role?: string; tier?: string } };
+
+/** Helper: Check if a user object represents a verified creator */
+export function isCreator(user: { role?: string; is_creator?: boolean; tier?: string }): boolean {
+  if (typeof user.is_creator === "boolean") return user.is_creator;
+  return user.role === "influencer" && !!user.tier && user.tier !== "none";
+}
 export type Msg = { id: string; content: string; link_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; created_at: string; sender: { id: string; username: string; display_name: string; avatar_url: string | null } };
 export type LinkPreview = { original_url: string; affiliate_url: string; title: string | null; description: string | null; image: string | null; price: number | null; domain: string };
 export type Drop = { id: string; title: string; description: string | null; product_url: string | null; discount_code: string | null; discount_percent: number | null; image_url: string | null; votes_yes: number; votes_no: number; status: string };

@@ -15,6 +15,8 @@ class AppServiceProvider extends ServiceProvider
                 config('services.paypal.client_secret'),
                 config('services.paypal.plan_id'),
                 config('services.paypal.mode', 'live'),
+                config('services.paypal.brand_plan_id'),
+                config('services.paypal.influencer_plan_id'),
             );
         });
     }

@@ -2,12 +2,13 @@ import { useEffect, useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, Image, Pressable, FlatList, Dimensions, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
-import { ChevronLeft, Link as LinkIcon } from "lucide-react-native";
+import { ChevronLeft, Link as LinkIcon, MessageCircle } from "lucide-react-native";
 import { colors } from "../../src/constants/theme";
-import { users as usersApi, feed as feedApi, type Post, type User, type ProfileLayout } from "../../src/lib/api";
+import { users as usersApi, feed as feedApi, type Post, type User, type ProfileLayout, influencer as influencerApi } from "../../src/lib/api";
 import { useAuth } from "../../src/lib/store";
 import MasonryGallery from "../../src/components/gallery/MasonryGallery";
 import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
+import CreatorBadge from "../../src/components/CreatorBadge";
 
 const { width } = Dimensions.get("window");
 const TILE = (width - 4) / 3;
@@ -18,6 +19,7 @@ export default function UserProfileScreen() {
   const [profileData, setProfileData] = useState<any>(null);
   const [stats, setStats] = useState({ posts_count: 0, followers_count: 0, following_count: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowingMe, setIsFollowingMe] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileLayout, setProfileLayout] = useState<ProfileLayout>("masonry");
@@ -25,7 +27,7 @@ export default function UserProfileScreen() {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      usersApi.profile(id).then((r) => { setProfileData(r.profile); setStats(r.stats); setIsFollowing(r.is_following); setProfileLayout(r.profile.profile_layout ?? "masonry"); }),
+      usersApi.profile(id).then((r) => { setProfileData(r.profile); setStats(r.stats); setIsFollowing(r.is_following); setIsFollowingMe((r as any).is_following_me ?? false); setProfileLayout(r.profile.profile_layout ?? "masonry"); }),
       feedApi.all().then((r) => setPosts(r.data.filter((p) => p.author.id === id))),
     ]).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
@@ -50,6 +52,9 @@ export default function UserProfileScreen() {
   const isMe = me?.id === id;
   const displayName = profileData?.display_name ?? profileData?.username ?? "";
   const initial = displayName[0]?.toUpperCase() ?? "?";
+
+  // Messaging-Permission: gegenseitiges Follow erlaubt DM
+  const canMessage = !isMe && isFollowing && isFollowingMe;
 
   if (loading) return <SafeAreaView style={s.container} edges={["top"]}><Stack.Screen options={{ headerShown: false }} /><ActivityIndicator color={colors.accent} style={{ marginTop: 60 }} /></SafeAreaView>;
 
@@ -80,15 +85,34 @@ export default function UserProfileScreen() {
                 <Stat label="Folge ich" value={stats.following_count} />
               </View>
             </View>
-            <Text style={s.name}>{displayName}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={s.name}>{displayName}</Text>
+              {profileData?.is_creator && <CreatorBadge size="md" />}
+            </View>
+            {profileData?.is_creator && (
+              <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>Verifizierter Creator</Text>
+            )}
             {profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
             {profileData?.link && (
               <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
             )}
             {!isMe && (
-              <Pressable style={[s.followBtn, isFollowing && s.followBtnActive]} onPress={toggleFollow}>
-                <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
-              </Pressable>
+              <View style={s.actionRow}>
+                <Pressable style={[s.followBtn, isFollowing && s.followBtnActive, canMessage && { flex: 1 }]} onPress={toggleFollow}>
+                  <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
+                </Pressable>
+                {canMessage && (
+                  <Pressable
+                    style={s.messageBtn}
+                    onPress={() => router.push({ pathname: "/messages/[userId]", params: { userId: id } })}
+                    accessibilityLabel={`Nachricht an ${displayName} senden`}
+                    accessibilityRole="button"
+                  >
+                    <MessageCircle color={colors.white} size={18} />
+                    <Text style={s.messageBtnText}>Nachricht</Text>
+                  </Pressable>
+                )}
+              </View>
             )}
             <View style={s.divider} />
           </View>
@@ -115,7 +139,13 @@ export default function UserProfileScreen() {
                   <Stat label="Folge ich" value={stats.following_count} />
                 </View>
               </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <Text style={s.name}>{displayName}</Text>
+              {profileData?.is_creator && <CreatorBadge size="md" />}
+            </View>
+            {profileData?.is_creator && (
+              <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>Verifizierter Creator</Text>
+            )}
               {profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
               {profileData?.link && (
                 <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
@@ -160,7 +190,10 @@ const s = StyleSheet.create({
   bio: { color: colors.white, fontSize: 13, lineHeight: 18, marginTop: 6 },
   linkRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
   link: { color: colors.accent, fontSize: 13, flex: 1 },
-  followBtn: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 10, alignItems: "center", marginTop: 14, minHeight: 44, justifyContent: "center" },
+  actionRow: { flexDirection: "row", gap: 10, marginTop: 14 },
+  followBtn: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 10, alignItems: "center", minHeight: 44, justifyContent: "center" },
+  messageBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: colors.bgCard, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16, minHeight: 44, borderWidth: 1, borderColor: colors.border },
+  messageBtnText: { color: colors.white, fontSize: 14, fontWeight: "600" },
   followBtnActive: { backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border },
   followText: { color: "#fff", fontSize: 14, fontWeight: "700" },
   followTextActive: { color: colors.white },

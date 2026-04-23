@@ -67,7 +67,7 @@ export default function FindFriendsScreen() {
       <SafeAreaView style={s.container} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10}><ChevronLeft color={colors.white} size={24} strokeWidth={2} /></Pressable>
+          <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck"><ChevronLeft color={colors.white} size={24} strokeWidth={2} /></Pressable>
           <View style={{ width: 44 }} />
         </View>
 
@@ -93,11 +93,11 @@ export default function FindFriendsScreen() {
 
           <Text style={s.preFootnote}>Du kannst diese Berechtigung jederzeit in den Einstellungen widerrufen.</Text>
 
-          <Pressable style={s.primaryBtn} onPress={requestAndMatch}>
+          <Pressable style={s.primaryBtn} onPress={requestAndMatch} accessibilityRole="button" accessibilityLabel="Jetzt Freunde finden" accessibilityHint="Gleicht dein Adressbuch verschluesselt ab">
             <UserPlus color={colors.bg} size={20} strokeWidth={2} />
             <Text style={s.primaryBtnText}>Jetzt Freunde finden</Text>
           </Pressable>
-          <Pressable style={s.laterBtn} onPress={() => router.back()}>
+          <Pressable style={s.laterBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Spaeter">
             <Text style={s.laterText}>Später</Text>
           </Pressable>
         </View>

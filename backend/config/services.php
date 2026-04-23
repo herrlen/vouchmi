@@ -62,11 +62,21 @@ return [
     ],
 
     'paypal' => [
-        'mode'          => env('PAYPAL_MODE', 'live'), // 'sandbox' | 'live'
-        'client_id'     => env('PAYPAL_CLIENT_ID'),
-        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
-        'plan_id'       => env('PAYPAL_PLAN_ID'),       // 0,99 €/Monat Plan
-        'webhook_id'    => env('PAYPAL_WEBHOOK_ID'),
+        'mode'               => env('PAYPAL_MODE', 'live'), // 'sandbox' | 'live'
+        'client_id'          => env('PAYPAL_CLIENT_ID'),
+        'client_secret'      => env('PAYPAL_CLIENT_SECRET'),
+        'plan_id'            => env('PAYPAL_PLAN_ID'),               // Legacy 0,99 € (Bestandskunden)
+        'brand_plan_id'      => env('PAYPAL_PLAN_ID_BRAND'),         // 1,99 €/Monat
+        'influencer_plan_id' => env('PAYPAL_PLAN_ID_INFLUENCER'),    // 0,99 €/Monat
+        'webhook_id'         => env('PAYPAL_WEBHOOK_ID'),
+    ],
+
+    'apple' => [
+        'bundle_id'        => env('APPLE_BUNDLE_ID', 'com.vouchmi.app'),
+        'issuer_id'        => env('APPLE_ISSUER_ID'),
+        'key_id'           => env('APPLE_KEY_ID'),
+        'private_key_path' => env('APPLE_PRIVATE_KEY_PATH'),
+        'environment'      => env('APPLE_ENVIRONMENT', 'sandbox'),
     ],
 
     'apns' => [

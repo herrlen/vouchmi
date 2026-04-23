@@ -56,7 +56,7 @@ export default function InviteScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck">
           <ChevronLeft color={colors.white} size={24} strokeWidth={2} />
         </Pressable>
         <Text style={s.headerTitle}>Freunde einladen</Text>
@@ -79,8 +79,8 @@ export default function InviteScreen() {
               </View>
             }
             renderItem={({ item }) => (
-              <Pressable style={s.commCard} onPress={() => generateLink(item)}>
-                <View style={[s.commAvatar, { backgroundColor: stringColor(item.name) }]}>
+              <Pressable style={s.commCard} onPress={() => generateLink(item)} accessible accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.member_count} Mitglieder. Einladungslink erstellen`}>
+                <View style={[s.commAvatar, { backgroundColor: stringColor(item.name) }]} accessibilityElementsHidden>
                   <Text style={s.commInitial}>{item.name[0]?.toUpperCase()}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
@@ -104,15 +104,15 @@ export default function InviteScreen() {
               </View>
 
               <View style={s.actions}>
-                <Pressable style={s.actionBtn} onPress={shareLink}>
+                <Pressable style={s.actionBtn} onPress={shareLink} accessibilityRole="button" accessibilityLabel="Einladungslink teilen">
                   <Send color={colors.accent} size={22} strokeWidth={1.8} />
                   <Text style={s.actionLabel}>Teilen</Text>
                 </Pressable>
-                <Pressable style={s.actionBtn} onPress={copyLink}>
+                <Pressable style={s.actionBtn} onPress={copyLink} accessibilityRole="button" accessibilityLabel="Einladungslink kopieren">
                   <Copy color={colors.accent} size={22} strokeWidth={1.8} />
                   <Text style={s.actionLabel}>Kopieren</Text>
                 </Pressable>
-                <Pressable style={s.actionBtn} onPress={shareViaSMS}>
+                <Pressable style={s.actionBtn} onPress={shareViaSMS} accessibilityRole="button" accessibilityLabel="Einladung per SMS oder Chat senden">
                   <MessageCircle color={colors.accent} size={22} strokeWidth={1.8} />
                   <Text style={s.actionLabel}>SMS/Chat</Text>
                 </Pressable>

@@ -21,6 +21,7 @@ import * as SecureStore from "expo-secure-store";
 import { Users, Sparkles, Store, ChevronLeft, ArrowRight, Check, User as UserIcon, Megaphone, Building2 } from "lucide-react-native";
 import { colors } from "../src/constants/theme";
 import { useAuth } from "../src/lib/store";
+import { useReduceMotion } from "../src/hooks/useReduceMotion";
 import { brand as brandApi } from "../src/lib/api";
 import { useProfileMode } from "../src/lib/profile-mode";
 
@@ -141,6 +142,7 @@ export default function OnboardingScreen() {
   );
   if (screen === "form") return <FormScreen role={role} onBack={back} />;
 
+  const reduceMotion = useReduceMotion();
   const slide = slides[slideIndex];
   const isLast = slideIndex === slides.length - 1;
 
@@ -148,7 +150,7 @@ export default function OnboardingScreen() {
     <SafeAreaView style={s.container} edges={["top", "bottom"]}>
       <View style={s.topRow}>
         <View style={{ width: 80 }} />
-        <Pressable onPress={skip} hitSlop={10} style={s.skipBtn}>
+        <Pressable onPress={skip} hitSlop={10} style={s.skipBtn} accessibilityRole="button" accessibilityLabel="Einführung überspringen">
           <Text style={s.skipText}>Überspringen</Text>
         </Pressable>
       </View>
@@ -161,30 +163,41 @@ export default function OnboardingScreen() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={(e) => setSlideIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
-        renderItem={({ item }) => (
-          <View style={[s.slide, { width }]}>
-            <View style={[s.iconBubble, { backgroundColor: item.accent + "22" }]}>
+        renderItem={({ item, index }) => (
+          <View style={[s.slide, { width }]} accessibilityRole="summary" accessibilityLabel={`Schritt ${index + 1} von ${slides.length}: ${item.headline.replace("\n", " ")}. ${item.body}`}>
+            <View style={[s.iconBubble, { backgroundColor: item.accent + "22" }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               {item.icon(item.accent)}
             </View>
             <Text style={s.headline}>{item.headline}</Text>
-            <Text style={s.body}>{item.body}</Text>
+            <ScrollView style={{ maxHeight: 200 }}>
+              <Text style={s.body}>{item.body}</Text>
+            </ScrollView>
           </View>
         )}
       />
 
       <View style={s.bottom}>
-        <View style={s.dots}>
+        <View style={s.dots} accessibilityRole="tablist" accessibilityLabel={`Seite ${slideIndex + 1} von ${slides.length}`}>
           {slides.map((_, i) => (
             <View
               key={i}
               style={[
                 s.dot,
-                i === slideIndex && { width: 28, backgroundColor: slide.accent },
+                i === slideIndex && {
+                  width: reduceMotion ? 12 : 28,
+                  backgroundColor: slide.accent,
+                },
               ]}
+              accessibilityElementsHidden
             />
           ))}
         </View>
-        <Pressable style={[s.cta, { backgroundColor: isLast ? "#10B981" : slide.accent }]} onPress={nextSlide}>
+        <Pressable
+          style={[s.cta, { backgroundColor: isLast ? "#10B981" : slide.accent }]}
+          onPress={nextSlide}
+          accessibilityRole="button"
+          accessibilityLabel={isLast ? "Los geht's — zur Rollenauswahl" : `Weiter zu Schritt ${slideIndex + 2}`}
+        >
           <Text style={s.ctaText}>{isLast ? "Los geht's" : "Weiter"}</Text>
           <ArrowRight color="#fff" size={18} strokeWidth={2.2} />
         </Pressable>
@@ -197,14 +210,14 @@ function RoleScreen({ onBack, onPick }: { onBack: () => void; onPick: (r: Role) 
   return (
     <SafeAreaView style={s.container} edges={["top", "bottom"]}>
       <View style={s.header}>
-        <Pressable onPress={onBack} style={s.iconBtn} hitSlop={10}>
+        <Pressable onPress={onBack} style={s.iconBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck zur Einfuehrung">
           <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
         <View style={s.iconBtn} />
       </View>
 
       <ScrollView contentContainerStyle={s.roleScroll}>
-        <Text style={s.roleTitle}>Wie möchtest du{"\n"}Vouchmi nutzen?</Text>
+        <Text style={s.roleTitle} accessibilityRole="header">Wie möchtest du{"\n"}Vouchmi nutzen?</Text>
         <Text style={s.roleSub}>Wähle deine Rolle — du kannst sie später jederzeit ändern.</Text>
 
         <View style={{ marginTop: 28, gap: 12 }}>
@@ -213,15 +226,19 @@ function RoleScreen({ onBack, onPick }: { onBack: () => void; onPick: (r: Role) 
               <Pressable
                 style={[s.roleCard, { borderColor: r.color + "40" }]}
                 onPress={() => onPick(r.id)}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${r.label}: ${r.desc}`}
+                accessibilityHint="Waehlt diese Rolle aus"
               >
-                <View style={[s.roleIcon, { backgroundColor: r.color + "22" }]}>
+                <View style={[s.roleIcon, { backgroundColor: r.color + "22" }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                   {r.icon(r.color)}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.roleLabel}>{r.label}</Text>
                   <Text style={s.roleDesc}>{r.desc}</Text>
                 </View>
-                <Text style={s.roleChev}>›</Text>
+                <Text style={s.roleChev} accessibilityElementsHidden>›</Text>
               </Pressable>
               <Pressable style={s.roleHelpLink} onPress={() => router.push(`/help?filter=${r.id}`)} hitSlop={6}>
                 <Text style={[s.roleHelpText, { color: r.color }]}>Was kann ich als {r.label}?</Text>

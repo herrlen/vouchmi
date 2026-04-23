@@ -20,11 +20,26 @@ class PayPalService
         private ?string $clientSecret,
         private ?string $planId,
         private string $mode = 'live',
+        private ?string $brandPlanId = null,
+        private ?string $influencerPlanId = null,
     ) {}
 
     public function isConfigured(): bool
     {
-        return !empty($this->clientId) && !empty($this->clientSecret) && !empty($this->planId);
+        return !empty($this->clientId) && !empty($this->clientSecret)
+            && (!empty($this->planId) || !empty($this->brandPlanId) || !empty($this->influencerPlanId));
+    }
+
+    private function resolvePlanId(string $planType = 'brand'): ?string
+    {
+        if ($planType === 'influencer' && !empty($this->influencerPlanId)) {
+            return $this->influencerPlanId;
+        }
+        if ($planType === 'brand' && !empty($this->brandPlanId)) {
+            return $this->brandPlanId;
+        }
+        // Fallback auf alten einzelnen plan_id (für Bestandskunden)
+        return $this->planId;
     }
 
     private function baseUrl(): string
@@ -68,10 +83,12 @@ class PayPalService
      * Erstellt eine neue Subscription und gibt
      * { subscription_id, approval_url, status } zurück.
      *
-     * @param array{email:string,brand_name:string,return_url?:string,cancel_url?:string} $context
+     * @param array{email:string,brand_name:string,plan_type?:string,return_url?:string,cancel_url?:string} $context
      */
     public function createSubscription(array $context): array
     {
+        $planType = $context['plan_type'] ?? 'brand';
+
         if (!$this->isConfigured()) {
             return [
                 'subscription_id' => 'STUB-' . bin2hex(random_bytes(6)),
@@ -94,7 +111,7 @@ class PayPalService
         $res = Http::withToken($token)
             ->acceptJson()
             ->post($this->baseUrl() . '/v1/billing/subscriptions', [
-                'plan_id'    => $this->planId,
+                'plan_id'    => $this->resolvePlanId($planType),
                 'subscriber' => [
                     'email_address' => $context['email'],
                     'name' => [

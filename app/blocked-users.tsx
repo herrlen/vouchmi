@@ -41,10 +41,10 @@ export default function BlockedUsersScreen() {
     <SafeAreaView style={s.container} edges={["top"]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck">
           <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
-        <Text style={s.title}>Blockierte Nutzer</Text>
+        <Text style={s.title} accessibilityRole="header">Blockierte Nutzer</Text>
         <View style={s.iconBtn} />
       </View>
 
@@ -56,7 +56,7 @@ export default function BlockedUsersScreen() {
           <Text style={s.empty}>{loading ? "" : "Du hast noch niemanden blockiert."}</Text>
         }
         renderItem={({ item }) => (
-          <Pressable style={s.row} onPress={() => unblock(item)}>
+          <Pressable style={s.row} onPress={() => unblock(item)} accessibilityRole="button" accessibilityLabel={`Blockierung von ${item.display_name ?? item.username} aufheben`}>
             <Text style={s.name}>{item.display_name ?? item.username}</Text>
             <Text style={s.action}>Aufheben</Text>
           </Pressable>

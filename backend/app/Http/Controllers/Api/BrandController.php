@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\BrandProfile;
+use App\Models\Subscription;
 use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -141,12 +142,21 @@ class BrandController extends Controller
         $result = $paypal->createSubscription([
             'email'      => $brand->paypal_email ?: ($brand->company_email ?: $request->user()->email),
             'brand_name' => $brand->brand_name,
+            'plan_type'  => 'brand',
         ]);
 
         if (!empty($result['subscription_id'])) {
             $brand->paypal_subscription_id = $result['subscription_id'];
             $brand->paypal_status = $result['status'];
             $brand->save();
+
+            // Auch in die neue subscriptions-Tabelle schreiben
+            Subscription::create([
+                'user_id'                => $request->user()->id,
+                'plan_type'              => 'brand',
+                'paypal_subscription_id' => $result['subscription_id'],
+                'paypal_status'          => $result['status'],
+            ]);
         }
 
         return response()->json([
@@ -198,31 +208,51 @@ class BrandController extends Controller
             return response()->json(['ok' => false, 'reason' => 'no resource id'], 200);
         }
 
-        $brand = BrandProfile::where('paypal_subscription_id', $subscriptionId)->first();
-        if (!$brand) {
+        // Zuerst in neuer subscriptions-Tabelle suchen
+        $subscription = Subscription::where('paypal_subscription_id', $subscriptionId)->first();
+
+        // Fallback: alte brand_profiles-Tabelle (Bestandskunden)
+        $brand = null;
+        if (!$subscription) {
+            $brand = BrandProfile::where('paypal_subscription_id', $subscriptionId)->first();
+        }
+
+        if (!$subscription && !$brand) {
             return response()->json(['ok' => false, 'reason' => 'unknown subscription'], 200);
         }
 
-        switch ($event) {
-            case 'BILLING.SUBSCRIPTION.ACTIVATED':
-            case 'BILLING.SUBSCRIPTION.RENEWED':
-                $brand->paypal_status = 'ACTIVE';
+        $statusMap = [
+            'BILLING.SUBSCRIPTION.ACTIVATED' => 'ACTIVE',
+            'BILLING.SUBSCRIPTION.RENEWED'   => 'ACTIVE',
+            'BILLING.SUBSCRIPTION.CANCELLED' => 'CANCELLED',
+            'BILLING.SUBSCRIPTION.EXPIRED'   => 'CANCELLED',
+            'BILLING.SUBSCRIPTION.SUSPENDED' => 'SUSPENDED',
+            'PAYMENT.SALE.DENIED'            => 'SUSPENDED',
+        ];
+
+        $newStatus = $statusMap[$event] ?? null;
+        if (!$newStatus) {
+            return response()->json(['ok' => true, 'reason' => 'unhandled event']);
+        }
+
+        if ($subscription) {
+            $subscription->paypal_status = $newStatus;
+            if ($newStatus === 'ACTIVE') {
+                $subscription->started_at = $subscription->started_at ?: now();
+                $subscription->expires_at = now()->addMonth();
+            }
+            $subscription->save();
+        }
+
+        if ($brand) {
+            $brand->paypal_status = $newStatus;
+            if ($newStatus === 'ACTIVE') {
                 $brand->subscription_started_at = $brand->subscription_started_at ?: now();
                 $brand->subscription_expires_at = now()->addMonth();
                 $brand->subscription_plan = 'brand';
                 $brand->user()->update(['role' => 'brand']);
-                $brand->save();
-                break;
-            case 'BILLING.SUBSCRIPTION.CANCELLED':
-            case 'BILLING.SUBSCRIPTION.EXPIRED':
-                $brand->paypal_status = 'CANCELLED';
-                $brand->save();
-                break;
-            case 'BILLING.SUBSCRIPTION.SUSPENDED':
-            case 'PAYMENT.SALE.DENIED':
-                $brand->paypal_status = 'SUSPENDED';
-                $brand->save();
-                break;
+            }
+            $brand->save();
         }
 
         return response()->json(['ok' => true]);

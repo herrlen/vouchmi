@@ -61,8 +61,8 @@ export default function SecurityScreen() {
       <SafeAreaView style={s.container} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10}><ChevronLeft color={colors.white} size={24} strokeWidth={2} /></Pressable>
-          <Text style={s.headerTitle}>Sicherheit</Text>
+          <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck"><ChevronLeft color={colors.white} size={24} strokeWidth={2} /></Pressable>
+          <Text style={s.headerTitle} accessibilityRole="header">Sicherheit</Text>
           <View style={{ width: 44 }} />
         </View>
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
@@ -79,7 +79,7 @@ export default function SecurityScreen() {
           {activeMethod === "none" ? (
             <>
               <Text style={s.infoText}>Schütze dein Konto mit einem zusätzlichen Verifizierungsschritt beim Login.</Text>
-              <Pressable style={s.primaryBtn} onPress={() => setStep("choose")}>
+              <Pressable style={s.primaryBtn} onPress={() => setStep("choose")} accessibilityRole="button" accessibilityLabel="Zwei-Faktor-Authentifizierung einrichten">
                 <Text style={s.primaryBtnText}>2FA einrichten</Text>
               </Pressable>
             </>
@@ -94,7 +94,7 @@ export default function SecurityScreen() {
                   <Text style={s.optionBtnText}>Backup-Codes anzeigen</Text>
                 </Pressable>
               )}
-              <Pressable style={s.dangerBtn} onPress={disable2FA}>
+              <Pressable style={s.dangerBtn} onPress={disable2FA} accessibilityRole="button" accessibilityLabel="Zwei-Faktor-Authentifizierung deaktivieren">
                 <Text style={s.dangerBtnText}>2FA deaktivieren</Text>
               </Pressable>
             </>
@@ -110,19 +110,19 @@ export default function SecurityScreen() {
       <SafeAreaView style={s.container} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.header}>
-          <Pressable onPress={() => setStep("overview")} style={s.backBtn} hitSlop={10}><ChevronLeft color={colors.white} size={24} strokeWidth={2} /></Pressable>
-          <Text style={s.headerTitle}>Methode wählen</Text>
+          <Pressable onPress={() => setStep("overview")} style={s.backBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck"><ChevronLeft color={colors.white} size={24} strokeWidth={2} /></Pressable>
+          <Text style={s.headerTitle} accessibilityRole="header">Methode wählen</Text>
           <View style={{ width: 44 }} />
         </View>
         <View style={{ padding: 16, gap: 12 }}>
-          <Pressable style={s.methodCard} onPress={() => { setStep("sms-enter"); setCode(""); }}>
+          <Pressable style={s.methodCard} onPress={() => { setStep("sms-enter"); setCode(""); }} accessible accessibilityRole="button" accessibilityLabel="SMS-Verifizierung: Code per SMS an deine Handynummer">
             <Smartphone color={colors.accent} size={28} strokeWidth={1.8} />
             <View style={{ flex: 1 }}>
               <Text style={s.methodTitle}>SMS-Verifizierung</Text>
               <Text style={s.methodSub}>Code per SMS an deine Handynummer</Text>
             </View>
           </Pressable>
-          <Pressable style={s.methodCard} onPress={() => { setStep("auth-qr"); setCode(""); }}>
+          <Pressable style={s.methodCard} onPress={() => { setStep("auth-qr"); setCode(""); }} accessible accessibilityRole="button" accessibilityLabel="Authenticator-App: Google Authenticator, Authy oder aehnliche">
             <KeyRound color={colors.accent} size={28} strokeWidth={1.8} />
             <View style={{ flex: 1 }}>
               <Text style={s.methodTitle}>Authenticator-App</Text>

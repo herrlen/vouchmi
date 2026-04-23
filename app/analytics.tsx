@@ -2,10 +2,10 @@ import { useCallback, useState } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, Image, RefreshControl, Dimensions, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack, useFocusEffect } from "expo-router";
-import { ChevronLeft, TrendingUp } from "lucide-react-native";
+import { ChevronLeft, TrendingUp, BarChart3, MessageCircle, Star, Lock } from "lucide-react-native";
 import { colors } from "../src/constants/theme";
 import { useAuth } from "../src/lib/store";
-import { profile as profileApi, feed as feedApi, type Post } from "../src/lib/api";
+import { profile as profileApi, feed as feedApi, analytics as analyticsApi, influencer as influencerApi, type Post, type AnalyticsOverview, type AnalyticsAudience } from "../src/lib/api";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const CHART_W = SCREEN_W - 64;
@@ -25,6 +25,11 @@ export default function AnalyticsScreen() {
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [influencerData, setInfluencerData] = useState<AnalyticsOverview | null>(null);
+  const [audienceData, setAudienceData] = useState<AnalyticsAudience[]>([]);
+  const [influencerActive, setInfluencerActive] = useState(false);
+
+  const isInfluencerRole = me?.role === "influencer";
 
   const load = useCallback(async () => {
     const [pRes, postsRes] = await Promise.allSettled([
@@ -33,9 +38,26 @@ export default function AnalyticsScreen() {
     ]);
     if (pRes.status === "fulfilled") setStats(pRes.value.stats);
     if (postsRes.status === "fulfilled") setRecentPosts(postsRes.value.data.slice(0, 10));
+
+    // Influencer-spezifische Daten laden
+    if (isInfluencerRole) {
+      try {
+        const statusRes = await influencerApi.status();
+        setInfluencerActive(statusRes.is_active);
+        if (statusRes.is_active) {
+          const [overview, audience] = await Promise.allSettled([
+            analyticsApi.overview(),
+            analyticsApi.audience(),
+          ]);
+          if (overview.status === "fulfilled") setInfluencerData(overview.value);
+          if (audience.status === "fulfilled") setAudienceData(audience.value.communities);
+        }
+      } catch {}
+    }
+
     setLoading(false);
     setRefreshing(false);
-  }, []);
+  }, [isInfluencerRole]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
   const onRefresh = () => { setRefreshing(true); load(); };
@@ -125,6 +147,61 @@ export default function AnalyticsScreen() {
                 );
               })}
             </View>
+          </View>
+        )}
+
+        {/* Influencer Analytics (nur mit aktivem Abo) */}
+        {isInfluencerRole && influencerActive && influencerData && (
+          <>
+            <Text style={s.sectionLabel}>CREATOR ANALYTICS</Text>
+            <View style={s.kpiRow}>
+              <KpiCard label="KLICKS 7T" value={formatNumber(influencerData.clicks['7d'])} accent="#6366F1" trend={null} />
+              <KpiCard label="KLICKS 30T" value={formatNumber(influencerData.clicks['30d'])} accent="#6366F1" trend={null} />
+            </View>
+            <View style={s.kpiRow}>
+              <KpiCard label="ENGAGEMENT" value={formatNumber(influencerData.engagement.likes + influencerData.engagement.comments)} accent="#F472B6" trend={null} />
+              <KpiCard label="FOLLOWER" value={formatNumber(influencerData.followers)} accent="#10B981" trend={null} />
+            </View>
+
+            {audienceData.length > 0 && (
+              <View style={s.chartCard}>
+                <Text style={s.chartTitle}>Top Communities</Text>
+                <Text style={s.chartSub}>Woher kommt dein Traffic</Text>
+                {audienceData.slice(0, 5).map((c) => (
+                  <View key={c.id} style={s.audienceRow}>
+                    <Text style={s.audienceName} numberOfLines={1}>{c.name}</Text>
+                    <Text style={s.audienceClicks}>{c.clicks} Klicks</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+
+        {/* Upsell fuer Nicht-Influencer oder inaktives Abo */}
+        {isInfluencerRole && !influencerActive && (
+          <View style={s.upsellCard}>
+            <Lock color={colors.coral} size={28} />
+            <Text style={s.upsellTitle}>Analytics freischalten</Text>
+            <Text style={s.upsellDesc}>Dein Influencer-Abo ist inaktiv. Reaktiviere es, um detaillierte Analytics zu sehen.</Text>
+            <Pressable style={s.upsellCta} onPress={() => router.push("/influencer-register")}>
+              <Text style={s.upsellCtaText}>Abo reaktivieren</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {!isInfluencerRole && me?.role !== "brand" && (
+          <View style={s.upsellCard}>
+            <BarChart3 color={colors.coral} size={28} />
+            <Text style={s.upsellTitle}>Analytics gibt es fuer Creator</Text>
+            <View style={s.upsellBenefits}>
+              <Text style={s.upsellBenefit}>&#8226; Echtzeit-Klick-Statistiken</Text>
+              <Text style={s.upsellBenefit}>&#8226; Direkter Draht zu Brands</Text>
+              <Text style={s.upsellBenefit}>&#8226; Creator-Badge im Profil</Text>
+            </View>
+            <Pressable style={s.upsellCta} onPress={() => router.push("/influencer-register")}>
+              <Text style={s.upsellCtaText}>Zu Influencer upgraden — 0,99 EUR/Monat</Text>
+            </Pressable>
           </View>
         )}
 
@@ -230,4 +307,18 @@ const s = StyleSheet.create({
 
   emptyReco: { paddingHorizontal: 16, paddingVertical: 24, alignItems: "center" },
   emptyRecoText: { color: "#64748B", fontSize: 14 },
+
+  // Audience rows
+  audienceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#1A1D2E" },
+  audienceName: { color: "#FFFFFF", fontSize: 14, fontWeight: "600", flex: 1, marginRight: 12 },
+  audienceClicks: { color: "#94A3B8", fontSize: 13, fontWeight: "600" },
+
+  // Upsell
+  upsellCard: { backgroundColor: "#141926", borderRadius: 20, marginHorizontal: 16, marginBottom: 20, padding: 28, alignItems: "center", borderWidth: 1, borderColor: "#F472B630" },
+  upsellTitle: { color: "#FFFFFF", fontSize: 20, fontWeight: "800", marginTop: 14 },
+  upsellDesc: { color: "#94A3B8", fontSize: 14, textAlign: "center", marginTop: 8, lineHeight: 20 },
+  upsellBenefits: { marginTop: 16, alignSelf: "flex-start", gap: 6 },
+  upsellBenefit: { color: "#F8F7F4", fontSize: 14 },
+  upsellCta: { backgroundColor: "#F472B6", borderRadius: 12, paddingVertical: 14, paddingHorizontal: 28, marginTop: 20 },
+  upsellCtaText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 });

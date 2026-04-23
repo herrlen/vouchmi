@@ -142,6 +142,8 @@ export default function ProfileScreen() {
               placeholder="Dein Name"
               placeholderTextColor={colors.grayDark}
               maxLength={50}
+              textContentType="name"
+              accessibilityLabel="Anzeigename"
             />
           ) : (
             <Text style={s.value}>{displayName || "—"}</Text>
@@ -159,6 +161,8 @@ export default function ProfileScreen() {
               placeholderTextColor={colors.grayDark}
               multiline
               maxLength={250}
+              accessibilityLabel="Beschreibung"
+              accessibilityHint="Maximal 250 Zeichen"
             />
           ) : (
             <Text style={s.value}>{bio || "—"}</Text>
@@ -177,6 +181,8 @@ export default function ProfileScreen() {
               placeholderTextColor={colors.grayDark}
               autoCapitalize="none"
               keyboardType="url"
+              textContentType="URL"
+              accessibilityLabel="Profil-Link"
             />
           ) : link ? (
             <Pressable onPress={() => Linking.openURL(link)}>

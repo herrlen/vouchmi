@@ -129,9 +129,9 @@ export default function CommunityDetail() {
       </View>
 
       {/* Top Tabs */}
-      <View style={s.topTabs}>
+      <View style={s.topTabs} accessibilityRole="tablist">
         {topTabs.map(({ key, label }) => (
-          <Pressable key={key} style={[s.topTab, tab === key && s.topTabOn]} onPress={() => setTab(key)}>
+          <Pressable key={key} style={[s.topTab, tab === key && s.topTabOn]} onPress={() => setTab(key)} accessibilityRole="tab" accessibilityState={{ selected: tab === key }} accessibilityLabel={label}>
             <Text style={[s.topTabText, tab === key && s.topTabTextOn]}>{label}</Text>
           </Pressable>
         ))}
@@ -361,7 +361,7 @@ const s = StyleSheet.create({
   topTab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 12, minHeight: 44, borderBottomWidth: 2, borderBottomColor: "transparent" },
   topTabOn: { borderBottomColor: colors.accent },
   topTabText: { color: colors.grayDark, fontSize: 14, fontWeight: "600" },
-  topTabTextOn: { color: colors.white },
+  topTabTextOn: { color: colors.white, fontWeight: "700" },
   center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32, gap: 8 },
   emptyTitle: { color: colors.white, fontSize: 16, fontWeight: "700" },
   emptyText: { color: colors.gray, textAlign: "center", lineHeight: 20, fontSize: 13 },

@@ -111,11 +111,11 @@ export default function CreatePostScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={s.headerBtn}>
+        <Pressable onPress={() => router.back()} hitSlop={10} style={s.headerBtn} accessibilityRole="button" accessibilityLabel="Abbrechen">
           <X color="#FFFFFF" size={22} strokeWidth={2} />
         </Pressable>
-        <Text style={s.headerTitle}>Empfehlen</Text>
-        <Pressable onPress={submit} disabled={!canSubmit} hitSlop={10} style={s.headerBtn}>
+        <Text style={s.headerTitle} accessibilityRole="header">Empfehlen</Text>
+        <Pressable onPress={submit} disabled={!canSubmit} hitSlop={10} style={s.headerBtn} accessibilityRole="button" accessibilityLabel="Empfehlung posten" accessibilityState={{ disabled: !canSubmit }}>
           <Text style={[s.postBtn, !canSubmit && { opacity: 0.3 }]}>{submitting ? "..." : "Posten"}</Text>
         </Pressable>
       </View>
@@ -138,6 +138,9 @@ export default function CreatePostScreen() {
               keyboardType="url"
               returnKeyType="go"
               onSubmitEditing={() => fetchPreview()}
+              textContentType="URL"
+              accessibilityLabel="Produkt-Link eingeben"
+              accessibilityHint="Fuege die URL des Produkts ein, das du empfehlen moechtest"
             />
             {!!url && (
               <Pressable onPress={() => fetchPreview()} hitSlop={8}>
@@ -145,7 +148,7 @@ export default function CreatePostScreen() {
               </Pressable>
             )}
           </View>
-          {urlError && <Text style={s.errorText}>{urlError}</Text>}
+          {urlError && <Text style={s.errorText} accessibilityRole="alert">{"\u26A0"} {urlError}</Text>}
           {!urlError && !preview && !loadingPreview && (
             <Text style={s.hintText}>Keine Affiliate-Links erlaubt.</Text>
           )}

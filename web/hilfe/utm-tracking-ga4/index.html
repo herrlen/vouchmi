@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UTM-Tracking in Google Analytics 4 — Vouchmi Hilfe</title>
+<meta name="description" content="Schritt-für-Schritt-Anleitung: So misst du den Traffic deiner Vouchmi-Links in GA4 — ohne zusätzliche Konfiguration.">
+<link rel="canonical" href="https://vouchmi.com/hilfe/utm-tracking-ga4">
+
+<!-- Open Graph -->
+<meta property="og:title" content="UTM-Tracking in Google Analytics 4 — Vouchmi Hilfe">
+<meta property="og:description" content="So misst du den Traffic deiner Vouchmi-Links in GA4 — ohne zusätzliche Konfiguration.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://vouchmi.com/hilfe/utm-tracking-ga4">
+
+<!-- JSON-LD -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "UTM-Tracking in Google Analytics 4",
+  "description": "Schritt-für-Schritt-Anleitung: So misst du den Traffic deiner Vouchmi-Links in GA4.",
+  "author": {"@type": "Organization", "name": "Vouchmi"},
+  "publisher": {"@type": "Organization", "name": "Vouchmi", "url": "https://vouchmi.com"},
+  "mainEntityOfPage": "https://vouchmi.com/hilfe/utm-tracking-ga4"
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231A1D2E%22/><text x=%2250%22 y=%2270%22 font-family=%22Arial%22 font-size=%2260%22 font-weight=%22800%22 fill=%22%23F59E0B%22 text-anchor=%22middle%22>V</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#F8F7F4;color:#1A1D2E;line-height:1.7}
+a{color:#4F46E5;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #E2E8F0;padding:14px 24px}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800;color:#1A1D2E;text-decoration:none}
+.nav-logo-mark{background:#1A1D2E;color:#F59E0B;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px}
+.mi{color:#F59E0B}
+.nav-links{display:flex;gap:20px;font-size:14px;font-weight:500}
+.nav-links a{color:#64748B;text-decoration:none}
+.nav-links a.active{color:#1A1D2E;font-weight:600}
+
+/* Breadcrumb */
+.breadcrumb{max-width:720px;margin:0 auto;padding:24px 24px 0;font-size:13px;color:#64748B}
+.breadcrumb a{color:#64748B;text-decoration:none}
+.breadcrumb a:hover{color:#1A1D2E}
+.breadcrumb span{margin:0 6px}
+
+/* Article */
+.article{max-width:720px;margin:0 auto;padding:32px 24px 80px}
+.article h1{font-family:'DM Serif Display',serif;font-size:40px;color:#1A1D2E;line-height:1.2;margin-bottom:16px}
+.article .lead{font-size:20px;color:#64748B;margin-bottom:32px;line-height:1.6}
+.article p{font-size:16px;margin-bottom:20px;color:#334155}
+.article h2{font-family:'DM Serif Display',serif;font-size:26px;color:#1A1D2E;margin:40px 0 16px;padding-top:16px;border-top:1px solid #E2E8F0}
+.article ol,.article ul{margin:0 0 20px 20px;font-size:16px;color:#334155}
+.article li{margin-bottom:8px}
+.article strong{color:#1A1D2E}
+
+/* Hint box */
+.hint-box{background:#FFF8ED;border-left:4px solid #10B981;border-radius:8px;padding:16px 20px;margin-bottom:28px;font-size:15px;color:#334155}
+.hint-box strong{color:#1A1D2E}
+
+/* Table */
+.param-table{width:100%;border-collapse:collapse;margin-bottom:28px;font-size:15px}
+.param-table thead{background:#1A1D2E}
+.param-table th{color:#fff;text-align:left;padding:12px 16px;font-weight:600;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+.param-table td{padding:12px 16px;border-bottom:1px solid #E2E8F0}
+.param-table tr:nth-child(even){background:#FFF8ED}
+.param-table code{font-family:'JetBrains Mono',monospace;font-size:13px;background:#E2E8F0;padding:2px 6px;border-radius:4px}
+
+/* Code block */
+.code-block{background:#1A1D2E;color:#FFF8ED;font-family:'JetBrains Mono',monospace;font-size:13px;padding:16px;border-radius:8px;overflow-x:auto;margin-bottom:28px;line-height:1.6;word-break:break-all}
+
+/* Accordion */
+.faq details{border:1px solid #E2E8F0;border-radius:8px;margin-bottom:8px;background:#fff}
+.faq summary{padding:16px 20px;font-weight:600;font-size:15px;cursor:pointer;list-style:none;color:#1A1D2E}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::before{content:'+';margin-right:10px;font-weight:700;color:#F59E0B}
+.faq details[open] summary::before{content:'-'}
+.faq details p{padding:0 20px 16px;font-size:14px;color:#64748B;margin:0}
+
+/* Contact */
+.contact-box{text-align:center;padding:40px 0;margin-top:20px;border-top:1px solid #E2E8F0}
+.contact-box p{color:#64748B;font-size:15px}
+.contact-box a{color:#4F46E5;font-weight:600}
+
+@media(max-width:640px){
+  .article h1{font-size:28px}
+  .article .lead{font-size:17px}
+  .article h2{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../../index.html" class="nav-logo">
+      <span class="nav-logo-mark">V</span>
+      <span>Vouch<span class="mi">mi</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="../">Hilfe</a>
+      <a href="../../index.html">Startseite</a>
+    </div>
+  </div>
+</nav>
+
+<div class="breadcrumb">
+  <a href="../">Hilfe</a><span>&#8250;</span>
+  <a href="../">Tracking & Analytics</a><span>&#8250;</span>
+  UTM-Tracking in GA4
+</div>
+
+<article class="article">
+  <h1>UTM-Tracking in Google Analytics 4</h1>
+  <p class="lead">So misst du den Traffic, den deine Vouchmi-Links auf deine Website bringen — ohne zusätzliche Konfiguration.</p>
+
+  <p>Das Tracking von UTM-Parametern in Google Analytics 4 (GA4) ist der beste Weg, um genau zu sehen, welche deiner Marketingmaßnahmen (Newsletter, Social Media Posts, Ads) wirklich funktionieren. GA4 erfasst diese Parameter automatisch, sobald jemand über einen mit UTM-Tags versehenen Link auf deine Website klickt. Du musst also nichts extra im Code einstellen, sondern nur wissen, wo du in den Berichten schauen musst.</p>
+
+  <div class="hint-box">
+    <strong>Vouchmi hängt automatisch UTM-Parameter an alle Profil- und Produktlinks an.</strong> Du musst auf deiner Seite nichts vorbereiten — einfach in GA4 nachschauen.
+  </div>
+
+  <h2>1. Den richtigen Bericht öffnen (Traffic-Akquisition)</h2>
+  <ol>
+    <li>Klicke im linken Seitenmenü von GA4 auf <strong>Berichte</strong>.</li>
+    <li>Klappe den Bereich <strong>Lebenszyklus</strong> (oder direkt <strong>Akquisition</strong>) auf.</li>
+    <li>Klicke auf <strong>Akquisition</strong> und wähle den Bericht <strong>Traffic-Akquisition</strong>.</li>
+    <li>Scrolle zur großen Datentabelle.</li>
+  </ol>
+
+  <h2>2. Die Ansicht auf UTM-Parameter umstellen</h2>
+  <ol>
+    <li>Klicke oben links in der Tabelle auf das Drop-down der primären Dimension (standardmäßig „Standard-Channelgruppe der Sitzung").</li>
+    <li>Wähle <strong>Sitzungsquelle/-medium</strong> für <code>utm_source</code> und <code>utm_medium</code>.</li>
+    <li>Oder <strong>Sitzungskampagne</strong> für <code>utm_campaign</code>.</li>
+  </ol>
+
+  <h2>3. Wie GA4 deine UTM-Parameter benennt</h2>
+  <table class="param-table">
+    <thead>
+      <tr><th>UTM-Parameter (Link)</th><th>GA4-Dimension (Bericht)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>utm_source</code></td><td>Sitzungsquelle (Source)</td></tr>
+      <tr><td><code>utm_medium</code></td><td>Sitzungsmedium (Medium)</td></tr>
+      <tr><td><code>utm_campaign</code></td><td>Sitzungskampagne (Campaign)</td></tr>
+      <tr><td><code>utm_term</code></td><td>Sitzungs-Keyword</td></tr>
+      <tr><td><code>utm_content</code></td><td>Sitzungs-Manueller Anzeigeninhalt</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. So erkennst du Vouchmi-Klicks</h2>
+  <p>Vouchmi setzt standardmäßig:</p>
+  <ul>
+    <li><code>utm_source</code> = <strong>vouchmi</strong></li>
+    <li><code>utm_medium</code> = <strong>community</strong> (Empfehlung aus einer Community) oder <strong>profile</strong> (direkter Profil-Link)</li>
+    <li><code>utm_campaign</code> = Slug der Community oder des Drops (z. B. <strong>winter-essentials-2026</strong>)</li>
+  </ul>
+  <p>Filtere in GA4 auf <strong>Sitzungsquelle = <code>vouchmi</code></strong> für den gesamten Vouchmi-Traffic.</p>
+
+  <div class="code-block">https://deine-shop-url.de/produkt-xyz?utm_source=vouchmi&amp;utm_medium=community&amp;utm_campaign=winter-essentials-2026</div>
+
+  <h2>5. Eigene Explorations-Ansicht (optional)</h2>
+  <ol>
+    <li>Menü links &#8594; <strong>Explorationen</strong> &#8594; <strong>Leere Vorlage</strong>.</li>
+    <li>Dimensionen: Sitzungsquelle, Sitzungskampagne, Landing-Page.</li>
+    <li>Metriken: Sitzungen, Engagement-Rate, Conversions.</li>
+    <li>Filter: <strong>Sitzungsquelle = vouchmi</strong>.</li>
+    <li>Speichern als „Vouchmi Performance".</li>
+  </ol>
+
+  <h2>Häufige Fragen</h2>
+  <div class="faq">
+    <details>
+      <summary>Warum sehe ich keine Daten?</summary>
+      <p>Es kann bis zu 24–48 Stunden dauern, bis Daten in den Standard-Berichten erscheinen. Im Echtzeit-Bericht siehst du Test-Klicks sofort.</p>
+    </details>
+    <details>
+      <summary>Funktioniert das in Matomo, Plausible, Fathom?</summary>
+      <p>Ja, alle gängigen Analytics-Tools lesen UTM-Parameter automatisch aus. Die Schritte in der jeweiligen Oberfläche unterscheiden sich, aber das Prinzip ist identisch.</p>
+    </details>
+    <details>
+      <summary>Shopify/WooCommerce-Verkäufe?</summary>
+      <p>Bei verbundenem GA4 erscheinen Vouchmi-Conversions automatisch im Conversions-Bericht unter derselben Quelle/Medium.</p>
+    </details>
+    <details>
+      <summary>UTM-Parameter anpassbar?</summary>
+      <p>Aktuell werden UTM-Parameter automatisch gesetzt, um konsistentes Tracking zu gewährleisten. Bei Sonderwünschen melde dich gern bei uns.</p>
+    </details>
+    <details>
+      <summary>Ziel-Shop hat bereits UTM-Parameter?</summary>
+      <p>Vouchmi überschreibt die UTM-Parameter im Original-Link, damit die Zuordnung korrekt bleibt.</p>
+    </details>
+  </div>
+
+  <h2>Brauchst du Hilfe?</h2>
+  <div class="contact-box">
+    <p>Schreibe an <a href="mailto:support@vouchmi.com">support@vouchmi.com</a></p>
+  </div>
+</article>
+
+</body>
+</html>

@@ -3,7 +3,8 @@ import { View, Text, Pressable, StyleSheet, Alert, ActionSheetIOS, Platform, Sha
 import { router } from "expo-router";
 import { colors } from "../constants/theme";
 import LinkEmbed from "./LinkEmbed";
-import { moderation, type Post } from "../lib/api";
+import CreatorBadge from "./CreatorBadge";
+import { moderation, isCreator, type Post } from "../lib/api";
 import { useAuth } from "../lib/store";
 
 type Props = { post: Post; onLike: (id: string) => void; onPress?: () => void; onHide?: (id: string) => void };
@@ -104,18 +105,30 @@ export default function PostCard({ post, onLike, onPress, onHide }: Props) {
     );
   };
 
+  const authorName = post.author.display_name ?? post.author.username;
+
   return (
-    <Pressable style={s.card} onPress={onPress}>
+    <Pressable
+      style={s.card}
+      onPress={onPress}
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={`Empfehlung von ${authorName}: ${post.content?.slice(0, 80)}${post.content?.length > 80 ? "..." : ""}. ${post.like_count} Likes, ${post.comment_count} Kommentare`}
+      accessibilityHint="Oeffnet die Empfehlung"
+    >
       <View style={s.header}>
         <View style={[s.avatar, { backgroundColor: post.author.display_name ? stringColor(post.author.display_name) : colors.accent }]}>
           <Text style={s.avatarText}>{(post.author.display_name ?? post.author.username)[0].toUpperCase()}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={s.name}>{post.author.display_name ?? post.author.username}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Text style={s.name}>{post.author.display_name ?? post.author.username}</Text>
+            {isCreator(post.author) && <CreatorBadge size="sm" />}
+          </View>
           <Text style={s.time}>{timeAgo(post.created_at)}</Text>
         </View>
-        <Pressable onPress={openMenu} hitSlop={10} style={s.menuBtn}>
-          <Text style={s.menuDots}>⋯</Text>
+        <Pressable onPress={openMenu} hitSlop={10} style={s.menuBtn} accessibilityRole="button" accessibilityLabel="Weitere Optionen">
+          <Text style={s.menuDots} accessibilityElementsHidden>⋯</Text>
         </Pressable>
       </View>
 
@@ -135,10 +148,10 @@ export default function PostCard({ post, onLike, onPress, onHide }: Props) {
       )}
 
       <View style={s.actions}>
-        <Pressable style={s.action} onPress={() => onLike(post.id)}>
+        <Pressable style={s.action} onPress={() => onLike(post.id)} accessibilityRole="button" accessibilityLabel={`${post.is_liked ? "Gefaellt mir nicht mehr" : "Gefaellt mir"}${post.like_count ? `, ${post.like_count} Likes` : ""}`}>
           <Text style={s.actionText}>♡ {post.like_count || ""}</Text>
         </Pressable>
-        <Pressable style={s.action} onPress={() => router.push(`/post/${post.id}`)}>
+        <Pressable style={s.action} onPress={() => router.push(`/post/${post.id}`)} accessibilityRole="button" accessibilityLabel={`Kommentare${post.comment_count ? `, ${post.comment_count}` : ""}`}>
           <Text style={s.actionText}>💬 {post.comment_count || ""}</Text>
         </Pressable>
         {post.click_count > 0 && (

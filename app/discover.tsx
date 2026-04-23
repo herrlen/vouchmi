@@ -72,10 +72,10 @@ export default function DiscoverScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck">
           <ChevronLeft color="#FFFFFF" size={24} strokeWidth={2} />
         </Pressable>
-        <Text style={s.headerTitle}>Entdecken</Text>
+        <Text style={s.headerTitle} accessibilityRole="header">Entdecken</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -90,6 +90,7 @@ export default function DiscoverScreen() {
             value={search}
             onChangeText={setSearch}
             autoCorrect={false}
+            accessibilityLabel="Community suchen"
           />
         </View>
       </View>
@@ -117,7 +118,7 @@ export default function DiscoverScreen() {
             const initial = item.name[0]?.toUpperCase() ?? "?";
             const isMember = item.is_member || item.my_role === "owner";
             return (
-              <Pressable style={s.card} onPress={() => router.push(`/community/${item.id}`)}>
+              <Pressable style={s.card} onPress={() => router.push(`/community/${item.id}`)} accessible accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.member_count} Mitglieder${item.category ? `, ${item.category}` : ""}`}>
                 <View style={[s.cardOverlay, { backgroundColor: accent + "10" }]} />
                 <View style={s.cardContent}>
                   <View style={[s.emojiBox, { backgroundColor: accent + "25" }]}>
@@ -141,6 +142,8 @@ export default function DiscoverScreen() {
                       style={[s.joinBtn, { backgroundColor: accent }, joining === item.id && { opacity: 0.5 }]}
                       onPress={() => handleJoin(item)}
                       disabled={joining === item.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${item.name} beitreten`}
                     >
                       <Text style={[s.joinText, { color: accent === "#F59E0B" ? "#1A1D2E" : "#FFFFFF" }]}>Join</Text>
                     </Pressable>

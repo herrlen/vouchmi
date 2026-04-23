@@ -36,10 +36,10 @@ export default function SettingsScreen() {
     <SafeAreaView style={s.container} edges={["top"]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck">
           <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
-        <Text style={s.title}>Einstellungen</Text>
+        <Text style={s.title} accessibilityRole="header">Einstellungen</Text>
         <View style={s.iconBtn} />
       </View>
 
@@ -48,6 +48,7 @@ export default function SettingsScreen() {
           <Text style={s.sectionTitle}>Account</Text>
           <Button label="Profil bearbeiten" onPress={() => router.push("/profile-edit")} />
           <Button label="Galerie-Layout" onPress={() => router.push("/layout-settings")} />
+          <Button label="Abo verwalten" onPress={() => router.push("/subscription")} />
           <Row label="Username" value={user?.username ?? "-"} />
           <Row label="E-Mail" value={user?.email ?? "-"} />
         </View>
@@ -103,7 +104,7 @@ export default function SettingsScreen() {
 
         <View style={s.section}>
           <Button label="Abmelden" onPress={async () => { await logout(); router.replace("/auth"); }} />
-          <Pressable style={s.deleteBtn} onPress={handleDelete}>
+          <Pressable style={s.deleteBtn} onPress={handleDelete} accessibilityRole="button" accessibilityLabel="Account loeschen" accessibilityHint="Loescht deinen Account unwiderruflich">
             <Text style={s.deleteText}>Account löschen</Text>
           </Pressable>
         </View>
@@ -114,7 +115,7 @@ export default function SettingsScreen() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <View style={s.row}>
+    <View style={s.row} accessible accessibilityLabel={`${label}: ${value}`}>
       <Text style={s.rowLabel}>{label}</Text>
       <Text style={s.rowValue}>{value}</Text>
     </View>
@@ -123,9 +124,9 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function Button({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable style={s.row} onPress={onPress}>
+    <Pressable style={s.row} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
       <Text style={s.rowLabel}>{label}</Text>
-      <Text style={s.chevron}>›</Text>
+      <Text style={s.chevron} accessibilityElementsHidden>›</Text>
     </Pressable>
   );
 }

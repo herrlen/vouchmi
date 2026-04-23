@@ -22,8 +22,9 @@ export const colors = {
 
   // Text
   white: "#F8F7F4",
-  gray: "#94A3B8",
+  gray: "#94A3B8",         // ~7:1 on Deep Navy — OK for dark BG
   grayDark: "#5A6178",
+  textMutedOnLight: "#64748B", // Slate-500 ~4.8:1 on Warm White — WCAG AA
   border: "#2A2D40",
 
   // Semantisch

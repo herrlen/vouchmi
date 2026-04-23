@@ -6,7 +6,8 @@ import {
 } from "react-native";
 import { ChevronDown, ChevronUp, Heart, Smile, Send, BadgeCheck } from "lucide-react-native";
 import { colors } from "../constants/theme";
-import { feed as feedApi, type Comment } from "../lib/api";
+import CreatorBadge from "./CreatorBadge";
+import { feed as feedApi, isCreator, type Comment } from "../lib/api";
 import { useAuth } from "../lib/store";
 
 const { height: SCREEN_H } = Dimensions.get("window");
@@ -174,6 +175,7 @@ export default function CommentsSheet({ postId, visible, onClose, onCommentAdded
           <View style={{ flex: 1 }}>
             <View style={s.headerRow}>
               <Text style={s.username}>{c.author.display_name ?? c.author.username}</Text>
+              {isCreator(c.author) && <CreatorBadge size="sm" />}
               <Text style={s.time}>{timeAgo(c.created_at)}</Text>
             </View>
             <Text style={s.content}>{c.content}</Text>

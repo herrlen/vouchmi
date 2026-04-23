@@ -10,6 +10,7 @@ import { useScrollStore } from "../../src/lib/scroll-store";
 import { profile as profileApi, feed as feedApi, type Post, type ProfileLayout } from "../../src/lib/api";
 import { useTierStore } from "../../src/lib/tier-store";
 import VSeal from "../../src/components/VSeal";
+import CreatorBadge from "../../src/components/CreatorBadge";
 import TierProgressBar from "../../src/components/TierProgressBar";
 import MasonryGallery from "../../src/components/gallery/MasonryGallery";
 import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
@@ -77,15 +78,23 @@ export default function ProfileTab() {
           )}
           {profileData?.tier && profileData.tier !== "none" && (
             <View style={s.sealOverlay}>
-              <VSeal tier={profileData.tier} opacity={profileData.tier_badge_opacity ?? 1} size="sm" />
+              <VSeal tier={profileData.tier} opacity={profileData.tier_badge_opacity ?? 1} size="sm" showLabel />
             </View>
           )}
         </Pressable>
 
         <View style={s.infoCol}>
-          <Text style={s.name}>
-            {profileMode === "brand" && brandStatus?.brand?.brand_name ? brandStatus.brand.brand_name : displayName}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text style={s.name}>
+              {profileMode === "brand" && brandStatus?.brand?.brand_name ? brandStatus.brand.brand_name : displayName}
+            </Text>
+            {me?.role === "influencer" && profileData?.tier && profileData.tier !== "none" && (
+              <CreatorBadge size="md" animate />
+            )}
+          </View>
+          {me?.role === "influencer" && profileData?.tier && profileData.tier !== "none" && (
+            <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>Verifizierter Creator</Text>
+          )}
           <Text style={s.handle}>@{me?.username}</Text>
         </View>
 

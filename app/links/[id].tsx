@@ -65,10 +65,10 @@ export default function LinkStatsScreen() {
     <SafeAreaView style={s.container} edges={["top"]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={s.iconBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Zurueck">
           <ChevronLeft color={colors.white} size={26} strokeWidth={2} />
         </Pressable>
-        <Text style={s.title}>Statistiken</Text>
+        <Text style={s.title} accessibilityRole="header">Statistiken</Text>
         <Pressable onPress={confirmDelete} style={s.iconBtn} hitSlop={10} accessibilityRole="button" accessibilityLabel="Link löschen">
           <Trash2 color={colors.red} size={20} strokeWidth={2} />
         </Pressable>

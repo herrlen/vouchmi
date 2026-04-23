@@ -14,15 +14,16 @@ type Props = {
   tier: Tier;
   opacity?: number;
   size?: "xs" | "sm" | "md" | "lg";
+  showLabel?: boolean;
 };
 
-export default function VSeal({ tier, opacity = 1, size = "sm" }: Props) {
+export default function VSeal({ tier, opacity = 1, size = "sm", showLabel = false }: Props) {
   if (tier === "none") return null;
 
   const config = TIER_CONFIG[tier];
   const s = SIZES[size];
 
-  return (
+  const badge = (
     <View
       style={[
         styles.outer,
@@ -35,7 +36,7 @@ export default function VSeal({ tier, opacity = 1, size = "sm" }: Props) {
           opacity,
         },
       ]}
-      accessibilityLabel={`${config.label} Creator Siegel`}
+      accessibilityLabel={`${config.label} Verifiziert`}
       accessibilityRole="image"
     >
       <View
@@ -51,6 +52,15 @@ export default function VSeal({ tier, opacity = 1, size = "sm" }: Props) {
       >
         <Text style={[styles.v, { fontSize: s.fontSize }]}>V</Text>
       </View>
+    </View>
+  );
+
+  if (!showLabel) return badge;
+
+  return (
+    <View style={styles.labelRow}>
+      {badge}
+      <Text style={[styles.labelText, { color: config.color }]}>{config.label}</Text>
     </View>
   );
 }
@@ -69,5 +79,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "900",
     letterSpacing: -0.5,
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  labelText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
 });
