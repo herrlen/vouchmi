@@ -13,8 +13,8 @@ export default async function UserCommunitiesPage() {
       <PageHeader title="Communities" description="Entdecke, tritt bei und verwalte deine Mitgliedschaften." />
       <EmptyState
         icon={Compass}
-        title="Community-Browser folgt"
-        description="Nutzt /api/communities/discover für die Liste und /api/communities/:id/join für Join/Leave."
+        title="Communities entdecken"
+        description="Community-Suche und Beitreten folgt in Kürze für Desktop. Für jetzt: nutze die Mobile-App, um Communities zu durchstöbern und beizutreten — sie erscheinen hier dann automatisch."
       />
     </div>
   );

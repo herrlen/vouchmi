@@ -16,8 +16,8 @@ export default async function BrandAnalyticsPage() {
       />
       <EmptyState
         icon={BarChart3}
-        title="Analytics bald verfügbar"
-        description="Diese Ansicht liest die Endpoints /api/brand/analytics/*. Sobald die Drops und Posts Daten haben, erscheinen hier Charts, Filter und CSV-Export."
+        title="Noch keine Analytics-Daten"
+        description="Sobald deine ersten Drops laufen und Posts deine Marke taggen, siehst du hier Reichweite, Klicks, Top-Communities und Influencer-Performance. CSV-Export folgt."
       />
     </div>
   );

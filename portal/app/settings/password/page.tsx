@@ -35,7 +35,8 @@ export default function PasswordSettingsPage() {
             Speichern
           </Button>
           <p className="text-xs text-muted-foreground">
-            Backend-Endpoint für Passwort-Änderung (eingeloggt) fehlt noch — siehe BACKEND-TODO.md.
+            Passwort-Änderung über das Portal folgt. Nutze bis dahin „Passwort vergessen" auf der
+            Login-Seite, um ein neues zu setzen.
           </p>
         </form>
       </CardContent>

@@ -13,8 +13,8 @@ export default async function BrandProductsPage() {
       <PageHeader title="Produkte" description="Dein Produkt-Katalog für Drops und Seeding." />
       <EmptyState
         icon={Box}
-        title="Produkte folgen"
-        description="Hier findest du später Produktkatalog, Create/Edit-Dialog und optionalen CSV-Import. Backend-Endpoints für Brand-Products sind noch offen — siehe BACKEND-TODO.md."
+        title="Produktkatalog folgt"
+        description="Lege deine Produkte mit Affiliate-Link und Bild an, verwalte Kategorien und importiere per CSV. Aktuell in Vorbereitung."
       />
     </div>
   );

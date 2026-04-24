@@ -70,8 +70,7 @@ export default async function ProfileSettingsPage() {
               Speichern
             </Button>
             <p className="mt-2 text-xs text-muted-foreground">
-              Bearbeitung folgt, sobald /api/user/profile PUT ein Validation-Schema
-              für das Web ausliefert (siehe BACKEND-TODO.md).
+              Bearbeitung über das Portal folgt in Kürze. Aktuell änderbar über die Mobile-App.
             </p>
           </div>
         </form>

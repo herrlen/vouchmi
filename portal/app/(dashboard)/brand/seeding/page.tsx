@@ -16,8 +16,8 @@ export default async function BrandSeedingPage() {
       />
       <EmptyState
         icon={Send}
-        title="Seeding-Composer folgt"
-        description="Dieser Bereich nutzt /api/brand/seeding. Composer für Direktposts und Influencer-Outreach-Tabelle werden hier hinzugefügt."
+        title="Seeding in Vorbereitung"
+        description="Hier wirst du bald Posts direkt in Communities seeden und gezielt Influencer für Kooperationen anfragen können."
       />
     </div>
   );

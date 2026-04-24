@@ -31,7 +31,7 @@ export default function NotificationsSettingsPage() {
           <Switch id="notify-community" disabled />
         </div>
         <p className="text-xs text-muted-foreground">
-          Backend-Endpoint für Benachrichtigungs-Präferenzen fehlt — siehe BACKEND-TODO.md.
+          Benachrichtigungs-Präferenzen folgen. Aktuell über die Mobile-App verwaltbar.
         </p>
       </CardContent>
     </Card>

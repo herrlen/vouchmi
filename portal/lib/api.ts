@@ -80,7 +80,12 @@ export async function apiMaybe<T>(path: string, opts: RequestOptions = {}): Prom
   try {
     return await api<T>(path, opts);
   } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 401) return null;
+    // 401 = stale token, 403 = role/subscription gate (e.g. brand middleware
+    // rejects users without an active brand subscription). Both represent
+    // "no data to show" rather than a hard failure.
+    if (error instanceof ApiRequestError && (error.status === 401 || error.status === 403)) {
+      return null;
+    }
     throw error;
   }
 }

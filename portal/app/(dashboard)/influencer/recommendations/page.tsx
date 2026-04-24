@@ -13,8 +13,8 @@ export default async function InfluencerRecommendationsPage() {
       <PageHeader title="Empfehlungen" description="Deine geteilten Recommendations." />
       <EmptyState
         icon={MessageSquare}
-        title="Empfehlungen folgen"
-        description="Diese Liste nutzt /api/user/posts und /api/v1/analytics/links für Performance."
+        title="Noch keine Empfehlungen"
+        description="Sobald du in der Mobile-App Empfehlungen teilst, siehst du hier die Liste mit Klicks, Conversions und Top-Performing-Posts."
       />
     </div>
   );

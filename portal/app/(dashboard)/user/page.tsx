@@ -16,8 +16,8 @@ export default async function UserFeedPage() {
       />
       <EmptyState
         icon={Sparkles}
-        title="Feed wird geladen"
-        description="Dein Feed zeigt bald Posts der Communities, denen du beigetreten bist. Nutzt /api/feed im Backend."
+        title="Dein Feed ist noch leer"
+        description="Tritt Communities bei, um Empfehlungen und Posts zu sehen. Oder öffne die Mobile-App und erstelle deinen ersten Post."
       />
     </div>
   );

@@ -13,8 +13,8 @@ export default async function InfluencerStatsPage() {
       <PageHeader title="Stats" description="Klicks pro Woche und Top-Posts." />
       <EmptyState
         icon={BarChart3}
-        title="Charts folgen"
-        description="Nutzt /api/v1/analytics/links und /api/v1/analytics/audience (Influencer-Abo erforderlich)."
+        title="Noch keine Stats"
+        description="Klicks pro Woche, Top-Communities und Audience-Insights siehst du hier, sobald deine Empfehlungen Reichweite bekommen."
       />
     </div>
   );

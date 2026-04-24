@@ -13,8 +13,8 @@ export default async function InfluencerRequestsPage() {
       <PageHeader title="Anfragen" description="Brand-Outreach-Inbox." />
       <EmptyState
         icon={Inbox}
-        title="Inbox folgt"
-        description="Dieser Bereich wartet auf einen Brand-Outreach-Endpoint (TODO). Anfragen lassen sich dann akzeptieren oder ablehnen."
+        title="Keine offenen Anfragen"
+        description="Wenn Marken dich für eine Kooperation anfragen, erscheinen die Anfragen hier zum Annehmen oder Ablehnen."
       />
     </div>
   );

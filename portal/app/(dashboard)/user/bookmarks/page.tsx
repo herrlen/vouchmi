@@ -14,7 +14,7 @@ export default async function UserBookmarksPage() {
       <EmptyState
         icon={Bookmark}
         title="Keine Bookmarks bisher"
-        description="Speichere Posts im Feed — sie erscheinen hier via /api/user/bookmarks."
+        description="Speichere Posts in der Mobile-App oder im Feed — sie erscheinen dann hier zum erneuten Aufrufen."
       />
     </div>
   );
