@@ -1,7 +1,7 @@
 // src/lib/api.ts
 import * as SecureStore from "expo-secure-store";
 
-const API = process.env.EXPO_PUBLIC_API_URL ?? "https://app.vouchmi.com/api";
+const API = process.env.EXPO_PUBLIC_API_URL ?? "https://api.vouchmi.com/api";
 
 async function req<T>(method: string, path: string, body?: any, noAuth?: boolean): Promise<T> {
   const isForm = body instanceof FormData;

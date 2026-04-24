@@ -77,6 +77,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
   },
   extra: {
-    API_URL: process.env.EXPO_PUBLIC_API_URL ?? "https://app.vouchmi.com/api",
+    API_URL: process.env.EXPO_PUBLIC_API_URL ?? "https://api.vouchmi.com/api",
   },
 });

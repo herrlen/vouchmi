@@ -113,7 +113,7 @@ export default function InfluencerRegisterScreen() {
         setStep("paying");
         await WebBrowser.openAuthSessionAsync(
           approval_url,
-          "https://app.vouchmi.com/influencer/return"
+          "https://api.vouchmi.com/influencer/return"
         );
 
         let attempts = 0;

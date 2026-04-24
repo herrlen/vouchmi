@@ -110,7 +110,7 @@ export default function BrandRegisterScreen() {
         setStep("paying");
         await WebBrowser.openAuthSessionAsync(
           approval_url,
-          "https://app.vouchmi.com/brand/return"
+          "https://api.vouchmi.com/brand/return"
         );
 
         let attempts = 0;
