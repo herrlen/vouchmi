@@ -36,13 +36,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Keep authed users away from auth pages (but not the verify handlers)
-  const authEntryPaths = ["/login", "/register", "/forgot-password"];
-  if (token && authEntryPaths.some((p) => pathname === p)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
+  // Intentionally NOT redirecting logged-in users away from /login, /register,
+  // /forgot-password. A stale cookie (e.g. after a password reset invalidates
+  // tokens server-side) would otherwise cause a redirect loop here:
+  // / → auth check 401 → /login → proxy back to / → loop. Let the auth pages
+  // themselves handle the already-authenticated case if desired.
 
   return NextResponse.next();
 }

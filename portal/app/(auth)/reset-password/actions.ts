@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { api, ApiRequestError } from "@/lib/api";
 import { type ActionState, zodFieldErrors } from "@/lib/action-state";
 import { resetPasswordSchema } from "@/lib/schemas";
+import { clearSessionToken } from "@/lib/session";
 
 export async function resetPasswordAction(
   _prev: ActionState,
@@ -44,6 +45,10 @@ export async function resetPasswordAction(
     }
     return { status: "error", message: "Verbindung zum Server fehlgeschlagen." };
   }
+
+  // Laravel invalidates all existing tokens on password reset; drop the
+  // stale session cookie so the user lands on /login as unauthenticated.
+  await clearSessionToken();
 
   redirect("/login?reset=success");
 }
