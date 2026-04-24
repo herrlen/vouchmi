@@ -7,13 +7,16 @@ siehe [README.md](./README.md). Für Backend-Änderungen siehe `../BACKEND-TODO.
 
 ## Entscheidende Weichenstellungen
 
-### 1. Same-Origin statt Domain-Split
-- Produktion: `app.vouchmi.com` serviert **beides** — Laravel (via Nginx-Path-Routing
-  auf `/api`, `/sanctum`, `/storage`, `/admin`, `/broadcasting`) und Next.js (alles andere).
-- Dev: Next.js-Rewrites in `next.config.ts` leiten `/api` & `/sanctum` an
-  `BACKEND_URL` weiter → Browser sieht same-origin, keine CORS-Einrichtung nötig.
-- **Nie wieder** auf `api.vouchmi.com` vorschlagen — der Split wurde explizit verworfen
-  (Mobile-Contract, Share-Extension, DNS-Risiko).
+### 1. Vercel + Mittwald, logisch same-origin
+- Produktion: `app.vouchmi.com` zeigt DNS-mäßig auf **Vercel** (Portal, Next.js).
+  Laravel liegt weiterhin auf Mittwald und ist unter **`api.vouchmi.com`** erreichbar.
+- Next.js-Rewrites in `next.config.ts` forwarden `/api/*`, `/sanctum/*`, `/storage/*`
+  serverseitig zu `BACKEND_URL` (= `https://api.vouchmi.com` in Prod).
+- Aus Browser-Sicht same-origin (alles `app.vouchmi.com`) → kein CORS.
+- Server Components + Server Actions rufen `BACKEND_URL` direkt auf (Node-zu-Node).
+- Mobile-App redet direkt mit `api.vouchmi.com` (keine Umleitung via Vercel).
+- Hintergrund: Mittwald Webhosting kann kein Node.js, daher diese hybride Lösung
+  statt Nginx-Path-Routing auf einem Server.
 
 ### 2. Bearer-Token in httpOnly-Cookie statt Sanctum-SPA-Session
 - Das Backend (`app/Http/Controllers/Api/AuthController.php`) gibt bei `login`/`register`

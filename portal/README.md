@@ -31,9 +31,12 @@ cd backend
 php artisan serve   # http://localhost:8000
 ```
 
-Next.js proxyt `/api/*`, `/sanctum/*` und `/storage/*` im Dev an `BACKEND_URL` — der
-Browser sieht alles als same-origin. Das stimmt 1:1 mit Produktion (Nginx leitet dort
-path-basiert).
+Next.js proxyt `/api/*`, `/sanctum/*` und `/storage/*` an `BACKEND_URL` — der Browser
+sieht alles als same-origin. Im Dev zeigt `BACKEND_URL` auf `http://localhost:8000`,
+in Produktion auf `https://api.vouchmi.com` (Laravel auf Mittwald).
+
+Produktion läuft auf **Vercel** (`app.vouchmi.com`), nicht auf eigenem Server.
+Siehe [DEPLOYMENT.md](../DEPLOYMENT.md) für den Rollout-Flow.
 
 ## Scripts
 

@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "http", hostname: "localhost" },
       { protocol: "https", hostname: "app.vouchmi.com" },
+      { protocol: "https", hostname: "api.vouchmi.com" },
     ],
   },
 };

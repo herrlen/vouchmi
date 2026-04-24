@@ -42,20 +42,25 @@ Empfehlung: **A**.
 
 ---
 
-## 🟥 Same-Origin-Auth
+## 🟥 Hostname-Split: `api.vouchmi.com` einrichten
 
-Das Portal läuft same-origin auf `app.vouchmi.com` → Bearer-Token aus dem Login
-wird in einem httpOnly-Cookie gespeichert (serverseitig durch Next.js). Keine
-Backend-Änderung nötig am Auth-Flow selbst.
+Portal liegt ab Rollout auf Vercel unter `app.vouchmi.com`. Laravel zieht
+technisch auf `api.vouchmi.com` um (zweiter Hostname, gleiches DocumentRoot).
+Details: siehe `DEPLOYMENT.md`.
 
-**Aber:** `SANCTUM_STATEFUL_DOMAINS` in der `.env` sollte `app.vouchmi.com`
-enthalten, falls wir später doch auf Sanctum SPA wechseln wollen:
+### Laravel `.env` anpassen (auf Mittwald)
 
 ```env
-SANCTUM_STATEFUL_DOMAINS=app.vouchmi.com,localhost:3000,127.0.0.1:3000
+APP_URL=https://app.vouchmi.com         # bleibt Portal-URL (Reset-Password-Link)
+SANCTUM_STATEFUL_DOMAINS=app.vouchmi.com
+SESSION_SECURE_COOKIE=true
 ```
 
-Aktuell: Nicht blockierend (Token-Modell reicht).
+Nach Änderung `php artisan config:clear` ausführen.
+
+Das Portal selbst nutzt Bearer-Token in httpOnly-Cookie, kein Sanctum-SPA.
+Die `SANCTUM_STATEFUL_DOMAINS`-Einstellung ist für spätere SPA-Nutzung
+vorbereitet, aktuell nicht blockierend.
 
 ---
 

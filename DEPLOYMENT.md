@@ -1,200 +1,215 @@
 # Deployment — Vouchmi Portal
 
-Portal (Next.js 16) und Laravel-Backend laufen same-origin auf
-`app.vouchmi.com`. Dieses Dokument beschreibt das Nginx-Setup und die
-Rollout-Checkliste.
+Portal (Next.js 16) läuft auf **Vercel**, Laravel-Backend bleibt auf **Mittwald**.
+Aus Browser-Sicht ist alles same-origin unter `app.vouchmi.com`, weil Vercel
+`/api/*` serverseitig an `api.vouchmi.com` (Mittwald) proxyt.
 
-## Architektur (Produktion)
+## Ziel-Topologie
 
 ```
-                     Internet
-                        │
-                https://app.vouchmi.com
-                        │
-                     Nginx
-         ┌──────────────┴──────────────┐
-         │                             │
-  /api, /sanctum,                Alles andere
-  /storage, /admin,                    │
-  /broadcasting                  Next.js (Node)
-         │                             │
-         ▼                             ▼
-   Laravel/PHP-FPM                port 3000
-   (bestehend, unverändert)
+                           Internet
+                              │
+                      app.vouchmi.com        api.vouchmi.com
+                      (DNS → Vercel)         (DNS → Mittwald)
+                              │                      │
+                         Vercel Edge            Mittwald Webhosting
+                              │                      │
+                      Next.js (Node)           Laravel / PHP-FPM
+                              │                      │
+                              └── /api/* Rewrite ───►│
+                                   (server-side)
+
+   Mobile App ────────── direkt ─────────►  api.vouchmi.com
 ```
 
-Kein DNS-Wechsel, kein Backend-Move.
+- `app.vouchmi.com` → Vercel → zeigt das Portal
+- `api.vouchmi.com` → Mittwald → zeigt Laravel-API
+- Portal ruft `api.vouchmi.com` via serverseitigem fetch (BACKEND_URL)
+- Browser-Fetches (TanStack Query etc.) nutzen weiter `/api/*` → Vercel-Rewrite
+- Mobile App redet direkt mit `api.vouchmi.com`, kein Umweg über Vercel
 
-## Nginx-Config (Snippet)
+## Deployment-Ablauf (Erstrollout)
 
-Siehe bestehende Config für `app.vouchmi.com`. Die folgenden Location-Blöcke
-müssen hinzugefügt/angepasst werden. Reihenfolge beachten — längster Prefix
-gewinnt bei Nginx.
+Reihenfolge ist wichtig — folge strikt dieser Sequenz, damit es keine Downtime gibt.
 
-```nginx
-# /etc/nginx/sites-available/app.vouchmi.com
+### Phase 1 · Mittwald: `api.vouchmi.com` als zweiten Hostnamen einrichten
 
-upstream portal {
-    server 127.0.0.1:3000;
-    keepalive 16;
-}
+Laravel hört ab jetzt auf zwei Hostnamen — `app.vouchmi.com` (wie bisher) und
+zusätzlich `api.vouchmi.com`. Später ziehen wir `app.vouchmi.com` zu Vercel um.
 
-server {
-    listen 443 ssl http2;
-    server_name app.vouchmi.com;
+1. mStudio → dein Webhosting-Projekt → **Domains** → **Hostname hinzufügen**
+2. Hostname: `api.vouchmi.com`
+3. DocumentRoot: identisch zur bestehenden `app.vouchmi.com`-Konfiguration (zeigt auf Laravel)
+4. SSL-Zertifikat via Let's Encrypt ausrollen (klickbar)
+5. Warten bis DNS und Cert grün sind
 
-    # SSL und bestehende Settings wie gehabt …
-
-    # ───────────────────────────────────────────────
-    # Laravel-Pfade (bleiben bei PHP-FPM wie bisher)
-    # ───────────────────────────────────────────────
-    root /var/www/backend/public;
-    index index.php;
-
-    # API, Sanctum, Storage, Admin, Broadcasting → Laravel
-    location /api/ {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    location /sanctum/ {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    location /storage/ {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    location /admin/ {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    location /broadcasting/ {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    location /webhooks/ {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    # Laravel-internes (health checks, etc.)
-    location = /up {
-        try_files $uri /index.php?$query_string;
-    }
-
-    # PHP-FPM
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    # ───────────────────────────────────────────────
-    # Next.js-Portal (alles was oben nicht matched)
-    # ───────────────────────────────────────────────
-    location /_next/ {
-        proxy_pass http://portal;
-        proxy_cache_valid 200 60m;
-        proxy_set_header Host $host;
-    }
-
-    location / {
-        proxy_pass http://portal;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 60s;
-    }
-}
-```
-
-**Wichtig:** Next.js schreibt `/_next/static/*` mit langer Cache-Zeit — Nginx
-kann das gut direkt proxy-cachen.
-
-## systemd-Unit für Next.js
-
-```ini
-# /etc/systemd/system/vouchmi-portal.service
-[Unit]
-Description=Vouchmi Portal (Next.js)
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/var/www/portal
-Environment=NODE_ENV=production
-Environment=PORT=3000
-Environment=BACKEND_URL=https://app.vouchmi.com
-Environment=NEXT_PUBLIC_APP_URL=https://app.vouchmi.com
-ExecStart=/usr/bin/pnpm start
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
+Danach erreichbar und testbar:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now vouchmi-portal
-sudo systemctl status vouchmi-portal
+curl -s https://api.vouchmi.com/api/legal/imprint | head -c 100
+# sollte JSON zurückgeben
 ```
 
-## Rollout-Checkliste
+### Phase 2 · Laravel `.env` auf Mittwald ergänzen
 
-### Vor dem Push auf Prod
+SSH auf Mittwald, `.env` im Laravel-Root editieren:
 
-- [ ] `pnpm build` läuft lokal ohne Errors
-- [ ] `pnpm typecheck` grün
-- [ ] `pnpm lint` grün
-- [ ] Login gegen produktives Backend mit Testnutzer smoketesten (staging-Nginx-Setup)
-- [ ] Backend-TODO.md durchgehen — mindestens die 🟥-Punkte erledigt oder
-      dokumentiert
+```env
+APP_URL=https://app.vouchmi.com        # bleibt Portal-URL (für Reset-Links)
+SANCTUM_STATEFUL_DOMAINS=app.vouchmi.com
+SESSION_SECURE_COOKIE=true
+```
 
-### Erster Deploy
+Dann:
 
-1. `ssh` auf den Server
-2. Code in `/var/www/portal` clonen (aus `truscart-app/portal` beziehen)
-3. `pnpm install --frozen-lockfile`
-4. `.env.local` erstellen:
+```bash
+php artisan config:clear
+php artisan cache:clear
+```
+
+### Phase 3 · Mobile App umstellen
+
+Zwei Ebenen:
+
+**a) `.env` (dev-Umgebung):**
+
+```env
+EXPO_PUBLIC_API_URL=https://api.vouchmi.com/api
+```
+
+**b) Hardcoded URLs in Produktion:**
+
+- `app.config.ts`
+- `src/lib/api.ts`
+- `app/brand-register.tsx` (PayPal return URL)
+- `app/influencer-register.tsx` (PayPal return URL)
+
+Alle `app.vouchmi.com` → `api.vouchmi.com`.
+
+Neuen Build machen (`eas build` oder `expo export`) und TestFlight-/Store-Submission
+vorbereiten. Alter Build redet weiter mit app.vouchmi.com — das ist unproblematisch,
+solange wir in Phase 5 den Mittwald-Hostname `app.vouchmi.com` nicht abschalten.
+
+### Phase 4 · Vercel: Portal deployen
+
+1. **GitHub-Repo pushen** (falls noch nicht geschehen):
+
+   ```bash
+   cd /Users/len/Desktop/truscart-app
+   git remote add origin git@github.com:<user>/<repo>.git   # falls nicht vorhanden
+   git push -u origin main
    ```
-   BACKEND_URL=https://app.vouchmi.com
-   NEXT_PUBLIC_APP_URL=https://app.vouchmi.com
+
+2. [vercel.com](https://vercel.com) → **Sign up** mit GitHub
+3. **New Project** → Repo importieren
+4. **Root Directory**: `portal` (wichtig! sonst baut Vercel den Mobile-Code)
+5. **Framework Preset**: Next.js (wird auto-erkannt)
+6. **Build Command**: `pnpm build` (Default)
+7. **Environment Variables** setzen:
+
+   | Name | Value |
+   |------|-------|
+   | `BACKEND_URL` | `https://api.vouchmi.com` |
+   | `NEXT_PUBLIC_APP_URL` | `https://app.vouchmi.com` |
+
+8. **Deploy** klicken
+
+Nach ~2 Minuten gibt's eine Preview-URL wie `vouchmi-portal.vercel.app`. Damit
+schon jetzt Login und Dashboard testen (Vercel → Mittwald api.vouchmi.com).
+
+### Phase 5 · Custom Domain `app.vouchmi.com` auf Vercel
+
+1. Vercel → Project → **Settings** → **Domains** → **Add**
+2. Eingabe: `app.vouchmi.com`
+3. Vercel zeigt dir einen CNAME-Target (meistens `cname.vercel-dns.com`)
+4. mStudio → **DNS** für `vouchmi.com` öffnen
+5. Den bestehenden A-Record für `app` **ersetzen** durch:
+
    ```
-5. `pnpm build`
-6. systemd-Unit installieren (siehe oben), `systemctl start vouchmi-portal`
-7. Nginx-Config erweitern um die Portal-Location-Blöcke
-8. `nginx -t` → wenn grün, `nginx -s reload`
-9. Smoketests:
-   - `curl -I https://app.vouchmi.com/login` → 200
-   - `curl -I https://app.vouchmi.com/api/auth/login` → 405 (Laravel antwortet, Methode nicht erlaubt für GET)
-   - Browser: Login + Role-Redirect prüfen
+   app    CNAME   cname.vercel-dns.com
+   ```
 
-### Backend-Seite (Parallel)
+6. Speichern. DNS-Propagation dauert 5–30 Minuten, teils bis zu 24h
+7. Vercel validiert das Let's-Encrypt-Cert automatisch, sobald DNS zeigt
 
-- [ ] `.env` um `SANCTUM_STATEFUL_DOMAINS=app.vouchmi.com` erweitern (optional,
-      siehe BACKEND-TODO.md)
-- [ ] `APP_URL=https://app.vouchmi.com` ist bereits gesetzt (unverändert lassen)
-- [ ] Verify-E-Mail-Link Mobile vs. Web differenzieren (siehe BACKEND-TODO.md)
+Solange Propagation läuft, sehen User je nach DNS-Cache entweder Portal (Vercel) oder
+Laravel (Mittwald). Beides antwortet, nur unterschiedlich. Keine Fehler.
 
-### Rollback
+### Phase 6 · Verifikation
 
-Falls das Portal problematisch ist:
+```bash
+# Portal erreichbar via Vercel?
+curl -I https://app.vouchmi.com/login
+# → HTTP/2 200, server: Vercel
 
-1. `systemctl stop vouchmi-portal`
-2. In Nginx-Config die `location /` + `location /_next/` auskommentieren
-3. `nginx -s reload`
+# Backend via Vercel-Rewrite erreichbar?
+curl -I https://app.vouchmi.com/api/legal/imprint
+# → HTTP/2 200
 
-Laravel läuft dann wieder wie vor dem Rollout auf `app.vouchmi.com`.
+# Backend direkt erreichbar?
+curl -I https://api.vouchmi.com/api/legal/imprint
+# → HTTP/2 200, server: nginx (Mittwald)
+```
+
+Im Browser:
+
+1. `https://app.vouchmi.com` → leitet je nach Auth-Status auf `/login` oder Dashboard
+2. Registrierung mit Test-E-Mail → Session-Cookie gesetzt, Redirect `/verify-email-pending`
+3. Verify-E-Mail → kommt an Mobile-Deep-Link `vouchmi://` (siehe BACKEND-TODO.md 🟥)
+   — vorerst manuell auf `https://app.vouchmi.com/verify-email?email=…&token=…`
+4. Login → Dashboard
+
+### Phase 7 · Aufräumen (optional, später)
+
+- Mittwald-Hostname `app.vouchmi.com` entfernen (Mittwald antwortet dort nicht mehr,
+  DNS zeigt auf Vercel — der Hostname ist dead code). Nicht eilig.
+- Vercel-Deployment-Branch auf `main` limitieren, Preview-Deployments für PRs erlauben
+
+## Continuous Deployment
+
+Nach dem ersten Setup deployt Vercel automatisch bei jedem Push auf `main`:
+
+- Commit auf `main` → Vercel Build → automatisches Rollout
+- Commit auf feature-branch → Vercel Preview-Deployment mit eigener URL
+
+Die CI-Workflow `.github/workflows/portal-ci.yml` läuft parallel zu Vercel und
+liefert Typecheck/Lint/Build als GitHub-Check — praktisch für PR-Reviews.
+
+## Rollback
+
+**Wenn das Portal auf Vercel kaputt ist:**
+
+1. Vercel Dashboard → Deployments → letzten funktionierenden Deploy → **Promote to Production**
+2. Alternativ: `git revert` auf `main`, Vercel baut neu
+
+**Wenn Vercel komplett down ist (selten):**
+
+1. mStudio → `app.vouchmi.com` als Hostname temporär wieder aktivieren
+2. DNS-Record zurück auf Mittwald-IP (A-Record)
+3. Laravel antwortet dann wieder direkt unter `app.vouchmi.com` — Mobile-App auf alten Buildstand funktioniert wieder
+
+## ENV-Variablen (alle Umgebungen)
+
+| Variable | Lokal | Vercel (Prod) |
+|----------|-------|---------------|
+| `BACKEND_URL` | `http://localhost:8000` | `https://api.vouchmi.com` |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | `https://app.vouchmi.com` |
+| `NEXT_PUBLIC_USE_MOCKS` | optional `true` | `false` |
 
 ## Monitoring
 
-- systemd journal: `journalctl -u vouchmi-portal -f`
-- Nginx access.log
-- Metric-Idee: Status-404-Rate auf `/` als Frühwarnung für Next.js-down
+- **Vercel Dashboard** → Observability → Logs, Analytics (Requests/s, Error-Rate, Response-Time)
+- **Mittwald-Logs** → mStudio → PHP-Error-Log für Laravel-Seite
+- **Error-Tracking** (optional): Sentry in Portal + Laravel einbauen — separate Session
 
-## Performance-Hinweis
+## Kosten-Übersicht (Stand heute)
 
-Next.js 16 nutzt Turbopack per Default für Build und Dev. Der Production-Build
-rendert Auth-Seiten statisch (`○`) und Dashboard-Seiten dynamisch (`ƒ`) —
-Bundle-Sizes bleiben klein, weil Server Components den JS-Bundle nicht aufblähen.
+| Service | Tarif | Kosten |
+|---------|-------|--------|
+| Mittwald Webhosting (für Laravel) | aktueller Tarif bleibt | unverändert |
+| Vercel Hobby (für Portal) | Free | 0 € |
+| Domain vouchmi.com | beim Registrar | unverändert |
+| GitHub (für Repo) | Free | 0 € |
+
+Upgrade auf Vercel Pro (20 USD/Monat) wird erst nötig, wenn Portal > 100 GB
+Bandbreite oder mehr Team-Features gewünscht sind. Für Phase 1 nicht nötig.
