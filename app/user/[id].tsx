@@ -85,9 +85,23 @@ export default function UserProfileScreen() {
                 <Stat label="Folge ich" value={stats.following_count} />
               </View>
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={s.name}>{displayName}</Text>
-              {profileData?.is_creator && <CreatorBadge size="md" />}
+            <View style={s.nameActionRow}>
+              <View style={s.nameLeft}>
+                <Text style={s.name} numberOfLines={1}>{displayName}</Text>
+                {profileData?.is_creator && <CreatorBadge size="md" />}
+                <RoleBadge role={profileData?.role} />
+              </View>
+              {!isMe && (
+                <Pressable
+                  style={[s.followBtnCompact, isFollowing && s.followBtnActive]}
+                  onPress={toggleFollow}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={isFollowing ? "Entfolgen" : "Folgen"}
+                >
+                  <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
+                </Pressable>
+              )}
             </View>
             {profileData?.is_creator && (
               <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>Verifizierter Creator</Text>
@@ -96,23 +110,16 @@ export default function UserProfileScreen() {
             {profileData?.link && (
               <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
             )}
-            {!isMe && (
-              <View style={s.actionRow}>
-                <Pressable style={[s.followBtn, isFollowing && s.followBtnActive, canMessage && { flex: 1 }]} onPress={toggleFollow}>
-                  <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
-                </Pressable>
-                {canMessage && (
-                  <Pressable
-                    style={s.messageBtn}
-                    onPress={() => router.push({ pathname: "/messages/[userId]", params: { userId: id } })}
-                    accessibilityLabel={`Nachricht an ${displayName} senden`}
-                    accessibilityRole="button"
-                  >
-                    <MessageCircle color={colors.white} size={18} />
-                    <Text style={s.messageBtnText}>Nachricht</Text>
-                  </Pressable>
-                )}
-              </View>
+            {!isMe && canMessage && (
+              <Pressable
+                style={[s.messageBtn, { marginTop: 14 }]}
+                onPress={() => router.push({ pathname: "/messages/[userId]", params: { userId: id } })}
+                accessibilityLabel={`Nachricht an ${displayName} senden`}
+                accessibilityRole="button"
+              >
+                <MessageCircle color={colors.white} size={18} />
+                <Text style={s.messageBtnText}>Nachricht</Text>
+              </Pressable>
             )}
             <View style={s.divider} />
           </View>
@@ -139,21 +146,30 @@ export default function UserProfileScreen() {
                   <Stat label="Folge ich" value={stats.following_count} />
                 </View>
               </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={s.name}>{displayName}</Text>
-              {profileData?.is_creator && <CreatorBadge size="md" />}
-            </View>
-            {profileData?.is_creator && (
-              <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>Verifizierter Creator</Text>
-            )}
+              <View style={s.nameActionRow}>
+                <View style={s.nameLeft}>
+                  <Text style={s.name} numberOfLines={1}>{displayName}</Text>
+                  {profileData?.is_creator && <CreatorBadge size="md" />}
+                  <RoleBadge role={profileData?.role} />
+                </View>
+                {!isMe && (
+                  <Pressable
+                    style={[s.followBtnCompact, isFollowing && s.followBtnActive]}
+                    onPress={toggleFollow}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={isFollowing ? "Entfolgen" : "Folgen"}
+                  >
+                    <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
+                  </Pressable>
+                )}
+              </View>
+              {profileData?.is_creator && (
+                <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>Verifizierter Creator</Text>
+              )}
               {profileData?.bio && <Text style={s.bio}>{profileData.bio}</Text>}
               {profileData?.link && (
                 <View style={s.linkRow}><LinkIcon color={colors.accent} size={13} /><Text style={s.link} numberOfLines={1}>{profileData.link}</Text></View>
-              )}
-              {!isMe && (
-                <Pressable style={[s.followBtn, isFollowing && s.followBtnActive]} onPress={toggleFollow}>
-                  <Text style={[s.followText, isFollowing && s.followTextActive]}>{isFollowing ? "Entfolgen" : "Folgen"}</Text>
-                </Pressable>
               )}
               <View style={s.divider} />
             </View>
@@ -172,6 +188,18 @@ function Stat({ label, value }: { label: string; value: number }) {
   return <View style={s.stat}><Text style={s.statValue}>{value}</Text><Text style={s.statLabel}>{label}</Text></View>;
 }
 
+function RoleBadge({ role }: { role?: string }) {
+  if (role !== "influencer" && role !== "brand") return null;
+  const color = role === "influencer" ? "#F59E0B" : "#6366F1";
+  const label = role === "influencer" ? "Influencer" : "Brand";
+  return (
+    <View style={[s.roleBadge, { backgroundColor: color + "22" }]}>
+      <View style={[s.roleDot, { backgroundColor: color }]} />
+      <Text style={[s.roleBadgeText, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, gap: 10 },
@@ -186,12 +214,18 @@ const s = StyleSheet.create({
   stat: { alignItems: "center" },
   statValue: { color: colors.white, fontSize: 20, fontWeight: "700" },
   statLabel: { color: colors.gray, fontSize: 12, marginTop: 2 },
-  name: { color: colors.white, fontSize: 16, fontWeight: "700", marginTop: 12 },
+  name: { color: colors.white, fontSize: 16, fontWeight: "700", flexShrink: 1 },
+  nameActionRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 },
+  nameLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 6, minWidth: 0 },
+  roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
+  roleDot: { width: 8, height: 8, borderRadius: 4 },
+  roleBadgeText: { fontSize: 11, fontWeight: "700" },
   bio: { color: colors.white, fontSize: 13, lineHeight: 18, marginTop: 6 },
   linkRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
   link: { color: colors.accent, fontSize: 13, flex: 1 },
   actionRow: { flexDirection: "row", gap: 10, marginTop: 14 },
   followBtn: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 10, alignItems: "center", minHeight: 44, justifyContent: "center" },
+  followBtnCompact: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 7, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
   messageBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: colors.bgCard, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16, minHeight: 44, borderWidth: 1, borderColor: colors.border },
   messageBtnText: { color: colors.white, fontSize: 14, fontWeight: "600" },
   followBtnActive: { backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border },

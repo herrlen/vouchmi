@@ -35,6 +35,9 @@ class CommunityController extends Controller
         $myIds = DB::table('community_members')
             ->where('user_id', $meId)
             ->pluck('community_id');
+        $followedIds = DB::table('community_followers')
+            ->where('user_id', $meId)
+            ->pluck('community_id');
 
         $communities = Community::where('is_private', false)
             ->orderByDesc('member_count')
@@ -43,6 +46,7 @@ class CommunityController extends Controller
             ->map(fn ($c) => [
                 ...$c->only('id', 'name', 'slug', 'description', 'image_url', 'category', 'member_count'),
                 'is_member' => $myIds->contains($c->id),
+                'is_followed' => $followedIds->contains($c->id),
             ]);
 
         return response()->json(['communities' => $communities]);
@@ -88,13 +92,19 @@ class CommunityController extends Controller
         $community = Community::with(['owner:id,username,display_name,avatar_url'])
             ->findOrFail($id);
 
-        $membership = $community->members()->where('user_id', $request->user()->id)->first();
+        $userId = $request->user()->id;
+        $membership = $community->members()->where('user_id', $userId)->first();
+        $isFollowed = DB::table('community_followers')
+            ->where('community_id', $id)
+            ->where('user_id', $userId)
+            ->exists();
 
         return response()->json([
             'community' => [
                 ...$community->toArray(),
                 'is_member' => !!$membership,
                 'my_role' => $membership?->pivot->role,
+                'is_followed' => $isFollowed,
             ],
         ]);
     }
@@ -131,6 +141,34 @@ class CommunityController extends Controller
         $community->decrement('member_count');
 
         return response()->json(['message' => 'Community verlassen']);
+    }
+
+    /**
+     * Folgen — passiver Status. User sieht Community-Posts im Feed,
+     * darf aber nicht selbst posten. Getrennt von Mitgliedschaft (join/leave).
+     */
+    public function follow(string $id, Request $request): JsonResponse
+    {
+        Community::findOrFail($id);
+        $userId = $request->user()->id;
+
+        DB::table('community_followers')->updateOrInsert(
+            ['community_id' => $id, 'user_id' => $userId],
+            ['followed_at' => now()],
+        );
+
+        return response()->json(['message' => 'Du folgst der Community.']);
+    }
+
+    public function unfollow(string $id, Request $request): JsonResponse
+    {
+        Community::findOrFail($id);
+        DB::table('community_followers')
+            ->where('community_id', $id)
+            ->where('user_id', $request->user()->id)
+            ->delete();
+
+        return response()->json(['message' => 'Entfolgt.']);
     }
 
     public function members(string $id): JsonResponse

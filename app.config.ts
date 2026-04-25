@@ -15,6 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-router",
     "expo-secure-store",
     "expo-asset",
+    "react-native-iap",
     [
       "expo-share-intent",
       {
@@ -28,11 +29,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         backgroundColor: { red: 26, green: 29, blue: 46, alpha: 0.95 },
         height: 620,
-        activationRules: {
-          NSExtensionActivationSupportsWebURLWithMaxCount: 1,
-          NSExtensionActivationSupportsWebPageWithMaxCount: 1,
-          NSExtensionActivationSupportsText: true,
-        },
+        activationRules: [
+          { type: "url", max: 1 },
+          { type: "text" },
+        ],
       },
     ],
   ],
@@ -40,6 +40,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     bundleIdentifier: "com.vouchmi.app",
     supportsTablet: true,
+    associatedDomains: ["applinks:app.vouchmi.com"],
     entitlements: {
       "com.apple.security.application-groups": ["group.com.vouchmi.app"],
       "keychain-access-groups": ["$(AppIdentifierPrefix)com.vouchmi.app"],
@@ -47,6 +48,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     infoPlist: {
       NSSupportsLiveActivities: true,
       NSSupportsLiveActivitiesFrequentUpdates: true,
+      ITSAppUsesNonExemptEncryption: false,
     },
     privacyManifests: {
       NSPrivacyTracking: false,

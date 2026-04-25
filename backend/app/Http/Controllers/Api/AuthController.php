@@ -119,7 +119,7 @@ class AuthController extends Controller
             ['token' => Hash::make($plainToken), 'created_at' => now()],
         );
 
-        $verifyUrl = 'vouchmi://verify-email'
+        $verifyUrl = rtrim(config('app.url'), '/') . '/verify-email'
             . '?token=' . urlencode($plainToken)
             . '&email=' . urlencode($user->email);
 
@@ -194,7 +194,7 @@ class AuthController extends Controller
                 ['token' => Hash::make($plainToken), 'created_at' => now()],
             );
 
-            $resetUrl = 'vouchmi://reset-password'
+            $resetUrl = rtrim(config('app.url'), '/') . '/reset-password'
                 . '?token=' . urlencode($plainToken)
                 . '&email=' . urlencode($data['email']);
 

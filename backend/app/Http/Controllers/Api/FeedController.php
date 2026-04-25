@@ -45,9 +45,13 @@ class FeedController extends Controller
             ->where('blocker_id', $user->id)
             ->pluck('blocked_id');
 
-        $communityIds = DB::table('community_members')
+        $memberCommunityIds = DB::table('community_members')
             ->where('user_id', $user->id)
             ->pluck('community_id');
+        $followedCommunityIds = DB::table('community_followers')
+            ->where('user_id', $user->id)
+            ->pluck('community_id');
+        $communityIds = $memberCommunityIds->concat($followedCommunityIds)->unique();
 
         $posts = Post::whereIn('community_id', $communityIds)
             ->where('is_hidden', false)
@@ -125,7 +129,14 @@ class FeedController extends Controller
             ->where('user_id', $request->user()->id)
             ->first();
 
-        if ($member && $member->muted_until && now()->lt($member->muted_until)) {
+        // Nur Mitglieder dürfen posten — Follower haben Read-Only-Zugriff.
+        if (!$member) {
+            return response()->json([
+                'message' => 'Nur Mitglieder können in dieser Community posten.',
+            ], 403);
+        }
+
+        if ($member->muted_until && now()->lt($member->muted_until)) {
             return response()->json([
                 'message' => 'Du bist stumm geschaltet bis ' . \Carbon\Carbon::parse($member->muted_until)->format('d.m.Y H:i') . '.',
             ], 403);

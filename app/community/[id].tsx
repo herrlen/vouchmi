@@ -30,6 +30,7 @@ export default function CommunityDetail() {
   const [communityName, setCommunityName] = useState("");
   const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [isMember, setIsMember] = useState(false);
   const [isFollowed, setIsFollowed] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [mutedUntil, setMutedUntil] = useState<string | null>(null);
@@ -43,8 +44,10 @@ export default function CommunityDetail() {
     communitiesApi.get(id).then((r) => {
       setCommunityName(r.community.name);
       const myRole = r.community.my_role;
+      const memberFlag = !!(r.community as any).is_member || !!myRole;
       setIsOwnerOrAdmin(myRole === "owner" || myRole === "admin" || myRole === "moderator");
       setIsOwner(r.community.owner_id === user?.id);
+      setIsMember(memberFlag);
       setIsFollowed(!!(r.community as any).is_followed);
     }).catch(() => {});
     communitiesApi.muteStatus(id).then((r) => { setIsMuted(r.muted); setMutedUntil(r.muted_until); }).catch(() => {});
@@ -100,6 +103,28 @@ export default function CommunityDetail() {
         <View style={s.headerIcons}>
           {!isOwner && (
             <Pressable
+              style={[s.followBtn, isMember && s.followBtnActive]}
+              onPress={async () => {
+                if (!id) return;
+                try {
+                  if (isMember) {
+                    await communitiesApi.leave(id);
+                    setIsMember(false);
+                  } else {
+                    await communitiesApi.join(id);
+                    setIsMember(true);
+                  }
+                } catch (e: any) { Alert.alert("Fehler", e.message); }
+              }}
+              hitSlop={6}
+            >
+              <Text style={[s.followBtnText, isMember && s.followBtnTextActive]}>
+                {isMember ? "Verlassen" : "Beitreten"}
+              </Text>
+            </Pressable>
+          )}
+          {!isOwner && !isMember && (
+            <Pressable
               style={[s.followBtn, isFollowed && s.followBtnActive]}
               onPress={async () => {
                 if (!id) return;
@@ -116,7 +141,7 @@ export default function CommunityDetail() {
               hitSlop={6}
             >
               <Text style={[s.followBtnText, isFollowed && s.followBtnTextActive]}>
-                {isFollowed ? "Folgt" : "Folgen"}
+                {isFollowed ? "Entfolgen" : "Folgen"}
               </Text>
             </Pressable>
           )}
@@ -278,9 +303,9 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
             </View>
           )}
         </Pressable>
-        <Pressable style={{ flex: 1 }} onPress={() => router.push(`/user/${post.author.id}`)}>
+        <Pressable style={{ flex: 1, minWidth: 0 }} onPress={() => router.push(`/user/${post.author.id}`)}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-            <Text style={s.cardAuthor}>{post.author.display_name ?? post.author.username}</Text>
+            <Text style={s.cardAuthor} numberOfLines={1}>{post.author.display_name ?? post.author.username}</Text>
             {post.author.tier && post.author.tier !== "none" && (
               <VSeal tier={post.author.tier as any} opacity={post.author.tier_badge_opacity ?? 1} size="xs" />
             )}
@@ -296,7 +321,7 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
 
         {!isOwnPost && checked && (
           <Pressable style={[s.cardFollowBtn, following && s.cardFollowBtnActive]} onPress={toggleFollow} hitSlop={6}>
-            <Text style={[s.cardFollowText, following && s.cardFollowTextActive]}>{following ? "Folgst du" : "Folgen"}</Text>
+            <Text style={[s.cardFollowText, following && s.cardFollowTextActive]}>{following ? "Entfolgen" : "Folgen"}</Text>
           </Pressable>
         )}
         {canModerate && (

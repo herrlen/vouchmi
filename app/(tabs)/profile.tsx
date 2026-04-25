@@ -1,12 +1,13 @@
 import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ScrollView, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2, Shield } from "lucide-react-native";
+import { Settings, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2, Shield, MessageCircle } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { useAuth } from "../../src/lib/store";
 import { useProfileMode } from "../../src/lib/profile-mode";
 import { useScrollStore } from "../../src/lib/scroll-store";
+import { useUnreadCount } from "../../src/lib/messages-store";
 import { profile as profileApi, feed as feedApi, type Post, type ProfileLayout } from "../../src/lib/api";
 import { useTierStore } from "../../src/lib/tier-store";
 import VSeal from "../../src/components/VSeal";
@@ -27,6 +28,7 @@ export default function ProfileTab() {
   const profileMode = useProfileMode((s) => s.mode);
   const brandStatus = useProfileMode((s) => s.status);
   const setProfileMode = useProfileMode((s) => s.setMode);
+  const unreadCount = useUnreadCount();
   const [profileData, setProfileData] = useState<any>(null);
   const [stats, setStats] = useState({ communities_count: 0, posts_count: 0, followers_count: 0, following_count: 0 });
   const [myPosts, setMyPosts] = useState<Post[]>([]);
@@ -108,6 +110,21 @@ export default function ProfileTab() {
           <Share2 color="#6366F1" size={18} strokeWidth={2} />
         </Pressable>
 
+        <Pressable
+          style={s.messagesBtn}
+          onPress={() => router.push("/messages")}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={unreadCount > 0 ? `Nachrichten, ${unreadCount} ungelesen` : "Nachrichten"}
+        >
+          <MessageCircle color="#F59E0B" size={18} strokeWidth={2} />
+          {unreadCount > 0 && (
+            <View style={s.messagesBadge}>
+              <Text style={s.messagesBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+            </View>
+          )}
+        </Pressable>
+
         <Pressable style={s.settingsBtn} onPress={() => router.push("/settings")} hitSlop={8}>
           <Settings color="#64748B" size={20} strokeWidth={1.8} />
         </Pressable>
@@ -153,12 +170,14 @@ export default function ProfileTab() {
         </View>
       )}
 
-      {/* Tier Progress */}
-      <TierProgressBar
-        tier={useTierStore.getState().tier}
-        progressToNext={useTierStore.getState().progressToNext}
-        nextTier={useTierStore.getState().nextTier as any}
-      />
+      {/* Tier Progress — nicht für Brand-Profile (Tier basiert auf Follower-Count + Empfehlungen, das passt nicht zur Brand-Rolle) */}
+      {profileMode !== "brand" && (
+        <TierProgressBar
+          tier={useTierStore.getState().tier}
+          progressToNext={useTierStore.getState().progressToNext}
+          nextTier={useTierStore.getState().nextTier as any}
+        />
+      )}
 
       {/* Sub Tabs */}
       <View style={s.subTabs}>
@@ -255,6 +274,9 @@ const s = StyleSheet.create({
   handle: { color: "#64748B", fontSize: 13, marginTop: 1 },
   privacyBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#10B98110", justifyContent: "center", alignItems: "center" },
   shareBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#6366F110", justifyContent: "center", alignItems: "center" },
+  messagesBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#F59E0B10", justifyContent: "center", alignItems: "center" },
+  messagesBadge: { position: "absolute", top: 2, right: 2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: "#EF4444", paddingHorizontal: 4, justifyContent: "center", alignItems: "center", borderWidth: 1.5, borderColor: colors.bg },
+  messagesBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", lineHeight: 12 },
   settingsBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
 
   // Bio

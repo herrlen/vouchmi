@@ -324,7 +324,7 @@ function FollowButton({
       accessibilityLabel={following ? "Entfolgen" : "Folgen"}
     >
       <Text style={[s.actionText, { color: following ? colors.accent : "#0A0E1A" }]}>
-        {following ? "Folgst du" : "Folgen"}
+        {following ? "Entfolgen" : "Folgen"}
       </Text>
     </Pressable>
   );

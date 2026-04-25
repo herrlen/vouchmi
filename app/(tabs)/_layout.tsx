@@ -1,7 +1,8 @@
 import { Tabs, router } from "expo-router";
-import { Compass, Search, Users, User, Plus, MessageCircle } from "lucide-react-native";
+import { Compass, Search, Users, User, Plus } from "lucide-react-native";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { colors } from "../../src/constants/theme";
+import { useScrollStore } from "../../src/lib/scroll-store";
 
 export default function TabsLayout() {
   return (
@@ -25,8 +26,19 @@ export default function TabsLayout() {
       >
         <Tabs.Screen name="search" options={{ title: "Suche", tabBarIcon: ({ color, size }) => <Search color={color} size={size} strokeWidth={1.8} /> }} />
         <Tabs.Screen name="communities" options={{ title: "Community", tabBarIcon: ({ color, size }) => <Users color={color} size={size} strokeWidth={1.8} /> }} />
-        <Tabs.Screen name="messages" options={{ title: "Nachrichten", tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} strokeWidth={1.8} /> }} />
-        <Tabs.Screen name="reco" options={{ title: "Reco", tabBarIcon: ({ color, size }) => <Compass color={color} size={size} strokeWidth={1.8} /> }} />
+        <Tabs.Screen name="messages" options={{ href: null }} />
+        <Tabs.Screen
+          name="reco"
+          options={{ title: "Reco", tabBarIcon: ({ color, size }) => <Compass color={color} size={size} strokeWidth={1.8} /> }}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              if (navigation.isFocused()) {
+                e.preventDefault();
+                useScrollStore.getState().triggerScrollToTopReco();
+              }
+            },
+          })}
+        />
         <Tabs.Screen name="profile" options={{ title: "Profil", tabBarIcon: ({ color, size }) => <User color={color} size={size} strokeWidth={1.8} /> }} />
       </Tabs>
 

@@ -1,14 +1,42 @@
 // src/lib/api.ts
+import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 const API = process.env.EXPO_PUBLIC_API_URL ?? "https://api.vouchmi.com/api";
+
+// Must match the options used in store.ts — on iOS the token is stored under
+// the shared keychain service so the Share Extension can read it too.
+const KEYCHAIN_OPTS: SecureStore.SecureStoreOptions | undefined = Platform.OS === "ios"
+  ? { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK, keychainService: "group.com.vouchmi.app" }
+  : undefined;
+
+// Unauth handler: registered by auth store to clear user + redirect.
+// Kept as module-level callback to avoid circular imports.
+let onUnauthenticated: (() => void) | null = null;
+export function registerUnauthHandler(fn: () => void) {
+  onUnauthenticated = fn;
+}
+
+export class SilentApiError extends Error {
+  isSilent = true;
+  realMessage: string;
+  constructor(message: string) {
+    super("Bitte erneut anmelden.");
+    this.realMessage = message;
+    this.name = "SilentApiError";
+  }
+}
+
+export function isSilentError(e: any): boolean {
+  return e && (e.isSilent === true || e instanceof SilentApiError);
+}
 
 async function req<T>(method: string, path: string, body?: any, noAuth?: boolean): Promise<T> {
   const isForm = body instanceof FormData;
   const h: Record<string, string> = { Accept: "application/json" };
   if (!isForm) h["Content-Type"] = "application/json";
   if (!noAuth) {
-    const t = await SecureStore.getItemAsync("token");
+    const t = await SecureStore.getItemAsync("token", KEYCHAIN_OPTS);
     if (t) h["Authorization"] = `Bearer ${t}`;
   }
   const r = await fetch(`${API}${path}`, {
@@ -22,6 +50,13 @@ async function req<T>(method: string, path: string, body?: any, noAuth?: boolean
     try { parsed = JSON.parse(text); } catch {}
     const msg = parsed.message || parsed.error || text || `HTTP ${r.status}`;
     console.warn(`[API ${r.status}] ${method} ${path}:`, msg);
+    // On 401: wipe token, trigger global logout, throw silent error so
+    // callers that blindly Alert.alert(e.message) can filter it out.
+    if (r.status === 401 && !noAuth) {
+      try { await SecureStore.deleteItemAsync("token", KEYCHAIN_OPTS); } catch {}
+      if (onUnauthenticated) onUnauthenticated();
+      throw new SilentApiError(msg);
+    }
     throw new Error(msg);
   }
   return r.json();
@@ -84,8 +119,10 @@ export const communities = {
   mine: () => api.get<{ communities: Community[] }>("/communities"),
   discover: (sort: "followers" | "new" | "random" = "followers") =>
     api.get<{ communities: Community[] }>(`/communities/discover?sort=${sort}`),
-  follow: (id: string) => api.post<{ following: boolean; follower_count: number }>(`/communities/${id}/follow`),
-  unfollow: (id: string) => api.del<{ following: boolean; follower_count: number }>(`/communities/${id}/follow`),
+  // follow/unfollow = passiver Follower-Status (sieht Posts im Feed, darf nicht posten).
+  // Mitgliedschaft ist getrennt via join/leave.
+  follow: (id: string) => api.post<{ message: string }>(`/communities/${id}/follow`),
+  unfollow: (id: string) => api.post<{ message: string }>(`/communities/${id}/unfollow`),
   get: (id: string) => api.get<{ community: Community }>(`/communities/${id}`),
   create: (d: { name: string; description?: string; category?: string }) => api.post<{ community: Community }>("/communities", d),
   update: (id: string, d: { description?: string; category?: string; tags?: string[] }) =>

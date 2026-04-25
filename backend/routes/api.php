@@ -72,6 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/communities/{id}', [CommunityController::class, 'destroy']);
     Route::post('/communities/{id}/join', [CommunityController::class, 'join']);
     Route::post('/communities/{id}/leave', [CommunityController::class, 'leave']);
+    Route::post('/communities/{id}/follow', [CommunityController::class, 'follow']);
+    Route::post('/communities/{id}/unfollow', [CommunityController::class, 'unfollow']);
     Route::get('/communities/{id}/members', [CommunityController::class, 'members']);
     Route::post('/communities/{id}/invite', [CommunityController::class, 'invite']);
     Route::post('/communities/join-by-code/{code}', [CommunityController::class, 'joinByCode']);

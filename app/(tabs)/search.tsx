@@ -49,11 +49,15 @@ export default function SearchTab() {
   const toggleFollowComm = async (c: Community) => {
     try {
       if (c.is_followed) {
-        const { follower_count } = await communitiesApi.unfollow(c.id);
-        setCommunities((arr) => arr.map((x) => x.id === c.id ? { ...x, is_followed: false, follower_count } : x));
+        await communitiesApi.unfollow(c.id);
+        setCommunities((arr) => arr.map((x) => x.id === c.id
+          ? { ...x, is_followed: false, member_count: Math.max(0, (x.member_count ?? 0) - 1) }
+          : x));
       } else {
-        const { follower_count } = await communitiesApi.follow(c.id);
-        setCommunities((arr) => arr.map((x) => x.id === c.id ? { ...x, is_followed: true, follower_count } : x));
+        await communitiesApi.follow(c.id);
+        setCommunities((arr) => arr.map((x) => x.id === c.id
+          ? { ...x, is_followed: true, member_count: (x.member_count ?? 0) + 1 }
+          : x));
       }
     } catch (e: any) { Alert.alert("Fehler", e.message); }
   };
@@ -112,7 +116,7 @@ export default function SearchTab() {
                     <View style={s.topRecoMeta}>
                       {recoFilter === "likes" && <><Heart size={10} color={colors.gray} /><Text style={s.topRecoMetaText}>{p.like_count}</Text></>}
                       {recoFilter === "comments" && <><MessageCircle size={10} color={colors.gray} /><Text style={s.topRecoMetaText}>{p.comment_count}</Text></>}
-                      {recoFilter === "shares" && <><Repeat2 size={10} color={colors.gray} /><Text style={s.topRecoMetaText}>{p.repost_count ?? 0}</Text></>}
+                      {recoFilter === "shares" && <><Repeat2 size={10} color={colors.gray} /><Text style={s.topRecoMetaText}>{p.click_count ?? 0}</Text></>}
                     </View>
                   </Pressable>
                 ))}
@@ -150,7 +154,7 @@ export default function SearchTab() {
                       </Pressable>
                       <Pressable style={[s.followBtn, c.is_followed && s.followBtnActive]} onPress={() => toggleFollowComm(c)}>
                         <Text style={[s.followBtnText, c.is_followed && s.followBtnTextActive]}>
-                          {c.is_followed ? "Folgt" : "Folgen"}
+                          {c.is_followed ? "Entfolgen" : "Folgen"}
                         </Text>
                       </Pressable>
                     </View>

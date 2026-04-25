@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, Linking } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, RefreshControl, ActivityIndicator, Alert, Linking, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
@@ -24,6 +24,7 @@ export default function RecoTab() {
   const listRef = useRef<FlatList>(null);
   const scrollToPostId = useScrollStore((s) => s.scrollToPostId);
   const clearScroll = useScrollStore((s) => s.setScrollToPostId);
+  const scrollToTopCounter = useScrollStore((s) => s.scrollToTopReco);
 
   const load = useCallback(async () => {
     try {
@@ -49,6 +50,18 @@ export default function RecoTab() {
       clearScroll(null);
     }
   }, [scrollToPostId, posts]);
+
+  useEffect(() => {
+    if (scrollToTopCounter === 0) return;
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [scrollToTopCounter]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") load();
+    });
+    return () => sub.remove();
+  }, [load]);
 
   const onRefresh = () => { setRefreshing(true); load(); };
 
