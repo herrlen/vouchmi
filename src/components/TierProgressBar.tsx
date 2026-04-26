@@ -31,7 +31,7 @@ export default function TierProgressBar({ tier, progressToNext, nextTier }: Prop
   return (
     <View style={s.container}>
       <Pressable style={s.header} onPress={toggle} hitSlop={6}>
-        <Text style={s.heading}>Fortschritt zu {config.label} {config.emoji}</Text>
+        <Text style={s.heading}>{config.label} {config.emoji}</Text>
         {open ? (
           <ChevronUp color="#64748B" size={18} strokeWidth={2} />
         ) : (
@@ -56,14 +56,14 @@ export default function TierProgressBar({ tier, progressToNext, nextTier }: Prop
 
           <View style={s.barGroup}>
             <View style={s.labelRow}>
-              <Text style={s.label}>Empfehlungen</Text>
+              <Text style={s.label}>Recos</Text>
               <Text style={s.value}>{recommendations.current} / {recommendations.required}</Text>
             </View>
             <View style={s.track}>
               <View style={[s.fill, { width: `${Math.min(100, recommendations.percent)}%`, backgroundColor: config.color }]} />
             </View>
             {recommendations.current < recommendations.required && (
-              <Text style={s.hint}>Noch {recommendations.required - recommendations.current} Empfehlungen</Text>
+              <Text style={s.hint}>Noch {recommendations.required - recommendations.current} Recos</Text>
             )}
           </View>
         </View>

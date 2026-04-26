@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, StyleSheet, FlatList, TextInput, Pressable, RefreshControl, ActivityIndicator, Alert, Image, Share, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Search as SearchIcon, Plus } from "lucide-react-native";
@@ -6,6 +6,7 @@ import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { useAuth } from "../../src/lib/store";
 import { communities as communitiesApi, type Community } from "../../src/lib/api";
+import { useScrollStore } from "../../src/lib/scroll-store";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const CARD_GAP = 10;
@@ -63,6 +64,13 @@ export default function CommunitiesTab() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
+  const listRef = useRef<FlatList>(null);
+  const scrollToTopCounter = useScrollStore((s) => s.scrollToTopCommunities);
+
+  useEffect(() => {
+    if (scrollToTopCounter === 0) return;
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [scrollToTopCounter]);
 
   const load = useCallback(async () => {
     try {
@@ -120,9 +128,10 @@ export default function CommunitiesTab() {
         <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
+          ref={listRef}
           data={pairs}
           keyExtractor={(_, i) => String(i)}
-          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 150 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
           ListEmptyComponent={
             <View style={s.empty}>
@@ -196,7 +205,7 @@ const s = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingTop: 6, paddingBottom: 10 },
   title: { color: "#FFFFFF", fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
   subtitle: { color: "#94A3B8", fontSize: 14, marginTop: 2 },
-  addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#141926", justifyContent: "center", alignItems: "center" },
+  addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" },
 
   // Search
   searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: "#141926", borderRadius: 24, paddingHorizontal: 16, height: 48, gap: 10, marginBottom: 4 },

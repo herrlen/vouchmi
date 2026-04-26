@@ -89,7 +89,10 @@ class InfluencerController extends Controller
         $ok = $paypal->cancelSubscription($subscription->paypal_subscription_id, 'User requested cancellation');
 
         if ($ok) {
-            $subscription->update(['paypal_status' => 'CANCELLED']);
+            $subscription->update([
+                'paypal_status' => 'CANCELLED',
+                'status'        => 'cancelled',
+            ]);
         }
 
         return response()->json([

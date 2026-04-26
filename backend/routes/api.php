@@ -74,6 +74,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities/{id}/leave', [CommunityController::class, 'leave']);
     Route::post('/communities/{id}/follow', [CommunityController::class, 'follow']);
     Route::post('/communities/{id}/unfollow', [CommunityController::class, 'unfollow']);
+    Route::patch('/communities/{id}/chat/read', [CommunityController::class, 'markChatRead']);
+
+    // Telefonnummer-Verifizierung via Twilio Verify (SMS)
+    Route::post('/auth/phone/send-code', [AuthController::class, 'sendPhoneCode']);
+    Route::post('/auth/phone/verify', [AuthController::class, 'verifyPhoneCode']);
     Route::get('/communities/{id}/members', [CommunityController::class, 'members']);
     Route::post('/communities/{id}/invite', [CommunityController::class, 'invite']);
     Route::post('/communities/join-by-code/{code}', [CommunityController::class, 'joinByCode']);

@@ -1,22 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Check, Eye, EyeOff, Mail, Lock, User as UserIcon, CheckCircle, ChevronLeft } from "lucide-react-native";
+import { Check, Eye, EyeOff, Mail, Lock, CheckCircle, ChevronLeft } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "../src/lib/store";
 import { auth as authApi } from "../src/lib/api";
 import { colors } from "../src/constants/theme";
 
-type Mode = "login" | "register" | "forgot" | "forgot-sent";
-
-function validatePassword(pw: string) {
-  return {
-    length: pw.length >= 8,
-    upper: /[A-Z]/.test(pw),
-    number: /[0-9]/.test(pw),
-    valid: pw.length >= 8 && /[A-Z]/.test(pw) && /[0-9]/.test(pw),
-  };
-}
+type Mode = "login" | "forgot" | "forgot-sent";
 
 function validateEmail(e: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -27,16 +18,13 @@ export default function Auth() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [showResetBanner, setShowResetBanner] = useState(params.reset === "success");
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
 
-  const pwCheck = useMemo(() => validatePassword(password), [password]);
   const emailValid = useMemo(() => validateEmail(email), [email]);
 
   // Reset success banner auto-hide
@@ -71,17 +59,18 @@ export default function Auth() {
       return;
     }
     if (!email || !password) return Alert.alert("Fehler", "Bitte alle Felder ausfüllen.");
-    if (mode === "register") {
-      if (!username) return Alert.alert("Fehler", "Username wird benötigt.");
-      if (!pwCheck.valid) return Alert.alert("Fehler", "Passwort erfüllt nicht die Anforderungen.");
-      if (!acceptTerms) return Alert.alert("Fehler", "Bitte akzeptiere die Nutzungsbedingungen.");
-    }
     setLoading(true);
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      if (mode === "register") await register(email, password, username, acceptTerms);
-      else await login(email, password);
-      router.replace("/");
+      await login(email, password);
+      // Pflicht-Telefonverifikation NUR für Influencer (Brand identifiziert sich
+      // per Unternehmens-E-Mail, User braucht gar keine Pflicht).
+      const u = useAuth.getState().user;
+      if (u && u.role === "influencer" && !u.phone_verified_at) {
+        router.replace("/phone-verify?required=1");
+      } else {
+        router.replace("/");
+      }
     } catch (e: any) {
       Alert.alert("Fehler", e.message);
     } finally { setLoading(false); }
@@ -122,8 +111,8 @@ export default function Auth() {
     );
   }
 
-  const heading = mode === "login" ? "Anmeldung" : mode === "register" ? "Account erstellen" : "Passwort vergessen?";
-  const submitLabel = mode === "login" ? "Einloggen" : mode === "register" ? "Registrieren" : "Link senden";
+  const heading = mode === "login" ? "Anmeldung" : "Passwort vergessen?";
+  const submitLabel = mode === "login" ? "Einloggen" : "Link senden";
 
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -158,17 +147,6 @@ export default function Auth() {
         )}
 
         <View style={s.form}>
-          {mode === "register" && (
-            <View style={s.inputWrap}>
-              <UserIcon color="#4A5068" size={18} style={s.inputIcon} />
-              <TextInput style={s.inputField} placeholder="Username" placeholderTextColor="#4A5068"
-                value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false}
-                textContentType="username" autoComplete="username-new"
-                accessibilityLabel="Benutzername" accessibilityHint="Mindestens 3 Zeichen" />
-              {username.length >= 3 && <Check color={colors.accent} size={18} accessibilityElementsHidden />}
-            </View>
-          )}
-
           <View style={s.inputWrap}>
             <Mail color="#4A5068" size={18} style={s.inputIcon} />
             <TextInput style={s.inputField} placeholder="E-Mail" placeholderTextColor="#4A5068"
@@ -178,47 +156,20 @@ export default function Auth() {
             {email.length > 3 && emailValid && <Check color={colors.accent} size={18} accessibilityElementsHidden />}
           </View>
 
-          {(mode === "login" || mode === "register") && (
+          {mode === "login" && (
             <View>
               <View style={s.inputWrap}>
                 <Lock color="#4A5068" size={18} style={s.inputIcon} />
                 <TextInput style={s.inputField} placeholder="Passwort" placeholderTextColor="#4A5068"
                   value={password} onChangeText={setPassword} secureTextEntry={!showPw}
-                  textContentType={mode === "register" ? "newPassword" : "password"}
-                  autoComplete={mode === "register" ? "password-new" : "password"}
-                  accessibilityLabel="Passwort" accessibilityHint={mode === "register" ? "Mindestens 8 Zeichen, 1 Grossbuchstabe, 1 Zahl" : undefined} />
+                  textContentType="password"
+                  autoComplete="password"
+                  accessibilityLabel="Passwort" />
                 <Pressable onPress={() => setShowPw(!showPw)} hitSlop={10} accessibilityRole="button" accessibilityLabel={showPw ? "Passwort verbergen" : "Passwort anzeigen"}>
                   {showPw ? <EyeOff color="#64748B" size={18} /> : <Eye color="#64748B" size={18} />}
                 </Pressable>
               </View>
-              {mode === "register" && password.length > 0 && (
-                <View style={s.pwChecks}>
-                  <PwRule ok={pwCheck.length} label="Min. 8 Zeichen" />
-                  <PwRule ok={pwCheck.upper} label="1 Großbuchstabe" />
-                  <PwRule ok={pwCheck.number} label="1 Zahl" />
-                </View>
-              )}
             </View>
-          )}
-
-          {mode === "register" && (
-            <Pressable
-              style={s.termsRow}
-              onPress={() => setAcceptTerms((v) => !v)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: acceptTerms }}
-              accessibilityLabel="Nutzungsbedingungen und Datenschutzerklaerung akzeptieren"
-            >
-              <View style={[s.checkbox, acceptTerms && s.checkboxOn]}>
-                {acceptTerms && <Check color="#fff" size={14} strokeWidth={3} />}
-              </View>
-              <Text style={s.termsText}>
-                Ich akzeptiere die{" "}
-                <Text style={s.link} onPress={() => router.push("/legal/terms")}>Nutzungsbedingungen</Text>
-                {" "}und die{" "}
-                <Text style={s.link} onPress={() => router.push("/legal/privacy")}>Datenschutzerklärung</Text>.
-              </Text>
-            </Pressable>
           )}
 
           <Pressable
@@ -238,25 +189,14 @@ export default function Auth() {
             </Pressable>
           )}
 
-          {(mode === "login" || mode === "register") && (
-            <Pressable onPress={() => setMode(mode === "register" ? "login" : "register")} style={s.toggle} accessibilityRole="button" accessibilityLabel={mode === "register" ? "Zur Anmeldung wechseln" : "Zur Registrierung wechseln"}>
-              <Text style={s.toggleText}>
-                {mode === "register" ? "Bereits dabei? Einloggen" : "Noch kein Account? Registrieren"}
-              </Text>
+          {mode === "login" && (
+            <Pressable onPress={() => router.push("/register")} style={s.toggle} accessibilityRole="button" accessibilityLabel="Zur Registrierung wechseln">
+              <Text style={s.toggleText}>Noch kein Account? Registrieren</Text>
             </Pressable>
           )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-}
-
-function PwRule({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <View style={s.pwRule}>
-      <Check color={ok ? colors.accent : "#4A5068"} size={14} strokeWidth={ok ? 2.5 : 1.5} />
-      <Text style={[s.pwRuleText, ok && { color: colors.accent }]}>{label}</Text>
-    </View>
   );
 }
 
@@ -300,18 +240,10 @@ const s = StyleSheet.create({
   },
   inputIcon: { opacity: 0.7 },
   inputField: { flex: 1, color: "#FFFFFF", fontSize: 16 },
-  pwChecks: { marginTop: 8, gap: 4, paddingLeft: 4 },
-  pwRule: { flexDirection: "row", alignItems: "center", gap: 6 },
-  pwRuleText: { color: "#4A5068", fontSize: 12 },
   btn: { backgroundColor: "#F59E0B", borderRadius: 14, height: 54, alignItems: "center", justifyContent: "center", marginTop: 4 },
   btnText: { color: "#1A1D2E", fontSize: 16, fontWeight: "800" },
   secondaryBtn: { padding: 12, alignItems: "center" },
   secondaryText: { color: "#64748B", fontSize: 13 },
   toggle: { padding: 12 },
   toggleText: { color: "#F59E0B", textAlign: "center", fontSize: 14, fontWeight: "600" },
-  termsRow: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 6, gap: 10 },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: "#1E2235", marginTop: 2, justifyContent: "center", alignItems: "center" },
-  checkboxOn: { backgroundColor: "#F59E0B", borderColor: "#F59E0B" },
-  termsText: { flex: 1, color: "#94A3B8", fontSize: 13, lineHeight: 19 },
-  link: { color: "#F59E0B", textDecorationLine: "underline" },
 });

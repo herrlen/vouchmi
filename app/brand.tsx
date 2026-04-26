@@ -40,10 +40,14 @@ export default function BrandScreen() {
     }
     setSubmitting(true);
     try {
+      const rawWebsite = form.website_url.trim();
+      const website_url = rawWebsite
+        ? (/^https?:\/\//i.test(rawWebsite) ? rawWebsite : `https://${rawWebsite}`)
+        : undefined;
       await brandApi.register({
         brand_name: form.brand_name.trim(),
         company_email: form.company_email.trim(),
-        website_url: form.website_url.trim() || undefined,
+        website_url,
         industry: form.industry.trim() || undefined,
         description: form.description.trim() || undefined,
       });
@@ -59,12 +63,16 @@ export default function BrandScreen() {
     setSubmitting(true);
     try {
       const res = await brandApi.subscribe();
+      if (!res.configured) {
+        Alert.alert(
+          "Bald verfügbar",
+          "Die Bezahlung per PayPal wird gerade eingerichtet. Bitte versuche es später erneut — wir melden uns, sobald es losgehen kann."
+        );
+        return;
+      }
       if (!res.approval_url) {
         Alert.alert("PayPal", "Das Abo kann momentan nicht gestartet werden. Bitte versuche es später erneut.");
         return;
-      }
-      if (!res.configured) {
-        Alert.alert("Hinweis", "PayPal-Zahlung ist auf dem Server noch nicht eingerichtet. Die Approval-URL ist ein Platzhalter.");
       }
       await Linking.openURL(res.approval_url);
       // Nach Rückkehr: Status neu laden (Webhook kann bereits eingetroffen sein).
@@ -90,7 +98,7 @@ export default function BrandScreen() {
 
           <LabeledInput label="Firmenname *" value={form.brand_name} onChangeText={(t) => setForm({ ...form, brand_name: t })} />
           <LabeledInput label="Firmen-E-Mail *" value={form.company_email} onChangeText={(t) => setForm({ ...form, company_email: t })} keyboardType="email-address" autoCapitalize="none" />
-          <LabeledInput label="Website" value={form.website_url} onChangeText={(t) => setForm({ ...form, website_url: t })} keyboardType="url" autoCapitalize="none" placeholder="https://" />
+          <LabeledInput label="Website" value={form.website_url} onChangeText={(t) => setForm({ ...form, website_url: t })} keyboardType="url" autoCapitalize="none" placeholder="z. B. deine-domain.de" />
           <LabeledInput label="Branche" value={form.industry} onChangeText={(t) => setForm({ ...form, industry: t })} placeholder="z. B. Mode, Beauty, Sport" />
           <LabeledInput label="Kurzbeschreibung" value={form.description} onChangeText={(t) => setForm({ ...form, description: t })} multiline />
 

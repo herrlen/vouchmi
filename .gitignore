@@ -25,3 +25,4 @@ backend/storage/app/public/avatars/*
 # Web (Marketing-Website)
 web/newsletter_data/
 web/rate_limits/
+.DS_Store

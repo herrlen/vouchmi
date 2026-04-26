@@ -2,7 +2,9 @@
 import { create } from "zustand";
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { router } from "expo-router";
 import * as api from "./api";
+import { registerUnauthHandler } from "./api";
 import type { User, Community, Post, Msg } from "./api";
 
 // Shared Keychain options so the Share Extension can read the auth token
@@ -29,6 +31,13 @@ export const useAuth = create<AuthState>((set) => ({
   user: null,
   isLoading: true,
   init: async () => {
+    // On any 401 from the API, wipe session + bounce to /auth. Avoids
+    // a cascade of "Unauthenticated" alerts when a stale token hits protected endpoints.
+    registerUnauthHandler(() => {
+      SecureStore.deleteItemAsync("token", KEYCHAIN_OPTS).catch(() => {});
+      set({ user: null });
+      try { router.replace("/auth"); } catch {}
+    });
     const token = await SecureStore.getItemAsync("token", KEYCHAIN_OPTS);
     if (token) {
       try {

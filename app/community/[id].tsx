@@ -9,7 +9,7 @@ import BottomBar from "../../src/components/BottomBar";
 import PostActions from "../../src/components/PostActions";
 import LinkCard from "../../src/components/LinkCard";
 import { colors } from "../../src/constants/theme";
-import { communities as communitiesApi, feed as feedApi, users as usersApi, type Post } from "../../src/lib/api";
+import { communities as communitiesApi, feed as feedApi, users as usersApi, dm as dmApi, type Post, type DmConversation } from "../../src/lib/api";
 import VSeal from "../../src/components/VSeal";
 
 type Tab = "feed" | "chat" | "drops" | "messages";
@@ -34,6 +34,12 @@ export default function CommunityDetail() {
   const [isFollowed, setIsFollowed] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [mutedUntil, setMutedUntil] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [ownerName, setOwnerName] = useState<string>("");
+  const [memberIds, setMemberIds] = useState<Set<string>>(new Set());
+  const [mailConversations, setMailConversations] = useState<DmConversation[]>([]);
+  const [unreadChat, setUnreadChat] = useState(0);
+  const [unreadMail, setUnreadMail] = useState(0);
   const { feed, messages, loadFeed, likePost, loadMessages, sendMessage, startPolling, stopPolling } = useApp();
   const user = useAuth((s) => s.user);
   const chatRef = useRef<FlatList>(null);
@@ -49,15 +55,40 @@ export default function CommunityDetail() {
       setIsOwner(r.community.owner_id === user?.id);
       setIsMember(memberFlag);
       setIsFollowed(!!(r.community as any).is_followed);
+      setOwnerId(r.community.owner_id ?? null);
+      const owner = (r.community as any).owner;
+      if (owner) setOwnerName(owner.display_name ?? owner.username ?? "");
+      setUnreadChat((r.community as any).unread_chat_count ?? 0);
+      setUnreadMail((r.community as any).unread_mail_count ?? 0);
     }).catch(() => {});
     communitiesApi.muteStatus(id).then((r) => { setIsMuted(r.muted); setMutedUntil(r.muted_until); }).catch(() => {});
     return () => stopPolling();
   }, [id]);
 
   useEffect(() => {
-    if (tab === "chat" && id) startPolling(id);
-    else stopPolling();
+    if (tab === "chat" && id) {
+      startPolling(id);
+      // Mark chat as read once this user opens the chat tab.
+      communitiesApi.markChatRead(id).then(() => setUnreadChat(0)).catch(() => {});
+    } else {
+      stopPolling();
+    }
   }, [tab, id]);
+
+  // Mail-Tab: Owner sieht gefilterte DM-Inbox (nur Mitglieder dieser Community).
+  // Members sehen einen 1-Klick-Button zum Owner — kein Inbox-Load nötig.
+  useEffect(() => {
+    if (tab !== "messages" || !id || !isOwner) return;
+    Promise.all([
+      communitiesApi.members(id).then((r) => new Set(r.members.map((m) => m.id))),
+      dmApi.conversations().then((r) => r.conversations),
+    ])
+      .then(([memberSet, convs]) => {
+        setMemberIds(memberSet);
+        setMailConversations(convs.filter((c) => memberSet.has(c.other_user.id)));
+      })
+      .catch(() => {});
+  }, [tab, id, isOwner]);
 
   useEffect(() => {
     if (tab === "chat") setTimeout(() => chatRef.current?.scrollToEnd({ animated: true }), 200);
@@ -155,11 +186,21 @@ export default function CommunityDetail() {
 
       {/* Top Tabs */}
       <View style={s.topTabs} accessibilityRole="tablist">
-        {topTabs.map(({ key, label }) => (
-          <Pressable key={key} style={[s.topTab, tab === key && s.topTabOn]} onPress={() => setTab(key)} accessibilityRole="tab" accessibilityState={{ selected: tab === key }} accessibilityLabel={label}>
-            <Text style={[s.topTabText, tab === key && s.topTabTextOn]}>{label}</Text>
-          </Pressable>
-        ))}
+        {topTabs.map(({ key, label }) => {
+          const badge = key === "chat" ? unreadChat : key === "messages" ? unreadMail : 0;
+          return (
+            <Pressable key={key} style={[s.topTab, tab === key && s.topTabOn]} onPress={() => setTab(key)} accessibilityRole="tab" accessibilityState={{ selected: tab === key }} accessibilityLabel={badge > 0 ? `${label}, ${badge} ungelesen` : label}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={[s.topTabText, tab === key && s.topTabTextOn]}>{label}</Text>
+                {badge > 0 && (
+                  <View style={s.tabBadge}>
+                    <Text style={s.tabBadgeText}>{badge > 9 ? "9+" : badge}</Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
 
       {/* Content */}
@@ -225,11 +266,69 @@ export default function CommunityDetail() {
         )}
 
         {tab === "messages" && (
-          <View style={s.center}>
-            <Text style={{ fontSize: 42 }}>✉︎</Text>
-            <Text style={s.emptyTitle}>Nachrichten</Text>
-            <Text style={s.emptyText}>Private Nachrichten an Community-Mitglieder kommen bald.</Text>
-          </View>
+          isOwner ? (
+            // Owner: Inbox aller DMs mit Community-Mitgliedern
+            mailConversations.length === 0 ? (
+              <View style={s.center}>
+                <Text style={{ fontSize: 42 }}>✉︎</Text>
+                <Text style={s.emptyTitle}>Noch keine Nachrichten</Text>
+                <Text style={s.emptyText}>Mitglieder können dir hier privat schreiben. Du siehst die Nachrichten, sobald welche eintreffen.</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={mailConversations}
+                keyExtractor={(c) => c.id}
+                contentContainerStyle={{ paddingVertical: 8 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    style={s.mailRow}
+                    onPress={() => router.push({ pathname: "/messages/[userId]", params: { userId: item.other_user.id } })}
+                  >
+                    {item.other_user.avatar_url ? (
+                      <Image source={{ uri: item.other_user.avatar_url }} style={s.mailAvatar} />
+                    ) : (
+                      <View style={[s.mailAvatar, { backgroundColor: colors.accent, justifyContent: "center", alignItems: "center" }]}>
+                        <Text style={{ color: "#1A1D2E", fontWeight: "800" }}>
+                          {(item.other_user.display_name ?? item.other_user.username)[0]?.toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={s.mailName} numberOfLines={1}>{item.other_user.display_name ?? item.other_user.username}</Text>
+                      <Text style={s.mailPreview} numberOfLines={1}>{item.last_message?.content ?? "—"}</Text>
+                    </View>
+                    {item.unread_count > 0 && (
+                      <View style={s.unreadDot}>
+                        <Text style={s.unreadDotText}>{item.unread_count}</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                )}
+              />
+            )
+          ) : isMember ? (
+            // Member: 1-Klick-Button zum Owner
+            <View style={s.center}>
+              <Text style={{ fontSize: 42 }}>✉︎</Text>
+              <Text style={s.emptyTitle}>An den Gründer schreiben</Text>
+              <Text style={s.emptyText}>Privat-Nachrichten in dieser Community gehen direkt an den Gründer.</Text>
+              {ownerId && (
+                <Pressable
+                  style={s.mailCta}
+                  onPress={() => router.push({ pathname: "/messages/[userId]", params: { userId: ownerId } })}
+                >
+                  <Text style={s.mailCtaText}>{ownerName ? `Schreibe an ${ownerName}` : "Nachricht senden"}</Text>
+                </Pressable>
+              )}
+            </View>
+          ) : (
+            // Follower / nicht-Mitglied
+            <View style={s.center}>
+              <Text style={{ fontSize: 42 }}>🔒</Text>
+              <Text style={s.emptyTitle}>Nur für Mitglieder</Text>
+              <Text style={s.emptyText}>Tritt der Community bei, um dem Gründer privat zu schreiben.</Text>
+            </View>
+          )
         )}
       </KeyboardAvoidingView>
 
@@ -319,11 +418,6 @@ function FeedPost({ post, onRefresh, canModerate, communityId }: {
           <Text style={[s.roleBadgeText, { color: badgeColor }]}>{badgeLabel}</Text>
         </View>
 
-        {!isOwnPost && checked && (
-          <Pressable style={[s.cardFollowBtn, following && s.cardFollowBtnActive]} onPress={toggleFollow} hitSlop={6}>
-            <Text style={[s.cardFollowText, following && s.cardFollowTextActive]}>{following ? "Entfolgen" : "Folgen"}</Text>
-          </Pressable>
-        )}
         {canModerate && (
           <Pressable onPress={openModMenu} hitSlop={10} style={s.modBtn}>
             <Text style={s.modDots}>⋯</Text>
@@ -390,6 +484,16 @@ const s = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32, gap: 8 },
   emptyTitle: { color: colors.white, fontSize: 16, fontWeight: "700" },
   emptyText: { color: colors.gray, textAlign: "center", lineHeight: 20, fontSize: 13 },
+  mailRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: colors.border },
+  mailAvatar: { width: 44, height: 44, borderRadius: 22 },
+  mailName: { color: colors.white, fontSize: 15, fontWeight: "600" },
+  mailPreview: { color: colors.gray, fontSize: 13, marginTop: 2 },
+  unreadDot: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: colors.accent, justifyContent: "center", alignItems: "center", paddingHorizontal: 6 },
+  unreadDotText: { color: "#1A1D2E", fontSize: 11, fontWeight: "800" },
+  mailCta: { backgroundColor: colors.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 14, marginTop: 14 },
+  mailCtaText: { color: "#1A1D2E", fontSize: 14, fontWeight: "800" },
+  tabBadge: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, justifyContent: "center", alignItems: "center", paddingHorizontal: 5 },
+  tabBadgeText: { color: "#1A1D2E", fontSize: 10, fontWeight: "800" },
 
   // Card-based Posts
   card: { backgroundColor: "#141926", borderRadius: 24, marginHorizontal: 12, marginBottom: 12, overflow: "hidden" },

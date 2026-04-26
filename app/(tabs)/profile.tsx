@@ -1,13 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ScrollView, Image, Pressable, Dimensions, ActivityIndicator, RefreshControl, Share, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2, Shield, MessageCircle } from "lucide-react-native";
+import { Menu, Compass, Repeat2, Bookmark as BookmarkIcon, Link as LinkIcon2, Store, User as UserIcon, Share2, ShieldCheck, MessageCircle } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/constants/theme";
 import { useAuth } from "../../src/lib/store";
 import { useProfileMode } from "../../src/lib/profile-mode";
 import { useScrollStore } from "../../src/lib/scroll-store";
-import { useUnreadCount } from "../../src/lib/messages-store";
+import { useUnreadCount, useMessages } from "../../src/lib/messages-store";
 import { profile as profileApi, feed as feedApi, type Post, type ProfileLayout } from "../../src/lib/api";
 import { useTierStore } from "../../src/lib/tier-store";
 import VSeal from "../../src/components/VSeal";
@@ -29,8 +29,9 @@ export default function ProfileTab() {
   const brandStatus = useProfileMode((s) => s.status);
   const setProfileMode = useProfileMode((s) => s.setMode);
   const unreadCount = useUnreadCount();
+  const loadConversations = useMessages((s) => s.loadConversations);
   const [profileData, setProfileData] = useState<any>(null);
-  const [stats, setStats] = useState({ communities_count: 0, posts_count: 0, followers_count: 0, following_count: 0 });
+  const [stats, setStats] = useState({ communities_count: 0, posts_count: 0, followers_count: 0, following_count: 0, likes_received_count: 0 });
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [myReposts, setMyReposts] = useState<Post[]>([]);
   const [myBookmarks, setMyBookmarks] = useState<Post[]>([]);
@@ -38,6 +39,15 @@ export default function ProfileTab() {
   const [refreshing, setRefreshing] = useState(false);
   const [subTab, setSubTab] = useState<SubTab>("reco");
   const [profileLayout, setProfileLayout] = useState<ProfileLayout>("masonry");
+  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
+  const scrollToTopCounter = useScrollStore((s) => s.scrollToTopProfile);
+
+  useEffect(() => {
+    if (scrollToTopCounter === 0) return;
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [scrollToTopCounter]);
 
   const load = useCallback(async () => {
     const [pRes, postsRes, repostsRes, bookmarksRes] = await Promise.allSettled([
@@ -58,7 +68,10 @@ export default function ProfileTab() {
     setRefreshing(false);
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    load();
+    loadConversations().catch(() => {});
+  }, [load, loadConversations]));
   const onRefresh = () => { setRefreshing(true); load(); };
 
   const displayName = profileData?.display_name ?? me?.username ?? "";
@@ -93,16 +106,15 @@ export default function ProfileTab() {
             {me?.role === "influencer" && profileData?.tier && profileData.tier !== "none" && (
               <CreatorBadge size="md" animate />
             )}
+            {profileData?.phone_verified_at && (
+              <ShieldCheck color="#10B981" size={20} strokeWidth={2.2} />
+            )}
           </View>
           {me?.role === "influencer" && profileData?.tier && profileData.tier !== "none" && (
             <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>Verifizierter Creator</Text>
           )}
           <Text style={s.handle}>@{me?.username}</Text>
         </View>
-
-        <Pressable style={s.privacyBtn} onPress={() => router.push("/privacy-settings")} hitSlop={8}>
-          <Shield color="#10B981" size={18} strokeWidth={2} />
-        </Pressable>
 
         <Pressable style={s.shareBtn} onPress={async () => {
           try { await Share.share({ message: `Schau dir mein Profil auf Vouchmi an:\nhttps://vouchmi.com/@${me?.username}` }); } catch {}
@@ -125,8 +137,8 @@ export default function ProfileTab() {
           )}
         </Pressable>
 
-        <Pressable style={s.settingsBtn} onPress={() => router.push("/settings")} hitSlop={8}>
-          <Settings color="#64748B" size={20} strokeWidth={1.8} />
+        <Pressable style={s.settingsBtn} onPress={() => router.push("/settings")} hitSlop={8} accessibilityRole="button" accessibilityLabel="Menü">
+          <Menu color="#FFFFFF" size={22} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -147,7 +159,7 @@ export default function ProfileTab() {
       <View style={s.statsRow}>
         <StatCard value={stats.posts_count} label="Recos" accent="#F59E0B" />
         <StatCard value={stats.followers_count} label="Follower" accent="#6366F1" />
-        <StatCard value={stats.following_count} label="Folge ich" accent="#10B981" />
+        <StatCard value={stats.likes_received_count} label="Likes" accent="#10B981" />
       </View>
 
       {/* Profil-Modus-Switcher (nur wenn Brand-Abo aktiv) */}
@@ -205,7 +217,8 @@ export default function ProfileTab() {
         <ActivityIndicator color={colors.accent} style={{ marginTop: 60 }} />
       ) : useScrollGallery ? (
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 120 }}
+          ref={scrollViewRef}
+          contentContainerStyle={{ paddingBottom: 150 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         >
           {profileHeader}
@@ -213,13 +226,14 @@ export default function ProfileTab() {
         </ScrollView>
       ) : (
         <FlatList
+          ref={flatListRef}
           data={currentData}
           keyExtractor={(p) => p.id}
           numColumns={NUM_COLS}
           key={`grid-${NUM_COLS}`}
           columnWrapperStyle={currentData.length > 0 ? { gap: GAP } : undefined}
           ItemSeparatorComponent={() => <View style={{ height: GAP }} />}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: 150 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
           ListHeaderComponent={profileHeader}
           ListEmptyComponent={

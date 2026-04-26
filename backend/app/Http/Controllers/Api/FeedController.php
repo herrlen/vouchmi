@@ -53,8 +53,17 @@ class FeedController extends Controller
             ->pluck('community_id');
         $communityIds = $memberCommunityIds->concat($followedCommunityIds)->unique();
 
-        $posts = Post::whereIn('community_id', $communityIds)
-            ->where('is_hidden', false)
+        // Eigene Reposts — auch wenn Original-Community nicht im Member/Follower-Set ist,
+        // sollen Posts, die ich selbst geteilt habe, in meinem Reco-Feed auftauchen.
+        $myRepostPostIds = DB::table('reposts')
+            ->where('user_id', $user->id)
+            ->pluck('original_post_id');
+
+        $posts = Post::where('is_hidden', false)
+            ->where(function ($q) use ($communityIds, $myRepostPostIds) {
+                $q->whereIn('community_id', $communityIds)
+                  ->orWhereIn('id', $myRepostPostIds);
+            })
             ->whereNotIn('author_id', $blockedIds)
             ->with('author:id,username,display_name,avatar_url,role,tier,tier_badge_opacity')
             ->with('community:id,name,slug')

@@ -47,6 +47,10 @@ export default function SettingsScreen() {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Account</Text>
           <Button label="Profil bearbeiten" onPress={() => router.push("/profile-edit")} />
+          <Button
+            label={user?.phone_verified_at ? "Telefon verifiziert ✓" : "Telefon verifizieren"}
+            onPress={() => router.push("/phone-verify")}
+          />
           <Button label="Galerie-Layout" onPress={() => router.push("/layout-settings")} />
           <Button label="Abo verwalten" onPress={() => router.push("/subscription")} />
           <Row label="Username" value={user?.username ?? "-"} />
@@ -79,10 +83,17 @@ export default function SettingsScreen() {
           <Button label="Kontaktzugriff verwalten" onPress={() => router.push("/find-friends")} />
         </View>
 
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Marken</Text>
-          <Button label="Brand-Profil" onPress={() => router.push("/brand")} />
-        </View>
+        {user?.role === "brand" ? (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Brand</Text>
+            <Button label="Brand-Abo verwalten" onPress={() => router.push("/brand")} />
+          </View>
+        ) : (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Marken</Text>
+            <Button label="Brand-Profil aktivieren" onPress={() => router.push("/brand")} />
+          </View>
+        )}
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>Rechtliches</Text>

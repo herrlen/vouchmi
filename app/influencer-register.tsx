@@ -63,7 +63,7 @@ export default function InfluencerRegisterScreen() {
       await iapFinish(purchase);
 
       setStep("done");
-      setTimeout(() => router.replace("/(tabs)/profile"), 1500);
+      setTimeout(() => router.replace("/phone-verify?required=1"), 1500);
     } catch (e: any) {
       if (e.code === "E_USER_CANCELLED") {
         setStep("info");
@@ -88,7 +88,7 @@ export default function InfluencerRegisterScreen() {
         await iapVerifyWithBackend(influencerPurchase, IAP_PRODUCTS.influencer);
         await iapFinish(influencerPurchase);
         Alert.alert("Erfolg", "Dein Influencer-Abo wurde wiederhergestellt.");
-        router.replace("/(tabs)/profile");
+        router.replace("/phone-verify?required=1");
       } else {
         Alert.alert("Hinweis", "Kein aktives Influencer-Abo gefunden.");
       }
@@ -107,7 +107,16 @@ export default function InfluencerRegisterScreen() {
         await influencerApi.register();
       }
 
-      const { approval_url } = await influencerApi.subscribe();
+      const { approval_url, configured } = await influencerApi.subscribe();
+
+      if (!configured) {
+        Alert.alert(
+          "Bald verfuegbar",
+          "Die Bezahlung per PayPal wird gerade eingerichtet. Deine Influencer-Rolle wurde gesetzt und wird automatisch aktiviert, sobald es losgehen kann."
+        );
+        router.back();
+        return;
+      }
 
       if (approval_url) {
         setStep("paying");
@@ -128,7 +137,7 @@ export default function InfluencerRegisterScreen() {
         const active = await poll();
         if (active) {
           setStep("done");
-          setTimeout(() => router.replace("/(tabs)/profile"), 1500);
+          setTimeout(() => router.replace("/phone-verify?required=1"), 1500);
         } else {
           Alert.alert("Hinweis", "Zahlung wird verarbeitet. Dein Influencer-Status wird aktiviert, sobald PayPal bestaetigt.");
           router.back();

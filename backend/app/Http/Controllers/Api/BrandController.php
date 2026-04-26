@@ -181,6 +181,14 @@ class BrandController extends Controller
         if ($ok) {
             $brand->paypal_status = 'CANCELLED';
             $brand->save();
+
+            // subscriptions-Tabelle synchron halten (der Webhook kommt zwar
+            // asynchron nach, aber bis dahin wäre der State inkonsistent).
+            Subscription::where('paypal_subscription_id', $brand->paypal_subscription_id)
+                ->update([
+                    'paypal_status' => 'CANCELLED',
+                    'status'        => 'cancelled',
+                ]);
         }
 
         return response()->json([
@@ -191,16 +199,31 @@ class BrandController extends Controller
 
     /**
      * POST /api/webhooks/paypal
-     * Empfängt Subscription-Events. Ohne gültige PAYPAL_WEBHOOK_ID-Verifizierung
-     * akzeptieren wir nur Requests aus dem lokalen Netzwerk (Entwicklung) —
-     * sobald Credentials da sind, muss hier die Signature-Verifikation ergänzt
-     * werden.
+     * Empfängt Subscription-Events. Wenn PAYPAL_WEBHOOK_ID gesetzt ist, wird
+     * die Signatur gegen PayPals verify-webhook-signature-Endpoint geprüft —
+     * ungültige Requests werden mit 401 abgelehnt. Ohne WEBHOOK_ID (Stub) wird
+     * nur ein Warn-Log geschrieben, damit der lokale Flow testbar bleibt.
      */
-    public function webhook(Request $request): JsonResponse
+    public function webhook(Request $request, PayPalService $paypal): JsonResponse
     {
         $event = $request->input('event_type');
         $resource = $request->input('resource', []);
-        $subscriptionId = $resource['id'] ?? null;
+
+        // Für PAYMENT.SALE.*-Events liegt die Subscription-Referenz in
+        // `billing_agreement_id`, nicht in `resource.id` (letzteres ist die Sale-ID).
+        $isSaleEvent = str_starts_with((string) $event, 'PAYMENT.SALE.');
+        $subscriptionId = $isSaleEvent
+            ? ($resource['billing_agreement_id'] ?? null)
+            : ($resource['id'] ?? null);
+
+        if ($paypal->hasWebhookId()) {
+            if (!$paypal->verifyWebhookSignature($request)) {
+                Log::warning('paypal.webhook.signature.invalid', ['event' => $event, 'id' => $subscriptionId]);
+                return response()->json(['ok' => false, 'reason' => 'invalid signature'], 401);
+            }
+        } else {
+            Log::warning('paypal.webhook.unverified', ['event' => $event, 'reason' => 'PAYPAL_WEBHOOK_ID not set']);
+        }
 
         Log::info('paypal.webhook.received', ['event' => $event, 'id' => $subscriptionId]);
 
@@ -208,26 +231,28 @@ class BrandController extends Controller
             return response()->json(['ok' => false, 'reason' => 'no resource id'], 200);
         }
 
-        // Zuerst in neuer subscriptions-Tabelle suchen
+        // Beide Stores durchsuchen — neue subscriptions-Tabelle UND brand_profiles.
+        // Sub-Rows gibt's für alle Neukunden, brand_profile-Rows gibt es für Brand-Abos
+        // (beides wird beim /brand/subscribe parallel angelegt). Status muss in beiden
+        // synchron bleiben, sonst liefern /brand/status und /subscription/status
+        // widersprüchliche Werte.
         $subscription = Subscription::where('paypal_subscription_id', $subscriptionId)->first();
-
-        // Fallback: alte brand_profiles-Tabelle (Bestandskunden)
-        $brand = null;
-        if (!$subscription) {
-            $brand = BrandProfile::where('paypal_subscription_id', $subscriptionId)->first();
-        }
+        $brand        = BrandProfile::where('paypal_subscription_id', $subscriptionId)->first();
 
         if (!$subscription && !$brand) {
             return response()->json(['ok' => false, 'reason' => 'unknown subscription'], 200);
         }
 
         $statusMap = [
-            'BILLING.SUBSCRIPTION.ACTIVATED' => 'ACTIVE',
-            'BILLING.SUBSCRIPTION.RENEWED'   => 'ACTIVE',
-            'BILLING.SUBSCRIPTION.CANCELLED' => 'CANCELLED',
-            'BILLING.SUBSCRIPTION.EXPIRED'   => 'CANCELLED',
-            'BILLING.SUBSCRIPTION.SUSPENDED' => 'SUSPENDED',
-            'PAYMENT.SALE.DENIED'            => 'SUSPENDED',
+            'BILLING.SUBSCRIPTION.ACTIVATED'      => 'ACTIVE',
+            'BILLING.SUBSCRIPTION.RE-ACTIVATED'   => 'ACTIVE',
+            'BILLING.SUBSCRIPTION.RENEWED'        => 'ACTIVE',
+            'PAYMENT.SALE.COMPLETED'              => 'ACTIVE',
+            'BILLING.SUBSCRIPTION.CANCELLED'      => 'CANCELLED',
+            'BILLING.SUBSCRIPTION.EXPIRED'        => 'CANCELLED',
+            'BILLING.SUBSCRIPTION.SUSPENDED'      => 'SUSPENDED',
+            'BILLING.SUBSCRIPTION.PAYMENT.FAILED' => 'SUSPENDED',
+            'PAYMENT.SALE.DENIED'                 => 'SUSPENDED',
         ];
 
         $newStatus = $statusMap[$event] ?? null;
@@ -237,6 +262,12 @@ class BrandController extends Controller
 
         if ($subscription) {
             $subscription->paypal_status = $newStatus;
+            $subscription->status        = match ($newStatus) {
+                'ACTIVE'    => 'active',
+                'CANCELLED' => 'cancelled',
+                'SUSPENDED' => 'past_due',
+                default     => $subscription->status,
+            };
             if ($newStatus === 'ACTIVE') {
                 $subscription->started_at = $subscription->started_at ?: now();
                 $subscription->expires_at = now()->addMonth();

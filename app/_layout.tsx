@@ -102,7 +102,9 @@ function RootLayout() {
         <Stack.Screen name="upgrade-confirm" options={{ headerShown: false }} />
         <Stack.Screen name="upgrade-success" options={{ headerShown: false }} />
         <Stack.Screen name="brand-register" options={{ headerShown: false }} />
+        <Stack.Screen name="brand-return" options={{ headerShown: false }} />
         <Stack.Screen name="influencer-register" options={{ headerShown: false }} />
+        <Stack.Screen name="influencer-return" options={{ headerShown: false }} />
         <Stack.Screen name="subscription" options={{ headerShown: false }} />
         <Stack.Screen name="messages/[userId]" options={{ headerShown: false }} />
         <Stack.Screen name="share/create" options={{ headerShown: false, presentation: "modal" }} />

@@ -78,7 +78,7 @@ export default function RecoTab() {
           ref={listRef}
           data={posts}
           keyExtractor={(p) => p.id}
-          contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
+          contentContainerStyle={{ paddingBottom: 150, paddingTop: 8 }}
           onScrollToIndexFailed={(info) => {
             setTimeout(() => listRef.current?.scrollToIndex({ index: info.index, animated: true }), 500);
           }}

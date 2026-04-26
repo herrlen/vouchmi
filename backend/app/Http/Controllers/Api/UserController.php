@@ -20,14 +20,17 @@ class UserController extends Controller
 
         $followerCount = \DB::table('follows')->where('following_id', $user->id)->count();
         $followingCount = \DB::table('follows')->where('follower_id', $user->id)->count();
+        // Likes auf eigene Posts (Engagement-Metric, ersetzt im UI das alte „Folge ich")
+        $likesReceivedCount = (int) \DB::table('posts')->where('author_id', $user->id)->sum('like_count');
 
         return response()->json([
-            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role', 'profile_layout', 'tier', 'tier_badge_opacity'),
+            'profile' => $user->only('id', 'email', 'username', 'display_name', 'avatar_url', 'bio', 'link', 'role', 'profile_layout', 'tier', 'tier_badge_opacity', 'phone', 'phone_verified_at'),
             'stats' => [
                 'communities_count' => $user->communities()->count(),
                 'posts_count' => $postCount,
                 'followers_count' => $followerCount,
                 'following_count' => $followingCount,
+                'likes_received_count' => $likesReceivedCount,
             ],
         ]);
     }
@@ -35,9 +38,9 @@ class UserController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'display_name' => 'nullable|string|max:50',
+            'display_name' => 'nullable|string|max:25',
             'bio' => 'nullable|string|max:250',
-            'link' => 'nullable|url|max:255',
+            'link' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+(\/.*)?$/i'],
         ]);
 
         $request->user()->update($data);

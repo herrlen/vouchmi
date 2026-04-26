@@ -107,6 +107,10 @@ export const auth = {
   sendVerification: () => api.post<{ message: string }>("/auth/send-verification"),
   resetPassword: (d: { email: string; token: string; password: string; password_confirmation: string }) =>
     req<{ message: string }>("POST", "/auth/reset-password", d, true),
+  sendPhoneCode: (phone: string) =>
+    api.post<{ message: string }>("/auth/phone/send-code", { phone }),
+  verifyPhoneCode: (code: string) =>
+    api.post<{ message: string; phone_verified_at: string | null }>("/auth/phone/verify", { code }),
 };
 
 export const legal = {
@@ -139,6 +143,7 @@ export const communities = {
   destroy: (id: string) => req<{ message: string }>("DELETE", `/communities/${id}`),
   join: (id: string) => api.post(`/communities/${id}/join`),
   leave: (id: string) => api.post(`/communities/${id}/leave`),
+  markChatRead: (id: string) => api.patch<{ message: string }>(`/communities/${id}/chat/read`),
   invite: (id: string) => api.post<{ invite_code: string; invite_link: string }>(`/communities/${id}/invite`),
   members: (id: string) => api.get<{ members: CommunityMember[] }>(`/communities/${id}/members`),
   setRole: (id: string, userId: string, role: "member" | "moderator") =>
@@ -448,7 +453,7 @@ export const drops = {
 };
 
 // Types
-export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string; email_verified_at?: string | null };
+export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string; email_verified_at?: string | null; phone_verified_at?: string | null };
 export type Community = { id: string; name: string; slug: string; description: string | null; image_url: string | null; category: string | null; tags?: string[] | null; member_count: number; follower_count?: number; is_followed?: boolean; is_private: boolean; role?: string; is_member?: boolean; my_role?: string; owner_id?: string };
 export type CommunityMember = { id: string; username: string; display_name: string | null; avatar_url: string | null; role: string; muted_until?: string | null };
 export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; repost_count: number; click_count: number; is_liked?: boolean; is_reposted?: boolean; is_bookmarked?: boolean; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null; role?: string; tier?: string; tier_badge_opacity?: number }; community?: { id: string; name: string; slug: string } | null };

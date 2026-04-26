@@ -61,17 +61,24 @@ export default function ProfileScreen() {
   };
 
   const save = async () => {
-    if (link && !/^https?:\/\//i.test(link)) {
-      Alert.alert("Ungültig", "Link muss mit http:// oder https:// beginnen.");
-      return;
+    // Domain-Eingabe normalisieren: http://, https://, www. strippen.
+    // Backend speichert nur die "saubere" Domain (z.B. domain.com).
+    let cleanLink = link.trim();
+    if (cleanLink) {
+      cleanLink = cleanLink.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "");
+      if (!/^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+(\/.*)?$/i.test(cleanLink)) {
+        Alert.alert("Ungültig", "Bitte nur die Domain eingeben (z.B. meinshop.com).");
+        return;
+      }
     }
     setSaving(true);
     try {
       await profileApi.update({
         display_name: displayName || undefined,
         bio: bio || undefined,
-        link: link || undefined,
+        link: cleanLink || undefined,
       });
+      setLink(cleanLink);
       setEditing(false);
     } catch (e: any) {
       Alert.alert("Fehler", e.message);
@@ -177,7 +184,7 @@ export default function ProfileScreen() {
               style={s.input}
               value={link}
               onChangeText={setLink}
-              placeholder="https://..."
+              placeholder="meinshop.com"
               placeholderTextColor={colors.grayDark}
               autoCapitalize="none"
               keyboardType="url"
@@ -185,7 +192,7 @@ export default function ProfileScreen() {
               accessibilityLabel="Profil-Link"
             />
           ) : link ? (
-            <Pressable onPress={() => Linking.openURL(link)}>
+            <Pressable onPress={() => Linking.openURL(/^https?:\/\//i.test(link) ? link : `https://${link}`)}>
               <Text style={[s.value, { color: colors.accent }]}>{link}</Text>
             </Pressable>
           ) : (

@@ -6,6 +6,7 @@ import * as Clipboard from "expo-clipboard";
 import { colors } from "../constants/theme";
 import { feed as feedApi, type Post } from "../lib/api";
 import { useAuth } from "../lib/store";
+import { useScrollStore } from "../lib/scroll-store";
 import CommentsSheet from "./CommentsSheet";
 
 type Props = {
@@ -83,7 +84,8 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
         setReposted(true);
         setRepostCount(repost_count);
         onRepostChange?.(post.id, repost_count);
-        Alert.alert("Geteilt", "In deinem Feed geteilt.");
+        useScrollStore.getState().setScrollToPostId(post.id);
+        router.push("/(tabs)/reco");
       } catch (e: any) { Alert.alert("Fehler", e.message); }
     }, 300);
   };
@@ -101,7 +103,8 @@ export default function PostActions({ post, onLikeChange, onRepostChange }: Prop
       onRepostChange?.(post.id, repost_count);
       setRepostEditor(false);
       setRepostComment("");
-      Alert.alert("Geteilt", "In deinem Feed geteilt.");
+      useScrollStore.getState().setScrollToPostId(post.id);
+      router.push("/(tabs)/reco");
     } catch (e: any) { Alert.alert("Fehler", e.message); }
   };
 

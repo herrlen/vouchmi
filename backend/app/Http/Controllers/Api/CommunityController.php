@@ -99,14 +99,71 @@ class CommunityController extends Controller
             ->where('user_id', $userId)
             ->exists();
 
+        // Unread Chat: Anzahl Messages in dieser Community, die NACH dem
+        // last_read_chat_at des Users entstanden sind (nicht eigene Messages).
+        $unreadChat = 0;
+        if ($membership) {
+            $lastRead = $membership->pivot->last_read_chat_at;
+            $q = DB::table('messages')
+                ->where('community_id', $id)
+                ->where('sender_id', '!=', $userId);
+            if ($lastRead) {
+                $q->where('created_at', '>', $lastRead);
+            }
+            $unreadChat = $q->count();
+        }
+
+        // Unread Mail: für Member = unread DMs vom Owner, für Owner = Summe
+        // unreader DMs aller Member dieser Community.
+        $unreadMail = 0;
+        try {
+            if ($community->owner_id === $userId) {
+                $memberIds = $community->members()->pluck('users.id');
+                $unreadMail = DB::table('direct_messages')
+                    ->where('receiver_id', $userId)
+                    ->whereIn('sender_id', $memberIds)
+                    ->whereNull('read_at')
+                    ->count();
+            } elseif ($membership) {
+                $unreadMail = DB::table('direct_messages')
+                    ->where('sender_id', $community->owner_id)
+                    ->where('receiver_id', $userId)
+                    ->whereNull('read_at')
+                    ->count();
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return response()->json([
             'community' => [
                 ...$community->toArray(),
                 'is_member' => !!$membership,
                 'my_role' => $membership?->pivot->role,
                 'is_followed' => $isFollowed,
+                'unread_chat_count' => $unreadChat,
+                'unread_mail_count' => $unreadMail,
             ],
         ]);
+    }
+
+    /**
+     * PATCH /api/communities/{id}/chat/read
+     * Setzt last_read_chat_at = now() für den User.
+     */
+    public function markChatRead(string $id, Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+        $updated = DB::table('community_members')
+            ->where('community_id', $id)
+            ->where('user_id', $userId)
+            ->update(['last_read_chat_at' => now()]);
+
+        if (!$updated) {
+            return response()->json(['message' => 'Nicht Mitglied'], 403);
+        }
+
+        return response()->json(['message' => 'Markiert.']);
     }
 
     public function join(string $id, Request $request): JsonResponse

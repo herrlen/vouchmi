@@ -233,7 +233,7 @@ export default function AnalyticsScreen() {
 
         {recentPosts.length === 0 && (
           <View style={s.emptyReco}>
-            <Text style={s.emptyRecoText}>Noch keine Empfehlungen. Teile dein erstes Produkt!</Text>
+            <Text style={s.emptyRecoText}>Noch keine Recos. Teile dein erstes Produkt!</Text>
           </View>
         )}
       </ScrollView>

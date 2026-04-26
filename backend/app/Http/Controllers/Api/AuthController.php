@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\TwilioVerifyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +19,9 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'email' => 'required|email|unique:users',
-            'username' => 'required|string|min:3|max:30|unique:users|alpha_dash',
+            'username' => 'required|string|min:3|max:20|unique:users|alpha_dash',
             'password' => 'required|string|min:8',
-            'display_name' => 'nullable|string|max:50',
+            'display_name' => 'nullable|string|max:25',
             'accept_terms' => 'required|accepted',
             'role'  => 'nullable|in:user,influencer,brand',
             'phone' => 'nullable|string|max:32',
@@ -265,6 +266,62 @@ class AuthController extends Controller
             'avatar_url' => $user->avatar_url,
             'role' => $user->role,
             'email_verified_at' => $user->email_verified_at,
+            'phone_verified_at' => $user->phone_verified_at,
         ];
+    }
+
+    /**
+     * POST /api/auth/phone/send-code
+     * Body: { phone: "+491711234567" }
+     * Schickt 6-stelligen Code per SMS via Twilio Verify.
+     */
+    public function sendPhoneCode(Request $request, TwilioVerifyService $twilio): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', 'string', 'regex:/^\+[1-9]\d{6,15}$/'],
+        ]);
+
+        // Phone-Nummer am User speichern (überschreibt evtl. eine alte unverified Nummer)
+        $user = $request->user();
+        $user->phone = $data['phone'];
+        $user->phone_verified_at = null;
+        $user->save();
+
+        $result = $twilio->sendCode($data['phone']);
+        if ($result['status'] !== 'pending') {
+            return response()->json(['message' => $result['message']], 502);
+        }
+
+        return response()->json(['message' => 'Code gesendet.']);
+    }
+
+    /**
+     * POST /api/auth/phone/verify
+     * Body: { code: "123456" }
+     * Prüft Code für die am User gespeicherte Phone-Nummer.
+     */
+    public function verifyPhoneCode(Request $request, TwilioVerifyService $twilio): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'regex:/^\d{4,8}$/'],
+        ]);
+
+        $user = $request->user();
+        if (!$user->phone) {
+            return response()->json(['message' => 'Keine Telefonnummer hinterlegt.'], 422);
+        }
+
+        $approved = $twilio->checkCode($user->phone, $data['code']);
+        if (!$approved) {
+            return response()->json(['message' => 'Code ungültig oder abgelaufen.'], 422);
+        }
+
+        $user->phone_verified_at = now();
+        $user->save();
+
+        return response()->json([
+            'message' => 'Telefonnummer bestätigt.',
+            'phone_verified_at' => $user->phone_verified_at,
+        ]);
     }
 }

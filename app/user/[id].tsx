@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, Image, Pressable, FlatList, Dimensions, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
-import { ChevronLeft, Link as LinkIcon, MessageCircle } from "lucide-react-native";
+import { ChevronLeft, Link as LinkIcon, MessageCircle, ShieldCheck } from "lucide-react-native";
 import { colors } from "../../src/constants/theme";
 import { users as usersApi, feed as feedApi, type Post, type User, type ProfileLayout, influencer as influencerApi } from "../../src/lib/api";
 import { useAuth } from "../../src/lib/store";
@@ -89,6 +89,7 @@ export default function UserProfileScreen() {
               <View style={s.nameLeft}>
                 <Text style={s.name} numberOfLines={1}>{displayName}</Text>
                 {profileData?.is_creator && <CreatorBadge size="md" />}
+                {profileData?.phone_verified_at && <VerifiedSeal />}
                 <RoleBadge role={profileData?.role} />
               </View>
               {!isMe && (
@@ -186,6 +187,10 @@ export default function UserProfileScreen() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return <View style={s.stat}><Text style={s.statValue}>{value}</Text><Text style={s.statLabel}>{label}</Text></View>;
+}
+
+function VerifiedSeal() {
+  return <ShieldCheck color="#10B981" size={18} strokeWidth={2.2} />;
 }
 
 function RoleBadge({ role }: { role?: string }) {

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\PayPalService;
+use App\Services\TwilioVerifyService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +18,15 @@ class AppServiceProvider extends ServiceProvider
                 config('services.paypal.mode', 'live'),
                 config('services.paypal.brand_plan_id'),
                 config('services.paypal.influencer_plan_id'),
+                config('services.paypal.webhook_id'),
+            );
+        });
+
+        $this->app->singleton(TwilioVerifyService::class, function () {
+            return new TwilioVerifyService(
+                (string) config('services.twilio.account_sid'),
+                (string) config('services.twilio.auth_token'),
+                (string) config('services.twilio.verify_service_sid'),
             );
         });
     }

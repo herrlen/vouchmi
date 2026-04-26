@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, TextInput, Pressable, Alert, ScrollView, Image,
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { X, Link as LinkIcon, RefreshCw, ArrowRight, ShoppingBag, Users, TrendingUp } from "lucide-react-native";
+import * as Clipboard from "expo-clipboard";
 import { links, feed as feedApi, communities as communitiesApi, type LinkPreview, type Community } from "../src/lib/api";
+import { colors } from "../src/constants/theme";
 
 // Blocked domains
 const BLOCKED_DOMAINS = ["amazon", "amzn", "ebay"];
@@ -23,6 +25,31 @@ export default function CreatePostScreen() {
   const [selectedCid, setSelectedCid] = useState<string | null>(preselectedCid ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
+
+  // "Einfügen"-Button (deutsch, statt iOS-Standard "Paste"). User klickt
+  // explizit, dann lesen wir aus der Zwischenablage. Vermeidet Side-Effects
+  // beim Mount (z.B. unerwünschten Preview-Fetch).
+  const pasteFromClipboard = async () => {
+    try {
+      const clip = await Clipboard.getStringAsync();
+      const trimmed = clip?.trim() ?? "";
+      if (!trimmed) {
+        Alert.alert("Zwischenablage", "Die Zwischenablage ist leer.");
+        return;
+      }
+      if (!/^https?:\/\//i.test(trimmed)) {
+        Alert.alert("Zwischenablage", "Kein gültiger Link in der Zwischenablage.");
+        return;
+      }
+      if (isBlocked(trimmed)) {
+        Alert.alert("Zwischenablage", "Amazon- und eBay-Links sind nicht erlaubt.");
+        return;
+      }
+      setUrl(trimmed);
+    } catch {
+      Alert.alert("Zwischenablage", "Konnte die Zwischenablage nicht lesen.");
+    }
+  };
 
   useEffect(() => {
     communitiesApi.mine()
@@ -142,6 +169,11 @@ export default function CreatePostScreen() {
               accessibilityLabel="Produkt-Link eingeben"
               accessibilityHint="Fuege die URL des Produkts ein, das du empfehlen moechtest"
             />
+            {!url && (
+              <Pressable onPress={pasteFromClipboard} hitSlop={8} accessibilityRole="button" accessibilityLabel="Aus Zwischenablage einfügen">
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: "700" }}>Einfügen</Text>
+              </Pressable>
+            )}
             {!!url && (
               <Pressable onPress={() => fetchPreview()} hitSlop={8}>
                 <RefreshCw color="#F59E0B" size={18} />
@@ -287,7 +319,7 @@ const s = StyleSheet.create({
   label: { color: "#94A3B8", fontSize: 11, fontWeight: "600", letterSpacing: 1.5, marginTop: 20, marginBottom: 8 },
   labelOpt: { fontWeight: "400", letterSpacing: 0 },
 
-  urlRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#141926", borderRadius: 14, paddingHorizontal: 14, height: 52, gap: 10, borderWidth: 1.5, borderColor: "#1E2235" },
+  urlRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#141926", borderRadius: 14, paddingHorizontal: 14, height: 52, gap: 10, borderWidth: 1.5, borderColor: colors.accent },
   urlRowError: { borderColor: "#F472B6" },
   urlInput: { flex: 1, color: "#FFFFFF", fontSize: 15 },
   errorText: { color: "#F472B6", fontSize: 12, marginTop: 6, paddingHorizontal: 4 },

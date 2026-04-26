@@ -104,7 +104,16 @@ export default function BrandRegisterScreen() {
     try {
       await registerBrandProfile();
 
-      const { approval_url } = await brandApi.subscribe();
+      const { approval_url, configured } = await brandApi.subscribe();
+
+      if (!configured) {
+        Alert.alert(
+          "Bald verfuegbar",
+          "Die Bezahlung per PayPal wird gerade eingerichtet. Dein Brand-Profil wurde angelegt und wird automatisch aktiviert, sobald es losgehen kann."
+        );
+        router.back();
+        return;
+      }
 
       if (approval_url) {
         setStep("paying");

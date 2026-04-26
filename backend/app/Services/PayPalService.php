@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -22,6 +23,7 @@ class PayPalService
         private string $mode = 'live',
         private ?string $brandPlanId = null,
         private ?string $influencerPlanId = null,
+        private ?string $webhookId = null,
     ) {}
 
     public function isConfigured(): bool
@@ -175,5 +177,149 @@ class PayPalService
             ]);
 
         return $res->successful();
+    }
+
+    /**
+     * Prüft die Authentizität eines Webhook-Requests über PayPals
+     * verify-webhook-signature-Endpoint. Erwartet einen eingehenden Request
+     * inkl. PAYPAL-TRANSMISSION-* Headern. Gibt `false` zurück wenn die
+     * WEBHOOK_ID nicht konfiguriert ist (Aufrufer entscheidet dann, ob
+     * trotzdem akzeptiert wird — z. B. im Stub-Modus).
+     */
+    public function verifyWebhookSignature(Request $request): bool
+    {
+        if (!$this->isConfigured() || !$this->webhookId) {
+            return false;
+        }
+
+        $token = $this->accessToken();
+        if (!$token) return false;
+
+        // WICHTIG: webhook_event muss die EXAKT empfangene Payload sein
+        // (json_decode des raw body), nicht $request->all() — Laravel dekodiert
+        // zwar identisch, aber wir wollen auf der sicheren Seite sein falls
+        // Middleware den input-Bag manipuliert hat.
+        $rawBody = $request->getContent();
+        $webhookEvent = json_decode($rawBody, true);
+
+        $payload = [
+            'auth_algo'         => $request->header('paypal-auth-algo', ''),
+            'cert_url'          => $request->header('paypal-cert-url', ''),
+            'transmission_id'   => $request->header('paypal-transmission-id', ''),
+            'transmission_sig'  => $request->header('paypal-transmission-sig', ''),
+            'transmission_time' => $request->header('paypal-transmission-time', ''),
+            'webhook_id'        => $this->webhookId,
+            'webhook_event'     => $webhookEvent,
+        ];
+
+        $res = Http::withToken($token)
+            ->acceptJson()
+            ->post($this->baseUrl() . '/v1/notifications/verify-webhook-signature', $payload);
+
+        $verificationStatus = $res->json('verification_status');
+        $ok = $res->successful() && $verificationStatus === 'SUCCESS';
+
+        if (!$ok) {
+            // Tiefer Debug-Log — welche Header fehlen, welchen Event-Typ, was hat PayPal geantwortet.
+            Log::warning('paypal.webhook.verify.details', [
+                'http_status'         => $res->status(),
+                'verification_status' => $verificationStatus,
+                'paypal_error'        => $res->json(),
+                'event_type'          => $webhookEvent['event_type'] ?? null,
+                'resource_type'       => $webhookEvent['resource_type'] ?? null,
+                'resource_version'    => $webhookEvent['resource_version'] ?? null,
+                'has_auth_algo'       => (bool) $request->header('paypal-auth-algo'),
+                'has_cert_url'        => (bool) $request->header('paypal-cert-url'),
+                'has_transmission_id' => (bool) $request->header('paypal-transmission-id'),
+                'has_transmission_sig'=> (bool) $request->header('paypal-transmission-sig'),
+                'transmission_time'   => $request->header('paypal-transmission-time'),
+            ]);
+        }
+
+        return $ok;
+    }
+
+    public function hasWebhookId(): bool
+    {
+        return !empty($this->webhookId);
+    }
+
+    /**
+     * Ganzheitlicher Status-Report — Credentials, OAuth, Plans, Webhook.
+     * Wird vom vouchmi:paypal:health Artisan-Command genutzt.
+     *
+     * @return array{mode:string, configured:bool, oauth:bool, plans:array, webhook:array|null, errors:string[]}
+     */
+    public function healthCheck(): array
+    {
+        $report = [
+            'mode'       => $this->mode,
+            'configured' => $this->isConfigured(),
+            'oauth'      => false,
+            'plans'      => [],
+            'webhook'    => null,
+            'errors'     => [],
+        ];
+
+        if (!$report['configured']) {
+            $report['errors'][] = 'Credentials fehlen (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET / mind. ein PLAN_ID).';
+            return $report;
+        }
+
+        $token = $this->accessToken();
+        $report['oauth'] = (bool) $token;
+        if (!$token) {
+            $report['errors'][] = 'OAuth fehlgeschlagen — prüfe Client-ID/Secret und MODE.';
+            return $report;
+        }
+
+        foreach ([
+            'brand'      => $this->brandPlanId,
+            'influencer' => $this->influencerPlanId,
+            'legacy'     => $this->planId,
+        ] as $label => $planId) {
+            if (!$planId) {
+                $report['plans'][$label] = ['set' => false];
+                continue;
+            }
+            $res = Http::withToken($token)
+                ->acceptJson()
+                ->get($this->baseUrl() . "/v1/billing/plans/{$planId}");
+            if ($res->successful()) {
+                $body = $res->json();
+                $report['plans'][$label] = [
+                    'set'    => true,
+                    'id'     => $planId,
+                    'name'   => $body['name'] ?? null,
+                    'status' => $body['status'] ?? null,
+                    'valid'  => true,
+                ];
+            } else {
+                $report['plans'][$label] = ['set' => true, 'id' => $planId, 'valid' => false, 'http' => $res->status()];
+                $report['errors'][] = "Plan {$label} ({$planId}) nicht gefunden (HTTP {$res->status()}).";
+            }
+        }
+
+        if ($this->webhookId) {
+            $res = Http::withToken($token)
+                ->acceptJson()
+                ->get($this->baseUrl() . "/v1/notifications/webhooks/{$this->webhookId}");
+            if ($res->successful()) {
+                $body = $res->json();
+                $report['webhook'] = [
+                    'id'     => $this->webhookId,
+                    'url'    => $body['url'] ?? null,
+                    'events' => array_column($body['event_types'] ?? [], 'name'),
+                    'valid'  => true,
+                ];
+            } else {
+                $report['webhook'] = ['id' => $this->webhookId, 'valid' => false, 'http' => $res->status()];
+                $report['errors'][] = "Webhook {$this->webhookId} nicht gefunden (HTTP {$res->status()}).";
+            }
+        } else {
+            $report['errors'][] = 'PAYPAL_WEBHOOK_ID nicht gesetzt — Signature-Verifikation ist deaktiviert.';
+        }
+
+        return $report;
     }
 }

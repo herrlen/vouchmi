@@ -205,7 +205,14 @@ function FormScreen({ role, onBack }: { role: Role; onBack: () => void }) {
         }
       }
 
-      router.replace("/");
+      // Nur Influencer müssen ihre Telefonnummer verifizieren.
+      // Brand registriert per Unternehmens-E-Mail (kein Phone-Verify-Pflicht),
+      // User per E-Mail (auch keine Pflicht).
+      if (role === "influencer") {
+        router.replace("/phone-verify?required=1");
+      } else {
+        router.replace("/");
+      }
     } catch (e: any) {
       Alert.alert("Fehler", e.message);
     } finally {
