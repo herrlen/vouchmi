@@ -54,11 +54,15 @@ export default function CreatePostScreen() {
   useEffect(() => {
     communitiesApi.mine()
       .then((r) => {
-        setCommunities(r.communities);
-        if (preselectedCid && r.communities.some((c) => c.id === preselectedCid)) {
+        // Posten ist nur in eigenen Communities erlaubt (Owner-Rolle).
+        const owned = r.communities.filter((c) => c.my_role === "owner" || c.role === "owner");
+        setCommunities(owned);
+        if (preselectedCid && owned.some((c) => c.id === preselectedCid)) {
           setSelectedCid(preselectedCid);
-        } else if (r.communities.length === 1) {
-          setSelectedCid(r.communities[0].id);
+        } else if (owned.length === 1) {
+          setSelectedCid(owned[0].id);
+        } else {
+          setSelectedCid(null);
         }
       })
       .catch(() => {});
@@ -269,7 +273,7 @@ export default function CreatePostScreen() {
               <Text style={s.label}>COMMUNITY</Text>
               {communities.length === 0 ? (
                 <View style={s.emptyComm}>
-                  <Text style={s.emptyCommText}>Du bist noch in keiner Community.</Text>
+                  <Text style={s.emptyCommText}>Posten geht nur in deiner eigenen Community.</Text>
                   <Pressable onPress={() => router.replace("/create-community")}>
                     <Text style={s.emptyCommLink}>Jetzt erstellen</Text>
                   </Pressable>

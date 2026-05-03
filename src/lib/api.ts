@@ -433,6 +433,12 @@ export const dm = {
   markRead: (userId: string) => api.patch<{ marked_read: number }>(`/dm/read/${userId}`),
 };
 
+export const push = {
+  register: (token: string, platform: "ios" | "android", appVersion?: string) =>
+    api.post<{ registered: boolean }>("/user/push-tokens", { token, platform, app_version: appVersion }),
+  unregister: (token: string) => req<{ unregistered: boolean }>("DELETE", "/user/push-tokens", { token }),
+};
+
 export const moderation = {
   report: (d: { target_type: "post" | "comment" | "user" | "community"; target_id: string; reason: "spam" | "abuse" | "illegal" | "sexual" | "other"; details?: string }) =>
     api.post<{ message: string }>("/reports", d),

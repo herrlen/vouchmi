@@ -189,7 +189,7 @@ function CommunityCard({ community: c }: { community: Community }) {
           </View>
         ) : (
           <View style={[s.joinBtn, { backgroundColor: accent }]}>
-            <Text style={[s.joinBtnText, { color: accent === "#F59E0B" ? "#1A1D2E" : "#FFFFFF" }]}>Join</Text>
+            <Text style={[s.joinBtnText, { color: accent === "#F59E0B" ? "#1A1D2E" : "#FFFFFF" }]}>Beitreten</Text>
           </View>
         )
       )}

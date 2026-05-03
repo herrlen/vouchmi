@@ -65,6 +65,22 @@ class DirectMessageController extends Controller
             'post:id,author_id,content,link_url,link_title,link_image,link_price',
         ]);
 
+        // Push an den Empfänger.
+        try {
+            $name = $me->display_name ?: $me->username;
+            $body = trim((string) ($data['content'] ?? '')) !== ''
+                ? \Illuminate\Support\Str::limit($data['content'], 140)
+                : 'hat dir eine Nachricht gesendet.';
+            app(\App\Services\PushNotificationService::class)->sendToUser(
+                $data['receiver_id'],
+                $name,
+                $body,
+                ['type' => 'dm', 'user_id' => $me->id]
+            );
+        } catch (\Throwable $e) {
+            \Log::warning("[Push:dm] {$e->getMessage()}");
+        }
+
         return response()->json(['message' => $message], 201);
     }
 

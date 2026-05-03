@@ -122,6 +122,20 @@ class UserController extends Controller
         ]);
 
         $count = \DB::table('follows')->where('following_id', $userId)->count();
+
+        // Push an die Person, der gefolgt wurde.
+        try {
+            $name = $me->display_name ?: $me->username;
+            app(\App\Services\PushNotificationService::class)->sendToUser(
+                $userId,
+                'Neuer Follower',
+                "{$name} folgt dir jetzt.",
+                ['type' => 'follow', 'user_id' => $me->id]
+            );
+        } catch (\Throwable $e) {
+            \Log::warning("[Push:follow] {$e->getMessage()}");
+        }
+
         return response()->json(['following' => true, 'followers_count' => $count]);
     }
 

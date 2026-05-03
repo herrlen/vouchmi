@@ -10,6 +10,7 @@ import { useTierStore } from "../src/lib/tier-store";
 import { useSharePending } from "../src/lib/share-pending-store";
 import TierUpgradeModal from "../src/components/TierUpgradeModal";
 import { syncDailyRecommendation } from "../src/lib/widget-sync";
+import { registerForPushNotifications, setupPushTapListener } from "../src/lib/push";
 import { colors } from "../src/constants/theme";
 
 function RootLayout() {
@@ -20,11 +21,20 @@ function RootLayout() {
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
 
   useEffect(() => { init(); }, []);
+  // Push-Tap-Listener einmalig mounten (vor User-Zustand): so funktionieren
+  // auch Cold-Start-Taps direkt nach Login.
+  useEffect(() => {
+    const unsubscribe = setupPushTapListener();
+    return () => unsubscribe();
+  }, []);
   useEffect(() => {
     if (user) {
       initProfileMode();
       fetchTier();
       syncDailyRecommendation();
+      // iOS-Permission-Prompt + Token-Registrierung. Idempotent — bei jedem
+      // Login/Cold-Start aufrufen, damit Token-Rotationen gleich propagieren.
+      registerForPushNotifications();
     }
   }, [user]);
 

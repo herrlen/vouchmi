@@ -69,6 +69,11 @@ export const useAuth = create<AuthState>((set) => ({
     set({ user });
   },
   logout: async () => {
+    // Push-Token zuerst entfernen, solange wir noch authentifiziert sind.
+    try {
+      const { unregisterPushNotifications } = await import("./push");
+      await unregisterPushNotifications();
+    } catch {}
     try { await api.auth.logout(); } catch {}
     await SecureStore.deleteItemAsync("token", KEYCHAIN_OPTS);
     set({ user: null });

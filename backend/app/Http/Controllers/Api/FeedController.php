@@ -45,23 +45,27 @@ class FeedController extends Controller
             ->where('blocker_id', $user->id)
             ->pluck('blocked_id');
 
+        // Communities werden NICHT mehr gefolgt — nur beigetreten. Posts kommen
+        // damit ausschliesslich aus eigenen Mitgliedschaften.
         $memberCommunityIds = DB::table('community_members')
             ->where('user_id', $user->id)
             ->pluck('community_id');
-        $followedCommunityIds = DB::table('community_followers')
-            ->where('user_id', $user->id)
-            ->pluck('community_id');
-        $communityIds = $memberCommunityIds->concat($followedCommunityIds)->unique();
 
-        // Eigene Reposts — auch wenn Original-Community nicht im Member/Follower-Set ist,
+        // Posts von Usern, denen ich folge — egal in welcher Community.
+        $followedUserIds = DB::table('follows')
+            ->where('follower_id', $user->id)
+            ->pluck('following_id');
+
+        // Eigene Reposts — auch wenn Original-Community nicht im Member-Set ist,
         // sollen Posts, die ich selbst geteilt habe, in meinem Reco-Feed auftauchen.
         $myRepostPostIds = DB::table('reposts')
             ->where('user_id', $user->id)
             ->pluck('original_post_id');
 
         $posts = Post::where('is_hidden', false)
-            ->where(function ($q) use ($communityIds, $myRepostPostIds) {
-                $q->whereIn('community_id', $communityIds)
+            ->where(function ($q) use ($memberCommunityIds, $followedUserIds, $myRepostPostIds) {
+                $q->whereIn('community_id', $memberCommunityIds)
+                  ->orWhereIn('author_id', $followedUserIds)
                   ->orWhereIn('id', $myRepostPostIds);
             })
             ->whereNotIn('author_id', $blockedIds)

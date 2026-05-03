@@ -51,11 +51,12 @@ export default function CommunityDetail() {
       setCommunityName(r.community.name);
       const myRole = r.community.my_role;
       const memberFlag = !!(r.community as any).is_member || !!myRole;
+      const ownId = r.community.owner_id ?? null;
       setIsOwnerOrAdmin(myRole === "owner" || myRole === "admin" || myRole === "moderator");
-      setIsOwner(r.community.owner_id === user?.id);
+      setIsOwner(ownId === user?.id);
       setIsMember(memberFlag);
       setIsFollowed(!!(r.community as any).is_followed);
-      setOwnerId(r.community.owner_id ?? null);
+      setOwnerId(ownId);
       const owner = (r.community as any).owner;
       if (owner) setOwnerName(owner.display_name ?? owner.username ?? "");
       setUnreadChat((r.community as any).unread_chat_count ?? 0);
@@ -151,28 +152,6 @@ export default function CommunityDetail() {
             >
               <Text style={[s.followBtnText, isMember && s.followBtnTextActive]}>
                 {isMember ? "Verlassen" : "Beitreten"}
-              </Text>
-            </Pressable>
-          )}
-          {!isOwner && !isMember && (
-            <Pressable
-              style={[s.followBtn, isFollowed && s.followBtnActive]}
-              onPress={async () => {
-                if (!id) return;
-                try {
-                  if (isFollowed) {
-                    await communitiesApi.unfollow(id);
-                    setIsFollowed(false);
-                  } else {
-                    await communitiesApi.follow(id);
-                    setIsFollowed(true);
-                  }
-                } catch (e: any) { Alert.alert("Fehler", e.message); }
-              }}
-              hitSlop={6}
-            >
-              <Text style={[s.followBtnText, isFollowed && s.followBtnTextActive]}>
-                {isFollowed ? "Entfolgen" : "Folgen"}
               </Text>
             </Pressable>
           )}
@@ -306,8 +285,8 @@ export default function CommunityDetail() {
                 )}
               />
             )
-          ) : isMember ? (
-            // Member: 1-Klick-Button zum Owner
+          ) : (isMember || isFollowed) ? (
+            // Follower oder Mitglied: 1-Klick-Button zum Gründer
             <View style={s.center}>
               <Text style={{ fontSize: 42 }}>✉︎</Text>
               <Text style={s.emptyTitle}>An den Gründer schreiben</Text>
@@ -322,11 +301,10 @@ export default function CommunityDetail() {
               )}
             </View>
           ) : (
-            // Follower / nicht-Mitglied
             <View style={s.center}>
               <Text style={{ fontSize: 42 }}>🔒</Text>
-              <Text style={s.emptyTitle}>Nur für Mitglieder</Text>
-              <Text style={s.emptyText}>Tritt der Community bei, um dem Gründer privat zu schreiben.</Text>
+              <Text style={s.emptyTitle}>Folge der Community</Text>
+              <Text style={s.emptyText}>Folge der Community oder dem Gründer, um privat zu schreiben.</Text>
             </View>
           )
         )}

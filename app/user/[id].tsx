@@ -53,7 +53,8 @@ export default function UserProfileScreen() {
   const displayName = profileData?.display_name ?? profileData?.username ?? "";
   const initial = displayName[0]?.toUpperCase() ?? "?";
 
-  // Messaging-Permission: gegenseitiges Follow erlaubt DM
+  // Messaging-Permission: nur bei gegenseitigem Follow. Verhindert Spam von
+  // Fremden — du musst der Person folgen UND sie dir.
   const canMessage = !isMe && isFollowing && isFollowingMe;
 
   if (loading) return <SafeAreaView style={s.container} edges={["top"]}><Stack.Screen options={{ headerShown: false }} /><ActivityIndicator color={colors.accent} style={{ marginTop: 60 }} /></SafeAreaView>;

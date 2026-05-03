@@ -41,7 +41,13 @@ class LinkPreviewService
     }
 
     /**
-     * Extrahiert Open Graph & Schema.org Daten aus HTML
+     * Extrahiert Open Graph & Schema.org Daten aus HTML.
+     *
+     * JSON-LD wird zuerst geparst (verlässlichste Quelle für Shopify & Co.):
+     * dort steht der Preis als Dezimalzahl + das echte Produktbild.
+     * OG-Tags werden nur als Fallback genutzt — Shopify schreibt z.B.
+     * `"price":1699` (Cents) als JS-Variable VOR der JSON-LD ins HTML, was
+     * eine naive Regex-Suche reinfällt.
      */
     private function extractMetaTags(string $html, string $url): array
     {
@@ -56,7 +62,15 @@ class LinkPreviewService
             'site_name' => null,
         ];
 
-        // Open Graph Tags
+        // 1) JSON-LD (Schema.org Product) zuerst — höchste Priorität.
+        $ld = $this->extractFromJsonLd($html);
+        if ($ld) {
+            foreach (['title', 'description', 'image', 'price', 'currency'] as $k) {
+                if (!empty($ld[$k])) $data[$k] = $ld[$k];
+            }
+        }
+
+        // 2) Open Graph Tags als Fallback / Ergänzung.
         $ogPatterns = [
             'title'       => '/<meta\s+property=["\']og:title["\']\s+content=["\']([^"\']+)["\']/i',
             'description' => '/<meta\s+property=["\']og:description["\']\s+content=["\']([^"\']+)["\']/i',
@@ -65,12 +79,12 @@ class LinkPreviewService
         ];
 
         foreach ($ogPatterns as $key => $pattern) {
-            if (preg_match($pattern, $html, $match)) {
+            if (empty($data[$key]) && preg_match($pattern, $html, $match)) {
                 $data[$key] = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
             }
         }
 
-        // Auch umgekehrte Reihenfolge (content vor property)
+        // Umgekehrte Reihenfolge (content vor property)
         $ogPatternsAlt = [
             'title'       => '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']og:title["\']/i',
             'description' => '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']og:description["\']/i',
@@ -78,12 +92,12 @@ class LinkPreviewService
         ];
 
         foreach ($ogPatternsAlt as $key => $pattern) {
-            if (!$data[$key] && preg_match($pattern, $html, $match)) {
+            if (empty($data[$key]) && preg_match($pattern, $html, $match)) {
                 $data[$key] = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
             }
         }
 
-        // OG image dimensions (for aspect-ratio placeholders, prevents layout shift)
+        // OG image dimensions (für Aspect-Ratio-Placeholder, verhindert Layout-Shift)
         $dimPatterns = [
             'image_width'  => ['/<meta\s+property=["\']og:image:width["\']\s+content=["\'](\d+)["\']/i', '/<meta\s+content=["\'](\d+)["\']\s+property=["\']og:image:width["\']/i'],
             'image_height' => ['/<meta\s+property=["\']og:image:height["\']\s+content=["\'](\d+)["\']/i', '/<meta\s+content=["\'](\d+)["\']\s+property=["\']og:image:height["\']/i'],
@@ -97,19 +111,20 @@ class LinkPreviewService
             }
         }
 
-        // Preis aus product:price oder Schema.org
-        $pricePatterns = [
-            '/<meta\s+property=["\']product:price:amount["\']\s+content=["\']([^"\']+)["\']/i',
-            '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']product:price:amount["\']/i',
-            '/"price"\s*:\s*"?([\d.,]+)"?/i',
-            '/itemprop=["\']price["\']\s+content=["\']([^"\']+)["\']/i',
-        ];
-
-        foreach ($pricePatterns as $pattern) {
-            if (preg_match($pattern, $html, $match)) {
-                $price = str_replace(',', '.', $match[1]);
-                $data['price'] = (float) $price;
-                break;
+        // 3) Preis-Fallback nur wenn JSON-LD nichts geliefert hat: dann
+        // ZUERST product:price:amount (sicher) und erst zuletzt die generische
+        // "price"-Regex (riskant wegen Cents-Variablen).
+        if ($data['price'] === null) {
+            $pricePatterns = [
+                '/<meta\s+property=["\']product:price:amount["\']\s+content=["\']([^"\']+)["\']/i',
+                '/<meta\s+content=["\']([^"\']+)["\']\s+property=["\']product:price:amount["\']/i',
+                '/itemprop=["\']price["\']\s+content=["\']([^"\']+)["\']/i',
+            ];
+            foreach ($pricePatterns as $pattern) {
+                if (preg_match($pattern, $html, $match)) {
+                    $data['price'] = (float) str_replace(',', '.', $match[1]);
+                    break;
+                }
             }
         }
 
@@ -125,7 +140,77 @@ class LinkPreviewService
             $data['image'] = $base . '/' . ltrim($data['image'], '/');
         }
 
+        // iOS App Transport Security blockt http:// — Shopify-CDN & die meisten
+        // Shops liefern auch über https aus. Upgrade jeden http-Bild-Link.
+        if ($data['image'] && str_starts_with($data['image'], 'http://')) {
+            $data['image'] = 'https://' . substr($data['image'], 7);
+        }
+
         return $data;
+    }
+
+    /**
+     * Parst alle <script type="application/ld+json">-Blöcke und extrahiert
+     * Produkt-Felder. Liefert null, wenn kein Product gefunden wird.
+     */
+    private function extractFromJsonLd(string $html): ?array
+    {
+        if (!preg_match_all('/<script[^>]*type=["\']application\/ld\+json["\'][^>]*>(.*?)<\/script>/is', $html, $matches)) {
+            return null;
+        }
+
+        foreach ($matches[1] as $raw) {
+            $json = trim(html_entity_decode($raw, ENT_QUOTES, 'UTF-8'));
+            $decoded = json_decode($json, true);
+            if (!is_array($decoded)) continue;
+
+            // JSON-LD kann eine Liste oder ein Graph sein — alle Knoten durchsuchen.
+            $candidates = isset($decoded['@graph']) && is_array($decoded['@graph']) ? $decoded['@graph'] : [$decoded];
+            if (isset($candidates[0]) && !is_array($candidates[0])) $candidates = [$decoded];
+
+            foreach ($candidates as $node) {
+                if (!is_array($node)) continue;
+                $type = $node['@type'] ?? null;
+                if (is_array($type)) $type = $type[0] ?? null;
+                if ($type !== 'Product') continue;
+
+                $result = [];
+                if (!empty($node['name'])) $result['title'] = (string) $node['name'];
+                if (!empty($node['description'])) $result['description'] = (string) $node['description'];
+
+                // Bild: kann String, Array oder Objekt mit "url" sein.
+                $img = $node['image'] ?? null;
+                if (is_array($img)) {
+                    $first = $img[0] ?? null;
+                    if (is_array($first)) $img = $first['url'] ?? null;
+                    else $img = $first;
+                } elseif (is_array($node['image'] ?? null)) {
+                    $img = $node['image']['url'] ?? null;
+                }
+                if (is_string($img) && $img !== '') $result['image'] = $img;
+
+                // Preis: erstes Offer mit Preis nehmen. Offer kann Liste oder Objekt sein.
+                $offers = $node['offers'] ?? null;
+                $offerList = [];
+                if (is_array($offers)) {
+                    if (isset($offers['@type'])) $offerList = [$offers];
+                    else $offerList = $offers;
+                }
+                foreach ($offerList as $offer) {
+                    if (!is_array($offer)) continue;
+                    $p = $offer['price'] ?? ($offer['priceSpecification']['price'] ?? null);
+                    if ($p !== null && $p !== '') {
+                        $result['price'] = (float) str_replace(',', '.', (string) $p);
+                        if (!empty($offer['priceCurrency'])) $result['currency'] = (string) $offer['priceCurrency'];
+                        break;
+                    }
+                }
+
+                if (!empty($result)) return $result;
+            }
+        }
+
+        return null;
     }
 
     /**

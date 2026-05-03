@@ -15,21 +15,33 @@ const tabs = [
 export default function BottomBar({ communityId }: { communityId?: string }) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  // Damit der "+"-Button optisch identisch zur (tabs)-Layout-FAB sitzt:
+  // 48×48 mittig in der Leiste (nicht pop-out). Wir rendern den FAB-Cell
+  // zwischen "communities" und "reco", genau wie im Tab-Layout.
+  const renderTabCell = (t: typeof tabs[number]) => (
+    <Pressable key={t.name} style={s.tab} onPress={() => router.replace(`/${t.name}`)} hitSlop={4}>
+      <t.Icon color={colors.tabInactive} size={22} strokeWidth={1.8} />
+      <Text style={s.label}>{t.label}</Text>
+    </Pressable>
+  );
+
   return (
     <View style={s.wrap}>
-      <Pressable
-        style={({ pressed }) => [s.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.94 }] }]}
-        onPress={() => setSheetOpen(true)}
-      >
-        <Plus color="#fff" size={28} strokeWidth={2.6} />
-      </Pressable>
       <View style={s.bar}>
-        {tabs.map(({ name, label, Icon }) => (
-          <Pressable key={name} style={s.tab} onPress={() => router.replace(`/${name}`)} hitSlop={4}>
-            <Icon color={colors.tabInactive} size={22} strokeWidth={1.8} />
-            <Text style={s.label}>{label}</Text>
-          </Pressable>
-        ))}
+        {renderTabCell(tabs[0])}
+        {renderTabCell(tabs[1])}
+        <Pressable
+          style={({ pressed }) => [s.fabCell, pressed && { opacity: 0.85 }]}
+          onPress={() => setSheetOpen(true)}
+          accessibilityLabel="Neuen Beitrag erstellen"
+          accessibilityRole="button"
+        >
+          <View style={s.fabCircle}>
+            <Plus color="#fff" size={28} strokeWidth={2.8} />
+          </View>
+        </Pressable>
+        {renderTabCell(tabs[2])}
+        {renderTabCell(tabs[3])}
       </View>
       <CreateSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} communityId={communityId} />
     </View>
@@ -51,21 +63,18 @@ const s = StyleSheet.create({
   },
   tab: { flex: 1, alignItems: "center", justifyContent: "center", gap: 2, minHeight: 44 },
   label: { color: colors.tabInactive, fontSize: 11, fontWeight: "500" },
-  fab: {
-    position: "absolute",
-    alignSelf: "center",
-    top: -20,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+  fabCell: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 4 },
+  fabCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.accent,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
   },
 });

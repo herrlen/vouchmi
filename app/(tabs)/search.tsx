@@ -46,17 +46,17 @@ export default function SearchTab() {
     router.push(`/community/${post.community_id}`);
   };
 
-  const toggleFollowComm = async (c: Community) => {
+  const toggleJoinComm = async (c: Community) => {
     try {
-      if (c.is_followed) {
-        await communitiesApi.unfollow(c.id);
+      if (c.is_member) {
+        await communitiesApi.leave(c.id);
         setCommunities((arr) => arr.map((x) => x.id === c.id
-          ? { ...x, is_followed: false, member_count: Math.max(0, (x.member_count ?? 0) - 1) }
+          ? { ...x, is_member: false, member_count: Math.max(0, (x.member_count ?? 0) - 1) }
           : x));
       } else {
-        await communitiesApi.follow(c.id);
+        await communitiesApi.join(c.id);
         setCommunities((arr) => arr.map((x) => x.id === c.id
-          ? { ...x, is_followed: true, member_count: (x.member_count ?? 0) + 1 }
+          ? { ...x, is_member: true, member_count: (x.member_count ?? 0) + 1 }
           : x));
       }
     } catch (e: any) { Alert.alert("Fehler", e.message); }
@@ -152,9 +152,9 @@ export default function SearchTab() {
                           </Text>
                         </View>
                       </Pressable>
-                      <Pressable style={[s.followBtn, c.is_followed && s.followBtnActive]} onPress={() => toggleFollowComm(c)}>
-                        <Text style={[s.followBtnText, c.is_followed && s.followBtnTextActive]}>
-                          {c.is_followed ? "Entfolgen" : "Folgen"}
+                      <Pressable style={[s.followBtn, c.is_member && s.followBtnActive]} onPress={() => toggleJoinComm(c)}>
+                        <Text style={[s.followBtnText, c.is_member && s.followBtnTextActive]}>
+                          {c.is_member ? "Verlassen" : "Beitreten"}
                         </Text>
                       </Pressable>
                     </View>

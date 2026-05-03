@@ -17,6 +17,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-asset",
     "react-native-iap",
     [
+      "expo-notifications",
+      {
+        // Default-Sound + kein Custom-Icon für jetzt; iOS reicht das aus
+        // (das App-Icon wird automatisch verwendet).
+      },
+    ],
+    [
       "expo-share-intent",
       {
         disableIOS: true,
@@ -44,6 +51,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     entitlements: {
       "com.apple.security.application-groups": ["group.com.vouchmi.app"],
       "keychain-access-groups": ["$(AppIdentifierPrefix)com.vouchmi.app"],
+      "aps-environment": "production",
     },
     infoPlist: {
       NSSupportsLiveActivities: true,

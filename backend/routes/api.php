@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\SponsoredDropController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ModerationController;
+use App\Http\Controllers\Api\PushTokenController;
 use App\Http\Controllers\Api\TierController;
 use App\Http\Controllers\Api\WidgetController;
 use Illuminate\Support\Facades\Route;
@@ -118,6 +119,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dm/conversations', [DirectMessageController::class, 'conversations']);
     Route::get('/dm/conversations/{userId}', [DirectMessageController::class, 'thread']);
     Route::patch('/dm/read/{userId}', [DirectMessageController::class, 'markRead']);
+
+    // Push notification tokens (APNs)
+    Route::post('/user/push-tokens', [PushTokenController::class, 'register']);
+    Route::delete('/user/push-tokens', [PushTokenController::class, 'unregister']);
 
     // Sponsored Drops (Nutzer-Seite: sehen & voten)
     Route::get('/communities/{id}/drops', [SponsoredDropController::class, 'index']);
