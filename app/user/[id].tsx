@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, FlatList, Dimensions, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, FlatList, Dimensions, ActivityIndicator, Alert, Platform, ActionSheetIOS } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
-import { ChevronLeft, Link as LinkIcon, MessageCircle, ShieldCheck } from "lucide-react-native";
+import { ChevronLeft, Link as LinkIcon, MessageCircle, ShieldCheck, Menu } from "lucide-react-native";
 import { colors } from "../../src/constants/theme";
-import { users as usersApi, feed as feedApi, type Post, type User, type ProfileLayout, influencer as influencerApi } from "../../src/lib/api";
+import { users as usersApi, feed as feedApi, moderation as moderationApi, type Post, type User, type ProfileLayout, influencer as influencerApi } from "../../src/lib/api";
 import { useAuth } from "../../src/lib/store";
+import { useMessages } from "../../src/lib/messages-store";
 import MasonryGallery from "../../src/components/gallery/MasonryGallery";
 import FeaturedGallery from "../../src/components/gallery/FeaturedGallery";
 import CreatorBadge from "../../src/components/CreatorBadge";
@@ -19,17 +20,20 @@ export default function UserProfileScreen() {
   const [profileData, setProfileData] = useState<any>(null);
   const [stats, setStats] = useState({ posts_count: 0, followers_count: 0, following_count: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
-  const [isFollowingMe, setIsFollowingMe] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileLayout, setProfileLayout] = useState<ProfileLayout>("masonry");
 
+  const loadConversations = useMessages((s) => s.loadConversations);
+
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      usersApi.profile(id).then((r) => { setProfileData(r.profile); setStats(r.stats); setIsFollowing(r.is_following); setIsFollowingMe((r as any).is_following_me ?? false); setProfileLayout(r.profile.profile_layout ?? "masonry"); }),
+      usersApi.profile(id).then((r) => { setProfileData(r.profile); setStats(r.stats); setIsFollowing(r.is_following); setProfileLayout(r.profile.profile_layout ?? "masonry"); }),
       feedApi.all().then((r) => setPosts(r.data.filter((p) => p.author.id === id))),
     ]).catch(() => {}).finally(() => setLoading(false));
+    // Conversations laden, damit das Header-Badge den korrekten Unread-Stand zeigt.
+    loadConversations().catch(() => {});
   }, [id]);
 
   const toggleFollow = async () => {
@@ -53,9 +57,46 @@ export default function UserProfileScreen() {
   const displayName = profileData?.display_name ?? profileData?.username ?? "";
   const initial = displayName[0]?.toUpperCase() ?? "?";
 
-  // Messaging-Permission: nur bei gegenseitigem Follow. Verhindert Spam von
-  // Fremden — du musst der Person folgen UND sie dir.
-  const canMessage = !isMe && isFollowing && isFollowingMe;
+  // Messaging-Permission: einseitiges Follow reicht — wenn ich der Person
+  // folge, darf ich ihr schreiben (Backend canInitiateMessage prüft dasselbe).
+  const canMessage = !isMe && isFollowing;
+
+  // Ungelesene Nachrichten aus genau dieser Conversation für das Header-Badge.
+  const unreadFromUser = useMessages((s) =>
+    s.conversations.find((c) => c.other_user.id === id)?.unread_count ?? 0
+  );
+
+  const openActionsMenu = () => {
+    if (!id) return;
+    const opts = ["Blockieren", "Melden", "Abbrechen"];
+    const handle = async (idx: number) => {
+      if (idx === 2) return;
+      try {
+        if (idx === 0) {
+          await moderationApi.block(id);
+          Alert.alert("Blockiert", `${displayName} wurde blockiert.`);
+          router.back();
+        } else if (idx === 1) {
+          await moderationApi.report({ target_type: "user", target_id: id, reason: "abuse" });
+          Alert.alert("Gemeldet", "Danke — wir prüfen den Account.");
+        }
+      } catch (e: any) {
+        Alert.alert("Fehler", e.message);
+      }
+    };
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: opts, cancelButtonIndex: 2, destructiveButtonIndex: 0 },
+        handle
+      );
+    } else {
+      Alert.alert(displayName, undefined, opts.map((o, i) => ({
+        text: o,
+        style: i === 2 ? "cancel" : i === 0 ? "destructive" : "default",
+        onPress: () => handle(i),
+      })));
+    }
+  };
 
   if (loading) return <SafeAreaView style={s.container} edges={["top"]}><Stack.Screen options={{ headerShown: false }} /><ActivityIndicator color={colors.accent} style={{ marginTop: 60 }} /></SafeAreaView>;
 
@@ -68,7 +109,35 @@ export default function UserProfileScreen() {
           <ChevronLeft color={colors.white} size={24} strokeWidth={2} />
         </Pressable>
         <Text style={s.headerTitle} numberOfLines={1}>@{profileData?.username ?? ""}</Text>
-        <View style={{ width: 44 }} />
+        {!isMe ? (
+          <View style={s.headerActions}>
+            <Pressable
+              style={s.headerIconBtn}
+              onPress={() => {
+                if (!canMessage) {
+                  Alert.alert("Folge zuerst", `Folge ${displayName}, um eine Nachricht zu senden.`);
+                  return;
+                }
+                router.push({ pathname: "/messages/[userId]", params: { userId: id } });
+              }}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={unreadFromUser > 0 ? `Nachricht, ${unreadFromUser} ungelesen` : "Nachricht"}
+            >
+              <MessageCircle color={canMessage ? "#F59E0B" : colors.grayDark} size={20} strokeWidth={2} />
+              {unreadFromUser > 0 && (
+                <View style={s.headerBadge}>
+                  <Text style={s.headerBadgeText}>{unreadFromUser > 9 ? "9+" : unreadFromUser}</Text>
+                </View>
+              )}
+            </Pressable>
+            <Pressable style={s.headerIconBtn} onPress={openActionsMenu} hitSlop={6} accessibilityRole="button" accessibilityLabel="Mehr">
+              <Menu color={colors.white} size={22} strokeWidth={2} />
+            </Pressable>
+          </View>
+        ) : (
+          <View style={{ width: 44 }} />
+        )}
       </View>
 
       {profileLayout === "masonry" || profileLayout === "featured" ? (
@@ -211,6 +280,10 @@ const s = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, gap: 10 },
   backBtn: { minWidth: 44, minHeight: 44, justifyContent: "center" },
   headerTitle: { flex: 1, color: colors.white, fontSize: 17, fontWeight: "600" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
+  headerIconBtn: { minWidth: 40, minHeight: 40, justifyContent: "center", alignItems: "center", position: "relative" },
+  headerBadge: { position: "absolute", top: 4, right: 2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: "#EF4444", paddingHorizontal: 4, justifyContent: "center", alignItems: "center", borderWidth: 1.5, borderColor: colors.bg },
+  headerBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", lineHeight: 12 },
   profileSection: { paddingHorizontal: 16, paddingBottom: 8 },
   topRow: { flexDirection: "row", alignItems: "center", gap: 20 },
   avatar: { width: 86, height: 86, borderRadius: 43 },

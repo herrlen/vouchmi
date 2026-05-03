@@ -69,7 +69,7 @@ class User extends Authenticatable {
 
     public function canInitiateMessage(User $recipient): bool
     {
-        // Brand mit aktivem Abo → kann Influencer anschreiben
+        // Brand mit aktivem Abo → kann Influencer anschreiben (Cold-Outreach erlaubt)
         if ($this->role === 'brand' && $this->hasActiveSubscription('brand')) {
             return $recipient->role === 'influencer';
         }
@@ -79,7 +79,11 @@ class User extends Authenticatable {
             return $recipient->role === 'brand';
         }
 
-        // Alle anderen: nur bei gegenseitigem Follow
-        return $this->isMutualFollow($recipient->id);
+        // Alle anderen: einseitiges Follow reicht — wenn ich der Person folge,
+        // darf ich ihr schreiben. Empfänger muss mir NICHT zurückfolgen.
+        return \DB::table('follows')
+            ->where('follower_id', $this->id)
+            ->where('following_id', $recipient->id)
+            ->exists();
     }
 }
