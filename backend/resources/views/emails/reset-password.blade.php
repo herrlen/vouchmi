@@ -46,7 +46,7 @@
                     <tr>
                         <td style="padding:22px 32px;background:#1A1D2E;text-align:center;">
                             <div style="color:#5A5E6B;font-size:11px;line-height:1.6;">
-                                Len Messerschmidt e.K. · Norderreihe 21 · 22767 Hamburg<br>
+                                Studio Luy UG · Norderreihe 21 · 22767 Hamburg<br>
                                 kontakt@vouchmi.com
                             </div>
                         </td>

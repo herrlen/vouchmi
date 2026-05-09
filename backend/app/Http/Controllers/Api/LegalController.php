@@ -13,10 +13,10 @@ use Illuminate\Http\JsonResponse;
  */
 class LegalController extends Controller
 {
-    private const COMPANY = 'Len Messerschmidt e.K.';
+    private const COMPANY = 'Studio Luy UG';
     private const ADDRESS = 'Norderreihe 21, 22767 Hamburg';
     private const EMAIL   = 'kontakt@vouchmi.com';
-    private const UPDATED = '2026-04-14';
+    private const UPDATED = '2026-05-08';
 
     public function privacy(): JsonResponse
     {
@@ -52,8 +52,21 @@ class LegalController extends Controller
 
 ## Angaben gemäß § 5 TMG
 
-{$c}
+{$c} (haftungsbeschränkt)
 {$a}
+
+## Vertretungsberechtigte Geschäftsführerin
+
+Keren Suh
+
+## Handelsregister
+
+Registergericht: Amtsgericht Hamburg
+Registernummer: HRB 195975
+
+## Umsatzsteuer-Identifikationsnummer
+
+USt-IdNr. gemäß § 27a UStG: DE459298622
 
 ## Kontakt
 
@@ -61,7 +74,7 @@ E-Mail: {$e}
 
 ## Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
 
-Len Messerschmidt
+Keren Suh
 {$a}
 
 ## Streitschlichtung
