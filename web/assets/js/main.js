@@ -183,7 +183,7 @@ const TRANSLATIONS = {
     'footer.legal.imprint': 'Impressum',
     'footer.legal.privacy': 'Datenschutz',
     'footer.legal.terms': 'AGB',
-    'footer.copyright': '© 2026 Vouchmi. Alle Rechte vorbehalten.',
+    'footer.copyright': '© 2026 Studio Luy UG (haftungsbeschränkt). Alle Rechte vorbehalten.',
     'footer.made': 'Made in Hamburg',
 
     'contact.eyebrow': 'Kontakt',
@@ -384,7 +384,7 @@ const TRANSLATIONS = {
     'footer.legal.imprint': 'Imprint',
     'footer.legal.privacy': 'Privacy',
     'footer.legal.terms': 'Terms',
-    'footer.copyright': '© 2026 Vouchmi. All rights reserved.',
+    'footer.copyright': '© 2026 Studio Luy UG (haftungsbeschränkt). All rights reserved.',
     'footer.made': 'Made in Hamburg',
 
     'contact.eyebrow': 'Contact',
