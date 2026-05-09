@@ -98,7 +98,7 @@ export const profile = {
 export const auth = {
   register: (d: { email: string; username: string; password: string; accept_terms: boolean; role?: "user" | "influencer" | "brand"; phone?: string }) =>
     req<{ user: User; token: string }>("POST", "/auth/register", d, true),
-  login: (email: string, password: string) => req<{ user: User; token: string }>("POST", "/auth/login", { email, password }, true),
+  login: (identifier: string, password: string) => req<{ user: User; token: string }>("POST", "/auth/login", { identifier, password }, true),
   logout: () => api.post("/auth/logout"),
   me: () => api.get<{ user: User }>("/auth/me"),
   forgotPassword: (email: string) => req<{ message: string }>("POST", "/auth/forgot-password", { email }, true),

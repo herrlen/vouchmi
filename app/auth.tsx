@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Check, Eye, EyeOff, Mail, Lock, CheckCircle, ChevronLeft } from "lucide-react-native";
+import { Check, Eye, EyeOff, Mail, Lock, CheckCircle, ChevronLeft, AtSign } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "../src/lib/store";
 import { auth as authApi } from "../src/lib/api";
@@ -16,7 +16,7 @@ function validateEmail(e: string) {
 export default function Auth() {
   const params = useLocalSearchParams<{ reset?: string }>();
   const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,8 @@ export default function Auth() {
   const { login } = useAuth();
   const router = useRouter();
 
-  const emailValid = useMemo(() => validateEmail(email), [email]);
+  const isEmailLike = useMemo(() => validateEmail(identifier), [identifier]);
+  const identifierValid = useMemo(() => identifier.trim().length >= 3, [identifier]);
 
   // Reset success banner auto-hide
   useEffect(() => {
@@ -44,10 +45,10 @@ export default function Auth() {
 
   const handleSubmit = async () => {
     if (mode === "forgot") {
-      if (!emailValid) return Alert.alert("Fehler", "Bitte gib eine gültige E-Mail ein.");
+      if (!isEmailLike) return Alert.alert("Fehler", "Bitte gib eine gültige E-Mail ein.");
       setLoading(true);
       try {
-        await authApi.forgotPassword(email);
+        await authApi.forgotPassword(identifier);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setMode("forgot-sent");
         setCooldown(60);
@@ -58,11 +59,11 @@ export default function Auth() {
       } finally { setLoading(false); }
       return;
     }
-    if (!email || !password) return Alert.alert("Fehler", "Bitte alle Felder ausfüllen.");
+    if (!identifier || !password) return Alert.alert("Fehler", "Bitte alle Felder ausfüllen.");
     setLoading(true);
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      await login(email, password);
+      await login(identifier, password);
       // Pflicht-Telefonverifikation NUR für Influencer (Brand identifiziert sich
       // per Unternehmens-E-Mail, User braucht gar keine Pflicht).
       const u = useAuth.getState().user;
@@ -80,7 +81,7 @@ export default function Auth() {
     if (cooldown > 0) return;
     setLoading(true);
     try {
-      await authApi.forgotPassword(email);
+      await authApi.forgotPassword(identifier);
       setCooldown(60);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {} finally { setLoading(false); }
@@ -96,7 +97,7 @@ export default function Auth() {
           </View>
           <Text style={s.title}>Check deinen Posteingang</Text>
           <Text style={s.body}>
-            Wenn ein Konto mit <Text style={{ color: "#FFFFFF", fontWeight: "600" }}>{email}</Text> existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Der Link ist 60 Minuten gültig.
+            Wenn ein Konto mit <Text style={{ color: "#FFFFFF", fontWeight: "600" }}>{identifier}</Text> existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Der Link ist 60 Minuten gültig.
           </Text>
           <Pressable style={s.btn} onPress={() => { setMode("login"); setPassword(""); }}>
             <Text style={s.btnText}>Zurück zur Anmeldung</Text>
@@ -148,12 +149,20 @@ export default function Auth() {
 
         <View style={s.form}>
           <View style={s.inputWrap}>
-            <Mail color="#4A5068" size={18} style={s.inputIcon} />
-            <TextInput style={s.inputField} placeholder="E-Mail" placeholderTextColor="#4A5068"
-              value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none"
-              autoCorrect={false} textContentType="emailAddress" autoComplete="email"
-              accessibilityLabel="E-Mail-Adresse" />
-            {email.length > 3 && emailValid && <Check color={colors.accent} size={18} accessibilityElementsHidden />}
+            {mode === "forgot" || isEmailLike
+              ? <Mail color="#4A5068" size={18} style={s.inputIcon} />
+              : <AtSign color="#4A5068" size={18} style={s.inputIcon} />}
+            <TextInput style={s.inputField}
+              placeholder={mode === "forgot" ? "E-Mail" : "E-Mail oder Username"}
+              placeholderTextColor="#4A5068"
+              value={identifier} onChangeText={setIdentifier}
+              keyboardType={mode === "forgot" ? "email-address" : "default"}
+              autoCapitalize="none" autoCorrect={false}
+              textContentType={mode === "forgot" || isEmailLike ? "emailAddress" : "username"}
+              autoComplete={mode === "forgot" || isEmailLike ? "email" : "username"}
+              accessibilityLabel={mode === "forgot" ? "E-Mail-Adresse" : "E-Mail oder Username"} />
+            {identifierValid && (mode === "forgot" ? isEmailLike : true) &&
+              <Check color={colors.accent} size={18} accessibilityElementsHidden />}
           </View>
 
           {mode === "login" && (

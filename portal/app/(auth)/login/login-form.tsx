@@ -15,16 +15,18 @@ export function LoginForm() {
   return (
     <form action={formAction} className="space-y-5">
       <div>
-        <Label htmlFor="email">E-Mail</Label>
+        <Label htmlFor="identifier">E-Mail oder Username</Label>
         <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
+          id="identifier"
+          name="identifier"
+          type="text"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
           required
           className="mt-1.5"
         />
-        <FormFieldError message={state.fieldErrors?.email} />
+        <FormFieldError message={state.fieldErrors?.identifier} />
       </div>
 
       <div>

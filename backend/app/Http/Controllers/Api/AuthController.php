@@ -143,15 +143,19 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+            'identifier' => 'required_without:email|string',
+            'email'      => 'required_without:identifier|string',
+            'password'   => 'required|string',
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        $identifier = $data['identifier'] ?? $data['email'];
+        $field      = str_contains($identifier, '@') ? 'email' : 'username';
+
+        $user = User::whereRaw("LOWER({$field}) = ?", [mb_strtolower($identifier)])->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Die Anmeldedaten sind nicht korrekt.'],
+                'identifier' => ['Die Anmeldedaten sind nicht korrekt.'],
             ]);
         }
 

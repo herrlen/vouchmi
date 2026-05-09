@@ -13,7 +13,7 @@ export async function loginAction(
   formData: FormData,
 ): Promise<ActionState> {
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
+    identifier: formData.get("identifier"),
     password: formData.get("password"),
   });
 
@@ -46,7 +46,7 @@ export async function loginAction(
         status: "error",
         message:
           error.status === 401
-            ? "E-Mail oder Passwort ist nicht korrekt."
+            ? "Anmeldedaten sind nicht korrekt."
             : error.message,
       };
     }
