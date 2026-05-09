@@ -19,7 +19,8 @@ const TRANSLATIONS = {
     'nav.contact': 'Kontakt',
     'nav.download': 'App laden',
 
-    'hero.eyebrow': 'Jetzt im App Store & Play Store',
+    'hero.eyebrow': 'Jetzt im App Store',
+    'hero.badge.small': 'Lade im',
     'hero.title.1': 'Empfehlungen,',
     'hero.title.highlight': 'denen du vertraust.',
     'hero.title.2': '',
@@ -75,7 +76,7 @@ const TRANSLATIONS = {
     'how.sub': 'Schnell installiert, schnell verstanden, schnell Teil der Community.',
 
     'how.step1.title': 'App laden & Rolle wählen',
-    'how.step1.body': 'Lade Vouchmi kostenlos im App Store oder Play Store. Wähle, ob du als User, Influencer oder Brand starten möchtest.',
+    'how.step1.body': 'Lade Vouchmi kostenlos im App Store. Wähle, ob du als User, Influencer oder Brand starten möchtest.',
     'how.step2.title': 'Communities entdecken',
     'how.step2.body': 'Finde Communities zu deinen Interessen — Mode, Tech, Food, Lifestyle. Folge, like, vouche.',
     'how.step3.title': 'Empfehlen & entdeckt werden',
@@ -220,7 +221,8 @@ const TRANSLATIONS = {
     'nav.contact': 'Contact',
     'nav.download': 'Get the App',
 
-    'hero.eyebrow': 'Now on App Store & Play Store',
+    'hero.eyebrow': 'Now on the App Store',
+    'hero.badge.small': 'Download on the',
     'hero.title.1': 'Recommendations',
     'hero.title.highlight': 'you can trust.',
     'hero.title.2': '',
@@ -276,7 +278,7 @@ const TRANSLATIONS = {
     'how.sub': 'Quick to install, quick to grasp, quick to belong.',
 
     'how.step1.title': 'Download & pick a role',
-    'how.step1.body': 'Download Vouchmi for free on the App Store or Play Store. Choose to start as a User, Influencer, or Brand.',
+    'how.step1.body': 'Download Vouchmi for free on the App Store. Choose to start as a User, Influencer, or Brand.',
     'how.step2.title': 'Discover communities',
     'how.step2.body': 'Find communities for your interests — fashion, tech, food, lifestyle. Follow, like, vouch.',
     'how.step3.title': 'Recommend & be discovered',

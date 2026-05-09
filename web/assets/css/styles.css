@@ -124,7 +124,9 @@ section {
   font-size: 17px;
 }
 
-.nav-logo .mi { opacity: 0.55; }
+.nav-logo .mi,
+.footer-brand .mi,
+.logo-text .mi { color: var(--brand-primary); }
 
 .nav-links {
   display: flex;
