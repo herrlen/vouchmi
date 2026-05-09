@@ -256,6 +256,35 @@ class AuthController extends Controller
         return response()->json(['message' => 'Passwort erfolgreich zurückgesetzt.']);
     }
 
+    /**
+     * POST /api/auth/change-password
+     * Authentifizierter Wechsel: aktuelles Passwort prüfen, neues setzen,
+     * alle übrigen Sanctum-Tokens revoken (aktueller Token bleibt gültig).
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'current_password' => 'required|string',
+            'password'         => 'required|string|min:8|confirmed|different:current_password',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($data['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Aktuelles Passwort stimmt nicht.'],
+            ]);
+        }
+
+        $user->password = Hash::make($data['password']);
+        $user->save();
+
+        $currentTokenId = $user->currentAccessToken()?->id;
+        $user->tokens()->when($currentTokenId, fn ($q) => $q->where('id', '!=', $currentTokenId))->delete();
+
+        return response()->json(['message' => 'Passwort erfolgreich geändert.']);
+    }
+
     private function userResponse(User $user): array
     {
         return [

@@ -38,6 +38,22 @@ export const resetPasswordSchema = z
   });
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, "Aktuelles Passwort erforderlich."),
+    password: z.string().min(8, "Mindestens 8 Zeichen."),
+    password_confirmation: z.string().min(8),
+  })
+  .refine((data) => data.password === data.password_confirmation, {
+    message: "Passwörter stimmen nicht überein.",
+    path: ["password_confirmation"],
+  })
+  .refine((data) => data.password !== data.current_password, {
+    message: "Neues Passwort muss sich vom alten unterscheiden.",
+    path: ["password"],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const verifyEmailSchema = z.object({
   email: z.string().email(),
   token: z.string().min(32),
