@@ -1820,3 +1820,53 @@ section {
   border-bottom: 1px solid #F1F5F9;
   color: var(--brand-deep);
 }
+
+/* ============ MOBILE-FIXES (responsiv) ============ */
+
+/* Section-Titles brand + influencer (vorher inline 48px hardcoded) */
+.section-title--brand,
+.section-title--influencer {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.1;
+}
+.section-title--brand { color: #fff; }
+.section-title--influencer { color: var(--brand-deep); }
+
+.section-sub--brand,
+.section-sub--influencer {
+  font-size: clamp(15px, 2vw, 18px);
+  max-width: 680px;
+}
+.section-sub--brand { color: rgba(255,255,255,0.7); }
+.section-sub--influencer { color: var(--brand-muted-on-light); }
+
+/* Hero stack auf mobile (vorher 2-col fix) */
+@media (max-width: 768px) {
+  .hero { padding: 130px 0 80px; }
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .hero-stats { flex-wrap: wrap; gap: 24px; }
+  .hero-cta { flex-wrap: wrap; }
+  .phone {
+    width: 280px;
+    height: 560px;
+    border-radius: 40px;
+  }
+  .phone-screen { border-radius: 30px; }
+}
+
+/* Influencer-Vergleichstabelle: kleinere Schrift + horizontaler Scroll auf mobile */
+@media (max-width: 768px) {
+  .influencer-compare { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .influencer-compare table { font-size: 13px; min-width: 480px; }
+  .influencer-compare th,
+  .influencer-compare td { padding: 8px 10px; }
+}
+
+/* Newsletter-Background-Kreis abdecken auf mobile (war 600px fix) */
+@media (max-width: 768px) {
+  .newsletter::before { width: 320px; height: 320px; }
+}
