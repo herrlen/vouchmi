@@ -46,6 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   experiments: { typedRoutes: true },
   ios: {
     bundleIdentifier: "com.vouchmi.app",
+    buildNumber: "8",
     supportsTablet: true,
     associatedDomains: ["applinks:app.vouchmi.com"],
     entitlements: {
