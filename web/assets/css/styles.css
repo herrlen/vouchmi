@@ -863,6 +863,43 @@ section {
 .screens-row::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 999px; }
 .screens-row::-webkit-scrollbar-thumb { background: var(--brand-muted); border-radius: 999px; }
 
+/* App-Store-Screenshots Galerie */
+.screens-gallery {
+  margin-top: 40px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 32px;
+  scrollbar-width: thin;
+}
+.screens-gallery::-webkit-scrollbar { height: 8px; }
+.screens-gallery::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 999px; }
+.screens-gallery::-webkit-scrollbar-thumb { background: var(--brand-muted); border-radius: 999px; }
+
+.screens-track {
+  display: flex;
+  gap: 24px;
+  padding: 0 max(24px, calc((100vw - 1200px) / 2));
+}
+
+.screen-shot {
+  flex: 0 0 280px;
+  width: 280px;
+  height: auto;
+  border-radius: 36px;
+  scroll-snap-align: center;
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.18);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.screen-shot:hover {
+  transform: translateY(-6px);
+}
+
+@media (max-width: 768px) {
+  .screen-shot { flex: 0 0 240px; width: 240px; border-radius: 30px; }
+  .screens-track { gap: 16px; padding: 0 16px; }
+}
+
 .screen-mockup {
   flex: 0 0 280px;
   scroll-snap-align: start;
