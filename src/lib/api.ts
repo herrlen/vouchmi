@@ -365,10 +365,21 @@ export type SubscriptionStatus = {
   paypal_status: string | null;
 };
 
+export type AppleIapValidationResult = {
+  subscription: {
+    uuid: string;
+    provider: "apple_iap";
+    status: string;
+    expires_at: string | null;
+    product_id: string | null;
+    auto_renew_status: boolean;
+  };
+};
+
 export const subscription = {
   status: () => api.get<SubscriptionStatus>("/subscription/status"),
-  verifyAppleReceipt: (d: { receipt_data: string; transaction_id: string; product_id: string }) =>
-    api.post<{ verified: boolean }>("/v1/iap/verify-receipt", d),
+  validateAppleTransaction: (d: { transaction_id: string }) =>
+    api.post<AppleIapValidationResult>("/v1/iap/validate", d),
 };
 
 // Influencer Analytics

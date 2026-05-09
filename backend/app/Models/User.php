@@ -2,11 +2,13 @@
 // app/Models/User.php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable {
-    use HasApiTokens, HasUuids;
+    use HasApiTokens, HasFactory, HasUuids;
     protected $fillable = ['email','phone','username','password','display_name','avatar_url','bio','link','role','profile_layout','profile_layout_updated_at','tier','tier_achieved_at','tier_badge_opacity','tier_below_threshold_since','terms_accepted_at','terms_version','is_seed'];
     protected $hidden = ['password','remember_token'];
     protected function casts(): array
@@ -41,11 +43,7 @@ class User extends Authenticatable {
 
     public function hasActiveSubscription(?string $planType = null): bool
     {
-        $query = $this->subscriptions()->where(function ($q) {
-            // Provider-agnostisch: status='active'/'grace_period' ODER legacy paypal_status='ACTIVE'
-            $q->whereIn('status', ['active', 'grace_period'])
-              ->orWhere('paypal_status', 'ACTIVE');
-        });
+        $query = $this->subscriptions()->active();
         if ($planType) {
             $query->where('plan_type', $planType);
         }
@@ -81,7 +79,7 @@ class User extends Authenticatable {
 
         // Alle anderen: einseitiges Follow reicht — wenn ich der Person folge,
         // darf ich ihr schreiben. Empfänger muss mir NICHT zurückfolgen.
-        return \DB::table('follows')
+        return DB::table('follows')
             ->where('follower_id', $this->id)
             ->where('following_id', $recipient->id)
             ->exists();

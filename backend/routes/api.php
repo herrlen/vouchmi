@@ -5,7 +5,8 @@
 // Kein eigener Shop. Nutzer teilen Links. Marken zahlen.
 
 use App\Http\Controllers\Api\AnalyticsController;
-use App\Http\Controllers\Api\AppleIapController;
+use App\Http\Controllers\Api\V1\AppStoreNotificationsController;
+use App\Http\Controllers\Api\V1\IapValidationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\FeedController;
@@ -41,7 +42,7 @@ Route::get('/legal/imprint', [LegalController::class, 'imprint']);
 Route::post('/webhooks/paypal', [BrandController::class, 'webhook']);
 
 // ── Apple App Store Server Notifications V2 (öffentlich, von Apple aufgerufen) ──
-Route::post('/v1/iap/server-notification', [AppleIapController::class, 'serverNotification']);
+Route::post('/v1/iap/notifications', [AppStoreNotificationsController::class, 'handle']);
 
 // ── Link Preview (öffentlich, gecached) ──
 Route::get('/link-preview', [LinkPreviewController::class, 'preview']);
@@ -180,8 +181,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/influencer/cancel', [InfluencerController::class, 'cancel']);
     Route::get('/influencer/status', [InfluencerController::class, 'status']);
 
-    // Apple IAP — Receipt-Validierung (authentifiziert)
-    Route::post('/v1/iap/verify-receipt', [AppleIapController::class, 'verifyReceipt']);
+    // Apple IAP — Receipt-Validierung (authentifiziert, rate-limited)
+    Route::post('/v1/iap/validate', [IapValidationController::class, 'validate'])
+        ->middleware('throttle:10,1');
 
     // Subscription-Status (generisch für beide Plan-Typen)
     Route::get('/subscription/status', function (\Illuminate\Http\Request $request) {

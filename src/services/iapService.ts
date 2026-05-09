@@ -135,15 +135,23 @@ export async function iapRestore(): Promise<any[]> {
 
 // ── Server Verification ──
 
+export type IapValidationResponse = {
+  subscription: {
+    uuid: string;
+    provider: "apple_iap";
+    status: string;
+    expires_at: string | null;
+    product_id: string | null;
+    auto_renew_status: boolean;
+  };
+};
+
 export async function iapVerifyWithBackend(
   purchase: any,
-  productId: string
-): Promise<{ verified: boolean }> {
-  return api.post<{ verified: boolean }>("/v1/iap/verify-receipt", {
+  _productId: string
+): Promise<IapValidationResponse> {
+  return api.post<IapValidationResponse>("/v1/iap/validate", {
     transaction_id: purchase.id,
-    original_transaction_id:
-      purchase.originalTransactionIdentifierIOS ?? purchase.id,
-    product_id: productId,
   });
 }
 

@@ -71,12 +71,17 @@ return [
         'webhook_id'         => env('PAYPAL_WEBHOOK_ID'),
     ],
 
-    'apple' => [
-        'bundle_id'        => env('APPLE_BUNDLE_ID', 'com.vouchmi.app'),
-        'issuer_id'        => env('APPLE_ISSUER_ID'),
-        'key_id'           => env('APPLE_KEY_ID'),
-        'private_key_path' => env('APPLE_PRIVATE_KEY_PATH'),
-        'environment'      => env('APPLE_ENVIRONMENT', 'sandbox'),
+    'apple_iap' => [
+        'bundle_id'        => env('APPLE_IAP_BUNDLE_ID', 'com.vouchmi.app'),
+        'issuer_id'        => env('APPLE_IAP_ISSUER_ID'),
+        'key_id'           => env('APPLE_IAP_KEY_ID'),
+        'private_key_path' => env('APPLE_IAP_PRIVATE_KEY_PATH', 'storage/app/private/AuthKey.p8'),
+        'environment'      => env('APPLE_IAP_ENVIRONMENT', 'sandbox'), // sandbox | production
+        'root_ca_path'     => env('APPLE_IAP_ROOT_CA_PATH', 'storage/app/apple/AppleRootCA-G3.cer'),
+        'products'         => [
+            'brand_monthly'      => env('APPLE_IAP_PRODUCT_ID_BRAND_MONTHLY', 'com.vouchmi.app.brand.monthly'),
+            'influencer_monthly' => env('APPLE_IAP_PRODUCT_ID_INFLUENCER_MONTHLY', 'com.vouchmi.app.influencer.monthly'),
+        ],
     ],
 
     'apns' => [

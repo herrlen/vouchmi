@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Services\AppStore\AppStoreJwtSigner;
+use App\Services\AppStore\AppStoreServerApiClient;
+use App\Services\AppStore\IapValidationService;
+use App\Services\AppStore\JwsVerifier;
+use App\Services\AppStore\NotificationHandler;
 use App\Services\PayPalService;
 use App\Services\TwilioVerifyService;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +33,28 @@ class AppServiceProvider extends ServiceProvider
                 (string) config('services.twilio.auth_token'),
                 (string) config('services.twilio.verify_service_sid'),
             );
+        });
+
+        // Apple IAP (App Store Server API + Notifications V2)
+        $this->app->singleton(AppStoreJwtSigner::class, fn () => AppStoreJwtSigner::fromConfig());
+
+        $this->app->singleton(AppStoreServerApiClient::class, function ($app) {
+            return AppStoreServerApiClient::fromConfig(
+                $app->make(AppStoreJwtSigner::class)
+            );
+        });
+
+        $this->app->singleton(JwsVerifier::class, fn () => JwsVerifier::fromConfig());
+
+        $this->app->singleton(IapValidationService::class, function ($app) {
+            return new IapValidationService(
+                $app->make(AppStoreServerApiClient::class),
+                $app->make(JwsVerifier::class),
+            );
+        });
+
+        $this->app->singleton(NotificationHandler::class, function ($app) {
+            return new NotificationHandler($app->make(JwsVerifier::class));
         });
     }
 

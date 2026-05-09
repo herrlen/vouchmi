@@ -52,8 +52,8 @@ export default function InfluencerRegisterScreen() {
       const purchase = await iapRequestSubscription(IAP_PRODUCTS.influencer);
 
       // 3. Receipt an Backend senden
-      const { verified } = await iapVerifyWithBackend(purchase, IAP_PRODUCTS.influencer);
-      if (!verified) {
+      const { subscription } = await iapVerifyWithBackend(purchase, IAP_PRODUCTS.influencer);
+      if (subscription?.status !== "active") {
         Alert.alert("Fehler", "Receipt-Validierung fehlgeschlagen.");
         setStep("info");
         return;

@@ -50,8 +50,8 @@ export default function BrandRegisterScreen() {
       setStep("paying");
       const purchase = await iapRequestSubscription(IAP_PRODUCTS.brand);
 
-      const { verified } = await iapVerifyWithBackend(purchase, IAP_PRODUCTS.brand);
-      if (!verified) {
+      const { subscription } = await iapVerifyWithBackend(purchase, IAP_PRODUCTS.brand);
+      if (subscription?.status !== "active") {
         Alert.alert("Fehler", "Receipt-Validierung fehlgeschlagen.");
         setStep("form");
         return;

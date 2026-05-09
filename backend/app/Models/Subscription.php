@@ -14,14 +14,17 @@ class Subscription extends Model
         'user_id', 'plan_type', 'payment_provider',
         'paypal_subscription_id', 'paypal_status',
         'apple_transaction_id', 'apple_original_transaction_id',
+        'apple_product_id', 'expiration_intent', 'last_notification_uuid',
+        'environment',
         'status', 'auto_renew',
         'started_at', 'expires_at',
     ];
 
     protected $casts = [
-        'started_at' => 'datetime',
-        'expires_at' => 'datetime',
-        'auto_renew' => 'boolean',
+        'started_at'        => 'datetime',
+        'expires_at'        => 'datetime',
+        'auto_renew'        => 'boolean',
+        'expiration_intent' => 'integer',
     ];
 
     public function user()
@@ -30,16 +33,38 @@ class Subscription extends Model
     }
 
     /**
-     * Provider-agnostischer Status-Check.
-     * Prüft sowohl das neue status-Feld als auch paypal_status für
-     * Rückwärtskompatibilität mit bestehenden PayPal-Subscriptions.
+     * Subscription is active if status='active'/'grace_period' AND expires_at
+     * is either NULL or still in the future (with a 5min skew tolerance).
+     * Legacy paypal_status='ACTIVE' rows without expires_at also count.
      */
+    public function scopeActive($query)
+    {
+        $cutoff = now()->subMinutes(5);
+        return $query->where(function ($q) use ($cutoff) {
+            $q->where(function ($qq) use ($cutoff) {
+                $qq->whereIn('status', ['active', 'grace_period'])
+                   ->where(function ($qqq) use ($cutoff) {
+                       $qqq->whereNull('expires_at')
+                           ->orWhere('expires_at', '>', $cutoff);
+                   });
+            })->orWhere(function ($qq) use ($cutoff) {
+                $qq->where('paypal_status', 'ACTIVE')
+                   ->where(function ($qqq) use ($cutoff) {
+                       $qqq->whereNull('expires_at')
+                           ->orWhere('expires_at', '>', $cutoff);
+                   });
+            });
+        });
+    }
+
     public function isActive(): bool
     {
-        if ($this->status === 'active' || $this->status === 'grace_period') {
+        $cutoff = now()->subMinutes(5);
+        $notExpired = $this->expires_at === null || $this->expires_at->greaterThan($cutoff);
+        if (in_array($this->status, ['active', 'grace_period'], true) && $notExpired) {
             return true;
         }
-        return $this->paypal_status === 'ACTIVE';
+        return $this->paypal_status === 'ACTIVE' && $notExpired;
     }
 
     public function isApple(): bool
