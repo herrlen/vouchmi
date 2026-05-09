@@ -52,15 +52,11 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your camera</string>
+    <string>Vouchmi nutzt die Kamera, damit du Profilbilder, Community-Cover und Posts mit Foto direkt aufnehmen kannst.</string>
     <key>NSContactsUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your contacts</string>
-    <key>NSFaceIDUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <string>Vouchmi gleicht deine Kontakte mit anderen Nutzer:innen ab, um dir Freunde vorzuschlagen, die schon auf Vouchmi sind.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your photos</string>
+    <string>Vouchmi greift auf deine Fotos zu, damit du Profilbilder, Community-Cover und Beiträge aus deiner Mediathek auswählen kannst.</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>NSSupportsLiveActivitiesFrequentUpdates</key>
