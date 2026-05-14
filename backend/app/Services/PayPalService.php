@@ -31,8 +31,11 @@ class PayPalService
 
     public function isConfigured(): bool
     {
-        return !empty($this->clientId) && !empty($this->clientSecret)
-            && (!empty($this->planId) || !empty($this->brandPlanId) || !empty($this->influencerPlanId));
+        // Client-ID + Secret reichen — PayPal-Service ist auch für reine
+        // Wallet-Topups (Orders v2 ohne Subscription-Plans) konfiguriert.
+        // Plan-IDs werden nur noch für den Sunset-Pfad bestehender Abos
+        // gebraucht; ohne sie funktionieren Topup-Orders + Webhooks trotzdem.
+        return !empty($this->clientId) && !empty($this->clientSecret);
     }
 
     private function resolvePlanId(string $planType = 'brand'): ?string
