@@ -24,6 +24,9 @@ class PayPalService
         private ?string $brandPlanId = null,
         private ?string $influencerPlanId = null,
         private ?string $webhookId = null,
+        // Separate Webhook für Wallet-Topup-Events (Orders v2). Wenn null,
+        // fällt der Wallet-Webhook-Pfad auf $webhookId zurück.
+        private ?string $walletWebhookId = null,
     ) {}
 
     public function isConfigured(): bool
@@ -186,9 +189,10 @@ class PayPalService
      * WEBHOOK_ID nicht konfiguriert ist (Aufrufer entscheidet dann, ob
      * trotzdem akzeptiert wird — z. B. im Stub-Modus).
      */
-    public function verifyWebhookSignature(Request $request): bool
+    public function verifyWebhookSignature(Request $request, ?string $webhookIdOverride = null): bool
     {
-        if (!$this->isConfigured() || !$this->webhookId) {
+        $webhookId = $webhookIdOverride ?? $this->webhookId;
+        if (!$this->isConfigured() || !$webhookId) {
             return false;
         }
 
@@ -208,7 +212,7 @@ class PayPalService
             'transmission_id'   => $request->header('paypal-transmission-id', ''),
             'transmission_sig'  => $request->header('paypal-transmission-sig', ''),
             'transmission_time' => $request->header('paypal-transmission-time', ''),
-            'webhook_id'        => $this->webhookId,
+            'webhook_id'        => $webhookId,
             'webhook_event'     => $webhookEvent,
         ];
 
@@ -242,6 +246,148 @@ class PayPalService
     public function hasWebhookId(): bool
     {
         return !empty($this->webhookId);
+    }
+
+    public function walletWebhookId(): ?string
+    {
+        return $this->walletWebhookId ?: $this->webhookId;
+    }
+
+    public function hasWalletWebhookId(): bool
+    {
+        return !empty($this->walletWebhookId()) || $this->hasWebhookId();
+    }
+
+    /**
+     * Orders v2 — One-shot purchase used for wallet topups (Credits).
+     * Returns { order_id, approval_url, status, configured }.
+     *
+     * @param array{
+     *     reference_id:string,
+     *     amount_cents:int,
+     *     currency:string,
+     *     description?:string,
+     *     return_url?:string,
+     *     cancel_url?:string,
+     *     custom_id?:string
+     * } $context
+     */
+    public function createTopupOrder(array $context): array
+    {
+        if (!$this->isConfigured()) {
+            return [
+                'order_id'     => 'STUB-ORDER-' . bin2hex(random_bytes(6)),
+                'approval_url' => $this->baseUrl() . '/checkoutnow?stub=1',
+                'status'       => 'STUB_CREATED',
+                'configured'   => false,
+            ];
+        }
+
+        $token = $this->accessToken();
+        if (!$token) {
+            return [
+                'order_id'     => null,
+                'approval_url' => null,
+                'status'       => 'OAUTH_FAILED',
+                'configured'   => true,
+            ];
+        }
+
+        $amount = number_format($context['amount_cents'] / 100, 2, '.', '');
+
+        $res = Http::withToken($token)
+            ->acceptJson()
+            ->withHeaders([
+                // Idempotency on PayPal's side — same request_id = same order.
+                'PayPal-Request-Id' => $context['reference_id'],
+            ])
+            ->post($this->baseUrl() . '/v2/checkout/orders', [
+                'intent' => 'CAPTURE',
+                'purchase_units' => [[
+                    'reference_id' => $context['reference_id'],
+                    'description'  => $context['description'] ?? 'Vouchmi Credits',
+                    'custom_id'    => $context['custom_id'] ?? $context['reference_id'],
+                    'amount' => [
+                        'currency_code' => $context['currency'],
+                        'value'         => $amount,
+                    ],
+                ]],
+                'application_context' => [
+                    'brand_name'  => 'Vouchmi',
+                    'locale'      => 'de-DE',
+                    'user_action' => 'PAY_NOW',
+                    'return_url'  => $context['return_url']
+                        ?? 'https://app.vouchmi.com/wallet/return',
+                    'cancel_url'  => $context['cancel_url']
+                        ?? 'https://app.vouchmi.com/wallet/cancel',
+                ],
+            ]);
+
+        if (!$res->successful()) {
+            Log::warning('paypal.order.create.failed', [
+                'status' => $res->status(),
+                'body'   => $res->body(),
+            ]);
+            return [
+                'order_id'     => null,
+                'approval_url' => null,
+                'status'       => 'CREATE_FAILED',
+                'configured'   => true,
+            ];
+        }
+
+        $body = $res->json();
+        $approval = collect($body['links'] ?? [])->firstWhere('rel', 'approve')['href'] ?? null;
+
+        return [
+            'order_id'     => $body['id'] ?? null,
+            'approval_url' => $approval,
+            'status'       => $body['status'] ?? 'CREATED',
+            'configured'   => true,
+        ];
+    }
+
+    /**
+     * Capture a previously created order. Returns the raw PayPal response
+     * or null on failure. Caller is responsible for extracting capture id +
+     * amount and feeding it into WalletService::credit().
+     */
+    public function captureOrder(string $orderId): ?array
+    {
+        if (!$this->isConfigured()) return null;
+        $token = $this->accessToken();
+        if (!$token) return null;
+
+        $res = Http::withToken($token)
+            ->acceptJson()
+            ->withHeaders([
+                'PayPal-Request-Id' => 'capture-' . $orderId,
+            ])
+            ->post($this->baseUrl() . "/v2/checkout/orders/{$orderId}/capture", (object) []);
+
+        if (!$res->successful()) {
+            Log::warning('paypal.order.capture.failed', [
+                'order_id' => $orderId,
+                'status'   => $res->status(),
+                'body'     => $res->body(),
+            ]);
+            return null;
+        }
+
+        return $res->json();
+    }
+
+    public function getOrder(string $orderId): ?array
+    {
+        if (!$this->isConfigured()) return null;
+        $token = $this->accessToken();
+        if (!$token) return null;
+
+        $res = Http::withToken($token)
+            ->acceptJson()
+            ->get($this->baseUrl() . "/v2/checkout/orders/{$orderId}");
+
+        return $res->successful() ? $res->json() : null;
     }
 
     /**

@@ -29,6 +29,14 @@ class User extends Authenticatable {
         return $this->hasMany(Subscription::class);
     }
 
+    public function wallet() {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function boosts() {
+        return $this->hasMany(Boost::class);
+    }
+
     public function brandProfile() {
         return $this->hasOne(BrandProfile::class);
     }
@@ -67,14 +75,21 @@ class User extends Authenticatable {
 
     public function canInitiateMessage(User $recipient): bool
     {
-        // Brand mit aktivem Abo → kann Influencer anschreiben (Cold-Outreach erlaubt)
-        if ($this->role === 'brand' && $this->hasActiveSubscription('brand')) {
-            return $recipient->role === 'influencer';
-        }
+        // Nach Sunset: Cold-Outreach ist für alle Rollen erlaubt (Brand↔Influencer).
+        // Cross-role DMs bleiben frei, gleiche Rollen brauchen weiterhin Follow.
+        if (config('credits.subscriptions_sunset')) {
+            if ($this->role === 'brand' && $recipient->role === 'influencer') return true;
+            if ($this->role === 'influencer' && $recipient->role === 'brand') return true;
+        } else {
+            // Brand mit aktivem Abo → kann Influencer anschreiben (Cold-Outreach erlaubt)
+            if ($this->role === 'brand' && $this->hasActiveSubscription('brand')) {
+                return $recipient->role === 'influencer';
+            }
 
-        // Influencer mit aktivem Abo → kann Brands anschreiben
-        if ($this->role === 'influencer' && $this->hasActiveSubscription('influencer')) {
-            return $recipient->role === 'brand';
+            // Influencer mit aktivem Abo → kann Brands anschreiben
+            if ($this->role === 'influencer' && $this->hasActiveSubscription('influencer')) {
+                return $recipient->role === 'brand';
+            }
         }
 
         // Alle anderen: einseitiges Follow reicht — wenn ich der Person folge,

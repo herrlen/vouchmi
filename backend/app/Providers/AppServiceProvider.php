@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
                 config('services.paypal.brand_plan_id'),
                 config('services.paypal.influencer_plan_id'),
                 config('services.paypal.webhook_id'),
+                config('services.paypal.wallet_webhook_id'),
             );
         });
 

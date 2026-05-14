@@ -10,6 +10,13 @@ class SubscriptionActiveMiddleware
 {
     public function handle(Request $request, Closure $next, ?string $planType = null): Response
     {
+        // Sunset: nach Abo-Sunset sind alle Routen frei zugänglich. Die
+        // Middleware bleibt im Routes-File aktiv, damit Bestandsverhalten
+        // einfach durch Flag-Toggle wiederhergestellt werden kann.
+        if (config('credits.subscriptions_sunset')) {
+            return $next($request);
+        }
+
         $user = $request->user();
 
         if (!$user || !$user->hasActiveSubscription($planType)) {

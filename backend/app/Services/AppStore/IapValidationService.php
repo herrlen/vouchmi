@@ -9,7 +9,10 @@ use App\Exceptions\AppStore\TransactionExpiredException;
 use App\Models\AppStoreTransaction;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\WalletTransaction;
+use App\Services\WalletService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -216,5 +219,147 @@ class IapValidationService
             $influencer => 'influencer',
             default     => null,
         };
+    }
+
+    /**
+     * Validates an Apple Consumable transaction and credits the wallet for it.
+     *
+     * Mirrors validateAndSync() but maps the productId to a credits-package
+     * defined in config/credits.php (cross-referenced via
+     * services.apple_iap.consumable_products).
+     *
+     * Idempotent: replaying the same Apple transactionId returns the existing
+     * wallet transaction without crediting twice.
+     */
+    public function validateAndCredit(User $user, string $transactionId): WalletTransaction
+    {
+        // 1. Pull transaction info from Apple
+        $apiResponse = $this->apiClient->getTransactionInfo($transactionId);
+        $signedTx = $apiResponse['signedTransactionInfo'] ?? null;
+        if (!is_string($signedTx) || $signedTx === '') {
+            throw new InvalidProductException('Apple returned no signedTransactionInfo');
+        }
+
+        $tx = $this->verifier->verifyAndDecode($signedTx);
+
+        // 2. Bundle check
+        $expectedBundle = (string) config('services.apple_iap.bundle_id');
+        if (($tx['bundleId'] ?? null) !== $expectedBundle) {
+            throw new InvalidBundleException('Transaction bundleId does not match');
+        }
+
+        // 3. Map productId → credits package
+        $productId = (string) ($tx['productId'] ?? '');
+        $package   = $this->resolveConsumablePackage($productId);
+        if ($package === null) {
+            throw new InvalidProductException('Unknown consumable product: ' . $productId);
+        }
+
+        // 4. Environment check (same rule as subscriptions)
+        $environment = (string) ($tx['environment'] ?? ($apiResponse['environment'] ?? 'Sandbox'));
+        $configuredEnv = (string) config('services.apple_iap.environment', 'sandbox');
+        if ($configuredEnv === 'production' && $environment !== 'Production') {
+            Log::warning('apple_iap.consumable.environment_mismatch', [
+                'transaction_environment' => $environment,
+                'configured_environment'  => $configuredEnv,
+                'transaction_tail'        => substr($transactionId, -4),
+            ]);
+            throw new InvalidProductException('Transaction environment mismatch');
+        }
+
+        $appleTxId = (string) ($tx['transactionId'] ?? '');
+        if ($appleTxId === '') {
+            throw new InvalidProductException('Transaction has no transactionId');
+        }
+
+        // 5. Anti-replay (different user trying to claim the same tx)
+        $existingTx = WalletTransaction::where('payment_provider', 'apple_iap')
+            ->where('provider_ref', $appleTxId)
+            ->first();
+        if ($existingTx) {
+            $wallet = $existingTx->wallet;
+            if ($wallet && $wallet->user_id !== $user->id) {
+                throw new TransactionAlreadyClaimedException(
+                    'Apple transactionId is already linked to a different user'
+                );
+            }
+            // Same user replaying → return existing tx (idempotency).
+            return $existingTx;
+        }
+
+        $purchasedAt = isset($tx['purchaseDate'])
+            ? Carbon::createFromTimestampMs((int) $tx['purchaseDate'])
+            : now();
+
+        // 6. Audit row + wallet credit inside a single DB transaction.
+        return DB::transaction(function () use ($user, $tx, $appleTxId, $productId, $environment, $purchasedAt, $package) {
+            AppStoreTransaction::updateOrCreate(
+                [
+                    'transaction_id' => $appleTxId,
+                    'environment'    => $environment,
+                ],
+                [
+                    'user_id'                 => $user->id,
+                    'original_transaction_id' => (string) ($tx['originalTransactionId'] ?? $appleTxId),
+                    'product_id'              => $productId,
+                    'bundle_id'               => (string) ($tx['bundleId'] ?? ''),
+                    'purchase_date'           => $purchasedAt,
+                    'expires_date'            => null,
+                    'in_app_ownership_type'   => $tx['inAppOwnershipType'] ?? null,
+                    'web_order_line_item_id'  => $tx['webOrderLineItemId'] ?? null,
+                    'raw_payload'             => $tx,
+                ]
+            );
+
+            $wallets = App::make(WalletService::class);
+            $wallet = $wallets->getOrCreateWallet($user);
+
+            $walletTx = $wallets->credit(
+                walletOrId: $wallet,
+                credits: (int) $package['credits'],
+                idempotencyKey: 'apple-tx:' . $appleTxId,
+                meta: [
+                    'payment_provider'      => 'apple_iap',
+                    'provider_ref'          => $appleTxId,
+                    'currency_amount_cents' => (int) $package['price_cents'],
+                    'currency_code'         => $package['currency'],
+                    'metadata' => [
+                        'package_id'  => $package['id'],
+                        'product_id'  => $productId,
+                        'environment' => $environment,
+                    ],
+                ],
+            );
+
+            Log::info('apple_iap.consumable.credited', [
+                'user_id'         => $user->id,
+                'transaction_tail' => substr($appleTxId, -4),
+                'product_id'      => $productId,
+                'credits'         => $package['credits'],
+                'environment'     => $environment,
+            ]);
+
+            return $walletTx;
+        });
+    }
+
+    /**
+     * Resolve an Apple productId to a credits-package config row.
+     * Returns null when the productId is not registered as a consumable.
+     */
+    private function resolveConsumablePackage(string $productId): ?array
+    {
+        $map = (array) config('services.apple_iap.consumable_products', []);
+        $packageId = $map[$productId] ?? null;
+        if (!$packageId) {
+            return null;
+        }
+
+        foreach ((array) config('credits.packages', []) as $package) {
+            if (($package['id'] ?? null) === $packageId) {
+                return $package;
+            }
+        }
+        return null;
     }
 }

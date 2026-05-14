@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\Post;
 use App\Models\Comment;
+use App\Services\BoostFeedService;
 use App\Services\LinkPreviewService;
 use App\Services\MatomoService;
 use App\Services\SharedLinkService;
@@ -20,6 +21,7 @@ class FeedController extends Controller
         private LinkPreviewService $links,
         private MatomoService $matomo,
         private SharedLinkService $shared,
+        private BoostFeedService $boostFeed,
     ) {}
 
     public function index(string $communityId, Request $request): JsonResponse
@@ -95,6 +97,9 @@ class FeedController extends Controller
             $post->is_bookmarked = in_array($post->id, $myBookmarks);
             return $post;
         });
+
+        // §6 TMG / DSA: posts that are currently boosted must be labelled.
+        $this->boostFeed->decoratePosts($posts->getCollection());
 
         return response()->json($posts);
     }

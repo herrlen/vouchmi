@@ -5,7 +5,10 @@ namespace App\Services\AppStore;
 use App\Models\AppStoreNotification;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\WalletTransaction;
+use App\Services\WalletService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -85,19 +88,29 @@ class NotificationHandler
     private function dispatch(string $type, ?string $subtype, array $tx, ?array $renewal, string $uuid): void
     {
         $originalTxId = (string) ($tx['originalTransactionId'] ?? '');
-        if ($originalTxId === '') {
-            Log::info('apple_iap.notification.no_original_tx', ['type' => $type]);
+        $appleTxId    = (string) ($tx['transactionId'] ?? '');
+        if ($originalTxId === '' && $appleTxId === '') {
+            Log::info('apple_iap.notification.no_tx_ids', ['type' => $type]);
             return;
         }
 
-        $subscription = Subscription::where('apple_original_transaction_id', $originalTxId)
-            ->where('payment_provider', 'apple_iap')
-            ->first();
+        // REFUND can apply to either a subscription OR a consumable credit
+        // purchase. Reverse the matching wallet transaction first, then fall
+        // through so any subscription-side state still gets updated.
+        if ($type === 'REFUND' && $appleTxId !== '') {
+            $this->reverseConsumableRefund($appleTxId, $uuid);
+        }
+
+        $subscription = $originalTxId !== ''
+            ? Subscription::where('apple_original_transaction_id', $originalTxId)
+                ->where('payment_provider', 'apple_iap')
+                ->first()
+            : null;
 
         if (!$subscription) {
             Log::info('apple_iap.notification.unknown_subscription', [
                 'type' => $type,
-                'tail' => substr($originalTxId, -4),
+                'tail' => substr($originalTxId ?: $appleTxId, -4),
             ]);
             return;
         }
@@ -202,6 +215,41 @@ class NotificationHandler
 
             $subscription->forceFill($update)->save();
         });
+    }
+
+    /**
+     * Apple refunded a consumable purchase — claw back the credited credits.
+     * Idempotent: WalletService::reverse() short-circuits when the tx is
+     * already reversed.
+     */
+    private function reverseConsumableRefund(string $appleTxId, string $uuid): void
+    {
+        $walletTx = WalletTransaction::where('payment_provider', 'apple_iap')
+            ->where('provider_ref', $appleTxId)
+            ->first();
+
+        if (!$walletTx) {
+            return; // Not a consumable we know about; subscription path handles it.
+        }
+
+        try {
+            App::make(WalletService::class)->reverse($walletTx, [
+                'reason'            => 'apple_refund',
+                'notification_uuid' => $uuid,
+            ]);
+            Log::info('apple_iap.consumable.refunded', [
+                'wallet_tx_id'      => $walletTx->id,
+                'transaction_tail'  => substr($appleTxId, -4),
+                'notification_uuid' => $uuid,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('apple_iap.consumable.refund_failed', [
+                'wallet_tx_id' => $walletTx->id,
+                'reason'       => $e->getMessage(),
+            ]);
+            // Re-throw so the queue retries — partial state is worse than retry.
+            throw $e;
+        }
     }
 
     /**

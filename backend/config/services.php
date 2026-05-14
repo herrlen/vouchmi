@@ -68,7 +68,8 @@ return [
         'plan_id'            => env('PAYPAL_PLAN_ID'),               // Legacy 0,99 € (Bestandskunden)
         'brand_plan_id'      => env('PAYPAL_PLAN_ID_BRAND'),         // 1,99 €/Monat
         'influencer_plan_id' => env('PAYPAL_PLAN_ID_INFLUENCER'),    // 0,99 €/Monat
-        'webhook_id'         => env('PAYPAL_WEBHOOK_ID'),
+        'webhook_id'         => env('PAYPAL_WEBHOOK_ID'),            // Subscription-Webhook
+        'wallet_webhook_id'  => env('PAYPAL_WALLET_WEBHOOK_ID'),     // Wallet-Topup-Webhook (Orders v2)
     ],
 
     'apple_iap' => [
@@ -81,6 +82,15 @@ return [
         'products'         => [
             'brand_monthly'      => env('APPLE_IAP_PRODUCT_ID_BRAND_MONTHLY', 'com.vouchmi.app.brand.monthly'),
             'influencer_monthly' => env('APPLE_IAP_PRODUCT_ID_INFLUENCER_MONTHLY', 'com.vouchmi.app.influencer.monthly'),
+        ],
+        // Map of consumable-product-id → credits-package-id (defined in config/credits.php).
+        // App Store Connect must expose these as type=Consumable.
+        // Note: .1500.v2 instead of .1500 because Apple locks deleted product IDs for 90 days.
+        'consumable_products' => [
+            env('APPLE_IAP_PRODUCT_ID_CREDITS_500',   'com.vouchmi.credits.500')      => 'pkg_500',
+            env('APPLE_IAP_PRODUCT_ID_CREDITS_1500',  'com.vouchmi.credits.1500.v2')  => 'pkg_1500',
+            env('APPLE_IAP_PRODUCT_ID_CREDITS_5000',  'com.vouchmi.credits.5000')     => 'pkg_5000',
+            env('APPLE_IAP_PRODUCT_ID_CREDITS_15000', 'com.vouchmi.credits.15000')    => 'pkg_15000',
         ],
     ],
 

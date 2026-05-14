@@ -7,6 +7,12 @@
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\V1\AppStoreNotificationsController;
 use App\Http\Controllers\Api\V1\IapValidationController;
+use App\Http\Controllers\Api\V1\BoostController;
+use App\Http\Controllers\Api\V1\CreditsAdminController;
+use App\Http\Controllers\Api\V1\CreditsHealthController;
+use App\Http\Controllers\Api\V1\PromotedFeedController;
+use App\Http\Controllers\Api\V1\WalletController;
+use App\Http\Controllers\Api\V1\WalletWebhookController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\FeedController;
@@ -40,6 +46,23 @@ Route::get('/legal/imprint', [LegalController::class, 'imprint']);
 
 // ── PayPal Webhook (öffentlich, von PayPal aufgerufen) ──
 Route::post('/webhooks/paypal', [BrandController::class, 'webhook']);
+
+// ── PayPal Wallet-Topup Webhook (öffentlich, Capture/Dispute/Refund Events) ──
+Route::post('/v1/webhooks/paypal/wallet', [WalletWebhookController::class, 'handle']);
+
+// ── Wallet-Pakete (öffentlich — Marketing/Pricing-Seite kann sie lesen) ──
+Route::get('/v1/wallet/packages', [WalletController::class, 'packages']);
+
+// ── Internes Monitoring (Bearer-Token, kein Sanctum) ──
+Route::get('/internal/credits/health', [CreditsHealthController::class, 'show'])
+    ->middleware('throttle:60,1');
+
+// ── Internes Admin-Backoffice (Bearer-Token, kein Sanctum) ──
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/internal/credits/admin/wallets/{userId}', [CreditsAdminController::class, 'showWallet']);
+    Route::post('/internal/credits/admin/adjust', [CreditsAdminController::class, 'adjust']);
+    Route::post('/internal/credits/admin/reverse', [CreditsAdminController::class, 'reverse']);
+});
 
 // ── Apple App Store Server Notifications V2 (öffentlich, von Apple aufgerufen) ──
 Route::post('/v1/iap/notifications', [AppStoreNotificationsController::class, 'handle']);
@@ -185,6 +208,23 @@ Route::middleware('auth:sanctum')->group(function () {
     // Apple IAP — Receipt-Validierung (authentifiziert, rate-limited)
     Route::post('/v1/iap/validate', [IapValidationController::class, 'validate'])
         ->middleware('throttle:10,1');
+
+    // Wallet (Credits) — Balance, Transaktionen, Topup über PayPal
+    Route::get('/v1/wallet', [WalletController::class, 'show']);
+    Route::post('/v1/wallet/topup/paypal/create-order', [WalletController::class, 'createPaypalOrder']);
+    Route::post('/v1/wallet/topup/paypal/capture', [WalletController::class, 'capturePaypalOrder']);
+    Route::post('/v1/wallet/topup/apple/validate', [WalletController::class, 'validateAppleTopup'])
+        ->middleware('throttle:10,1');
+
+    // Boosts (Empfehlungen bewerben)
+    Route::get('/v1/boosts/mine', [BoostController::class, 'mine']);
+    Route::get('/v1/posts/{post}/boost', [BoostController::class, 'show']);
+    Route::post('/v1/posts/{post}/boost', [BoostController::class, 'store']);
+    Route::delete('/v1/posts/{post}/boost', [BoostController::class, 'destroy']);
+
+    // Promoted / Discover (boosted Posts)
+    Route::get('/v1/feed/promoted', [PromotedFeedController::class, 'forViewer']);
+    Route::get('/v1/discover/boosted', [PromotedFeedController::class, 'discover']);
 
     // Subscription-Status (generisch für beide Plan-Typen)
     Route::get('/subscription/status', function (\Illuminate\Http\Request $request) {
