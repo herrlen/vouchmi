@@ -33,7 +33,7 @@ const brandNav: NavItem[] = [
   { href: "/brand/campaigns", label: "Drops", icon: Megaphone },
   { href: "/brand/seeding", label: "Seeding", icon: Send },
   { href: "/brand/products", label: "Produkte", icon: Box },
-  { href: "/brand/wallet", label: "Wallet", icon: Coins },
+  { href: "/wallet", label: "Wallet", icon: Coins },
   { href: "/brand/boosts", label: "Boosts", icon: Rocket },
 ];
 
@@ -41,6 +41,7 @@ const userNav: NavItem[] = [
   { href: "/user", label: "Feed", icon: Sparkles },
   { href: "/user/communities", label: "Communities", icon: Compass },
   { href: "/user/bookmarks", label: "Bookmarks", icon: Bookmark },
+  { href: "/wallet", label: "Wallet", icon: Coins },
   { href: "/user/profile", label: "Profil", icon: User },
 ];
 
@@ -49,6 +50,7 @@ const influencerNav: NavItem[] = [
   { href: "/influencer/recommendations", label: "Empfehlungen", icon: MessageSquare },
   { href: "/influencer/stats", label: "Stats", icon: BarChart3 },
   { href: "/influencer/requests", label: "Anfragen", icon: Inbox },
+  { href: "/wallet", label: "Wallet", icon: Coins },
   { href: "/influencer/profile", label: "Profil", icon: User },
 ];
 
