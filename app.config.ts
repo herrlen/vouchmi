@@ -89,5 +89,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     API_URL: process.env.EXPO_PUBLIC_API_URL ?? "https://api.vouchmi.com/api",
+    eas: {
+      projectId: "74e6b071-e2e6-46fc-bdfe-889f100f629d",
+    },
   },
+  owner: "herrlen",
 });
