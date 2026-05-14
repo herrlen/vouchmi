@@ -46,7 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   experiments: { typedRoutes: true },
   ios: {
     bundleIdentifier: "com.vouchmi.app",
-    buildNumber: "8",
+    // buildNumber wird remote via EAS verwaltet (eas.json: appVersionSource: "remote").
     supportsTablet: true,
     associatedDomains: ["applinks:app.vouchmi.com"],
     entitlements: {
