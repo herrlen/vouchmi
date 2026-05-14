@@ -341,7 +341,7 @@
     <li><a href="#datenarten">Datenarten &amp; Zwecke</a></li>
     <li><a href="#rechtsgrundlagen">Rechtsgrundlagen</a></li>
     <li><a href="#whatsapp">WhatsApp-Verifizierung</a></li>
-    <li><a href="#paypal">PayPal (Brand-Abo)</a></li>
+    <li><a href="#paypal">PayPal & Apple In-App-Purchase</a></li>
     <li><a href="#affiliate">Affiliate-Links</a></li>
     <li><a href="#apple">Apple &amp; Google Stores</a></li>
     <li><a href="#hosting">Hosting</a></li>
@@ -407,7 +407,9 @@
       <tr><td>Passwort</td><td>Authentifizierung. Wir speichern nur einen Hash (bcrypt), nie im Klartext.</td></tr>
       <tr><td>Telefonnummer</td><td>Zwei-Faktor-Verifizierung per WhatsApp (nur Influencer)</td></tr>
       <tr><td>Firmenname</td><td>Anzeige des Unternehmens-Profils (nur Brand)</td></tr>
-      <tr><td>PayPal-E-Mail</td><td>Zuordnung des Brand-Abos zum Account (nur Brand)</td></tr>
+      <tr><td>PayPal-E-Mail</td><td>Zuordnung von Topup-Aufladungen zum Account (bei Web-/Android-Zahlung)</td></tr>
+      <tr><td>Apple Transaction-ID</td><td>Zuordnung von Topup-Aufladungen und Refund-Erkennung (bei iOS-Zahlung)</td></tr>
+      <tr><td>Vouchmi-Credits-Saldo</td><td>Anzeige des aktuellen Guthabens und Boost-Buchungen</td></tr>
       <tr><td>User-UUID</td><td>Interne eindeutige Zuordnung aller zum Account gehörenden Inhalte</td></tr>
     </tbody>
   </table>
@@ -473,17 +475,19 @@
 
 <section id="paypal">
   <span class="section-number">06 / 15</span>
-  <h2>PayPal-Zahlungen (Brand-Abo)</h2>
-  <p>Brand-Accounts zahlen 1,99 €/Monat, Influencer-Accounts 0,99 €/Monat per PayPal. Die Zahlungsabwicklung erfolgt vollständig bei:</p>
+  <h2>Zahlungen (PayPal & Apple In-App-Purchase)</h2>
+  <p>Vouchmi erhebt für die Grundnutzung keine Gebühren. Optional können Nutzer:innen <strong>Vouchmi Credits</strong> aufladen, um eigene Empfehlungen zu bewerben. Die Zahlungsabwicklung erfolgt ausschließlich über externe Dienstleister:</p>
   <div class="info-box">
-    <p><strong>PayPal (Europe) S.à r.l. et Cie, S.C.A.</strong><br>22-24 Boulevard Royal, L-2449 Luxembourg<br>Datenschutzerklärung: <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener">paypal.com/de/privacy</a></p>
+    <p><strong>PayPal (Europe) S.à r.l. et Cie, S.C.A.</strong> (Web & Android)<br>22-24 Boulevard Royal, L-2449 Luxembourg<br>Datenschutzerklärung: <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener">paypal.com/de/privacy</a></p>
+    <p style="margin-top:12px"><strong>Apple Distribution International Ltd.</strong> (iOS-App, In-App-Purchase)<br>Hollyhill Industrial Estate, Hollyhill, Cork, T23 YK84, Ireland<br>Datenschutzerklärung: <a href="https://www.apple.com/legal/privacy/de-ww/" target="_blank" rel="noopener">apple.com/legal/privacy</a></p>
   </div>
   <ul>
     <li>Wir <strong>speichern keine Zahlungsdaten</strong> (keine Kreditkartennummern, keine Bankverbindungen).</li>
-    <li>Wir speichern ausschließlich deine PayPal-E-Mail sowie die PayPal-Abo-ID.</li>
-    <li>Der Status deines Abos wird via PayPal-Webhook an uns zurückgemeldet.</li>
+    <li>Wir speichern lediglich die <strong>Transaktions-ID</strong> (PayPal Capture-ID bzw. Apple Transaction-ID) und den zugehörigen Betrag, um Aufladungen sauber zu deinem Konto zuzuordnen und Refunds verarbeiten zu können.</li>
+    <li>Bei Bestandsabos werden zusätzlich die PayPal-Abo-ID bzw. Apple Original-Transaction-ID gespeichert, bis das jeweilige Abo ausgelaufen ist.</li>
+    <li>Der Status einer Zahlung wird via Webhook (PayPal) bzw. App Store Server Notifications V2 (Apple) zurückgemeldet — z.B. um Refunds automatisch zu erkennen und Credits zurückzubuchen.</li>
   </ul>
-  <p>Rechtsgrundlage: <span class="tag">Art. 6 Abs. 1 lit. b DSGVO</span> in Verbindung mit <span class="tag">Art. 6 Abs. 1 lit. c DSGVO</span>.</p>
+  <p>Rechtsgrundlage: <span class="tag">Art. 6 Abs. 1 lit. b DSGVO</span> (Vertragserfüllung) in Verbindung mit <span class="tag">Art. 6 Abs. 1 lit. c DSGVO</span> (steuerrechtliche Aufbewahrungspflichten gem. § 147 AO).</p>
 </section>
 
 <section id="affiliate">
@@ -528,7 +532,7 @@
       <tr><td>Nach Account-Löschung</td><td>30 Tage Kulanz-Frist, dann vollständige Löschung</td></tr>
       <tr><td>Empfehlungen &amp; Inhalte</td><td>Bis zur Löschung durch dich oder bei Account-Löschung</td></tr>
       <tr><td>OTP-Codes</td><td>5 Minuten, dann automatische Löschung</td></tr>
-      <tr><td>PayPal-Rechnungsdaten</td><td>10 Jahre nach §147 AO</td></tr>
+      <tr><td>Zahlungs-/Credits-Transaktionen (PayPal & Apple)</td><td>10 Jahre nach §147 AO</td></tr>
       <tr><td>Server-Log-IP-Adressen</td><td>7 Tage</td></tr>
       <tr><td>Crash- &amp; Performance-Logs</td><td>90 Tage, anonym</td></tr>
     </tbody>
@@ -541,7 +545,8 @@
   <ul>
     <li><strong>Hosting-Anbieter</strong> (Mittwald CM Service) — technische Infrastruktur</li>
     <li><strong>Meta Platforms Ireland Ltd.</strong> — WhatsApp-2FA (nur Influencer)</li>
-    <li><strong>PayPal (Europe) S.à r.l.</strong> — Zahlungsabwicklung (nur Brands)</li>
+    <li><strong>PayPal (Europe) S.à r.l.</strong> — Zahlungsabwicklung für Credit-Topups (Web & Android) sowie Bestandsabos</li>
+    <li><strong>Apple Distribution International Ltd.</strong> — Zahlungsabwicklung für In-App-Purchases (iOS-App)</li>
     <li><strong>Apple Inc. / Google LLC</strong> — App-Store-Distribution</li>
   </ul>
   <p><strong>Wir verkaufen deine Daten nicht.</strong> Wir geben sie nicht an Werbetreibende, Data Broker oder Analytik-Dienstleister weiter.</p>
