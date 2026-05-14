@@ -26,6 +26,7 @@ class Boost extends Model
         'tier',
         'credits_spent',
         'multiplier',
+        'target_community_ids',
         'starts_at',
         'ends_at',
         'status',
@@ -35,12 +36,13 @@ class Boost extends Model
     ];
 
     protected $casts = [
-        'credits_spent'     => 'integer',
-        'multiplier'        => 'integer',
-        'starts_at'         => 'datetime',
-        'ends_at'           => 'datetime',
-        'stats_impressions' => 'integer',
-        'stats_clicks'      => 'integer',
+        'credits_spent'        => 'integer',
+        'multiplier'           => 'integer',
+        'target_community_ids' => 'array',
+        'starts_at'            => 'datetime',
+        'ends_at'              => 'datetime',
+        'stats_impressions'    => 'integer',
+        'stats_clicks'         => 'integer',
     ];
 
     public function user()

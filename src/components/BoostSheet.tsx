@@ -16,9 +16,16 @@ import {
   View,
 } from "react-native";
 import { router } from "expo-router";
-import { Coins, Rocket, X } from "lucide-react-native";
+import { Check, Coins, Rocket, Users, X } from "lucide-react-native";
 import { colors } from "../constants/theme";
-import { boost as boostApi, wallet as walletApi, type Boost, type BoostTier } from "../lib/api";
+import {
+  boost as boostApi,
+  communities as communitiesApi,
+  wallet as walletApi,
+  type Boost,
+  type BoostTier,
+  type Community,
+} from "../lib/api";
 
 type Props = {
   visible: boolean;
@@ -74,6 +81,11 @@ const TIERS: TierDef[] = [
 export default function BoostSheet({ visible, postId, onClose, onSuccess }: Props) {
   const [balance, setBalance] = useState<number | null>(null);
   const [busyTier, setBusyTier] = useState<BoostTier | null>(null);
+  const [myCommunities, setMyCommunities] = useState<Community[]>([]);
+  // null = an alle natürlich erreichbaren User (Follower + alle gemeinsamen Communities + Discover bei Pro/Brand-Push).
+  // [] = an niemanden (sinnlos, daher disabled).
+  // [ids] = nur an Mitglieder dieser Communities (+ Follower bleiben sowieso erreicht).
+  const [selectedCommunityIds, setSelectedCommunityIds] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -81,7 +93,30 @@ export default function BoostSheet({ visible, postId, onClose, onSuccess }: Prop
       .show()
       .then((s) => setBalance(s.wallet.balance_credits))
       .catch(() => setBalance(null));
+    communitiesApi
+      .mine()
+      .then((r) => setMyCommunities(r.communities ?? []))
+      .catch(() => setMyCommunities([]));
+    setSelectedCommunityIds(null); // reset jedes Mal beim Öffnen
   }, [visible]);
+
+  function toggleCommunity(id: string) {
+    setSelectedCommunityIds((curr) => {
+      if (curr === null) {
+        // Vorher "alle", jetzt User schränkt ein → starte mit dieser Community
+        return [id];
+      }
+      if (curr.includes(id)) {
+        const next = curr.filter((c) => c !== id);
+        return next.length === 0 ? null : next;
+      }
+      return [...curr, id];
+    });
+  }
+
+  function resetToAll() {
+    setSelectedCommunityIds(null);
+  }
 
   async function handleBoost(tier: TierDef) {
     if (balance !== null && balance < tier.credits) {
@@ -105,7 +140,12 @@ export default function BoostSheet({ visible, postId, onClose, onSuccess }: Prop
     setBusyTier(tier.id);
     try {
       const idempotencyKey = `${postId}-${tier.id}-${Date.now()}`;
-      const result = await boostApi.create(postId, tier.id, idempotencyKey);
+      const result = await boostApi.create(
+        postId,
+        tier.id,
+        idempotencyKey,
+        selectedCommunityIds ?? undefined,
+      );
       onSuccess?.(result.boost);
       onClose();
       Alert.alert("Boost aktiv", `${tier.title} läuft jetzt für ${tier.durationLabel}.`);
@@ -147,7 +187,43 @@ export default function BoostSheet({ visible, postId, onClose, onSuccess }: Prop
           </Text>
         </View>
 
-        <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={{ paddingBottom: 24 }}>
+        {myCommunities.length > 0 ? (
+          <View style={s.targetSection}>
+            <View style={s.targetHeader}>
+              <Users size={14} color={colors.gray} />
+              <Text style={s.targetTitle}>Reichweite</Text>
+              {selectedCommunityIds !== null ? (
+                <Pressable onPress={resetToAll} hitSlop={8}>
+                  <Text style={s.targetReset}>Alle</Text>
+                </Pressable>
+              ) : null}
+            </View>
+            <Text style={s.targetHint}>
+              {selectedCommunityIds === null
+                ? "Standard: Follower + alle deine Communities. Du kannst Communities auswählen, um den Boost gezielter auszuspielen."
+                : `Nur Mitglieder von ${selectedCommunityIds.length} ${selectedCommunityIds.length === 1 ? "Community" : "Communities"} (+ Follower)`}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipRow}>
+              {myCommunities.map((c) => {
+                const isSelected = selectedCommunityIds?.includes(c.id) ?? false;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => toggleCommunity(c.id)}
+                    style={[s.chip, isSelected && s.chipSelected]}
+                  >
+                    {isSelected ? <Check size={12} color={colors.bg} /> : null}
+                    <Text style={[s.chipText, isSelected && s.chipTextSelected]} numberOfLines={1}>
+                      {c.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        ) : null}
+
+        <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ paddingBottom: 24 }}>
           {TIERS.map((t) => {
             const insufficient = balance !== null && balance < t.credits;
             const busy = busyTier === t.id;
@@ -259,4 +335,24 @@ const s = StyleSheet.create({
   tierCreditsLabel: { color: colors.gray, fontSize: 10 },
 
   footnote: { color: colors.grayDark, fontSize: 11, marginTop: 8, lineHeight: 16 },
+
+  targetSection: { marginBottom: 12 },
+  targetHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  targetTitle: { color: colors.white, fontSize: 13, fontWeight: "600", flex: 1 },
+  targetReset: { color: colors.accent, fontSize: 12, fontWeight: "600" },
+  targetHint: { color: colors.gray, fontSize: 11, lineHeight: 15, marginBottom: 8 },
+  chipRow: { gap: 6, paddingVertical: 2 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.bgCard,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    maxWidth: 140,
+  },
+  chipSelected: { backgroundColor: colors.accent },
+  chipText: { color: colors.white, fontSize: 12 },
+  chipTextSelected: { color: colors.bg, fontWeight: "700" },
 });

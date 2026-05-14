@@ -182,6 +182,7 @@ export const feed = {
   bookmark: (pid: string) => api.post<{ bookmarked: boolean }>(`/feed/${pid}/bookmark`),
   bookmarks: () => api.get<{ data: Post[] }>("/user/bookmarks"),
   myReposts: () => api.get<{ data: Post[] }>("/user/reposts"),
+  delete: (pid: string) => api.del<{ message: string }>(`/feed/${pid}`),
 };
 
 export const chat = {
@@ -459,10 +460,11 @@ export type Boost = {
 
 export const boost = {
   show: (postId: string) => api.get<{ boost: Boost | null }>(`/v1/posts/${postId}/boost`),
-  create: (postId: string, tier: BoostTier, idempotencyKey?: string) =>
+  create: (postId: string, tier: BoostTier, idempotencyKey?: string, targetCommunityIds?: string[]) =>
     api.post<{ boost: Boost }>(`/v1/posts/${postId}/boost`, {
       tier,
       idempotency_key: idempotencyKey,
+      target_community_ids: targetCommunityIds ?? null,
     }),
   cancel: (postId: string) =>
     api.del<{ boost: Boost; refunded: boolean }>(`/v1/posts/${postId}/boost`),

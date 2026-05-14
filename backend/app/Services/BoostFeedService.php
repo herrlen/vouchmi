@@ -41,16 +41,37 @@ class BoostFeedService
         array $blockedAuthorIds = [],
         int $limit = 5,
     ): Collection {
+        // Pull active boosts with their target_community_ids — we filter
+        // out boosts whose target list excludes every community the viewer
+        // is a member of.
         $boosts = Boost::active()
             ->orderByDesc('multiplier')
             ->orderByDesc('starts_at')
-            ->get(['post_id', 'multiplier']);
+            ->get(['post_id', 'multiplier', 'target_community_ids']);
 
         if ($boosts->isEmpty()) {
             return new Collection();
         }
 
-        $orderedPostIds = $boosts->pluck('post_id');
+        $memberCommunityIdsSet = array_flip($memberCommunityIds);
+        $eligibleBoosts = $boosts->filter(function (Boost $b) use ($memberCommunityIdsSet) {
+            $targets = $b->target_community_ids;
+            if (empty($targets)) {
+                return true; // no targeting → reach everyone naturally reachable
+            }
+            foreach ($targets as $cid) {
+                if (isset($memberCommunityIdsSet[$cid])) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        if ($eligibleBoosts->isEmpty()) {
+            return new Collection();
+        }
+
+        $orderedPostIds = $eligibleBoosts->pluck('post_id');
 
         $posts = Post::query()
             ->whereIn('id', $orderedPostIds)

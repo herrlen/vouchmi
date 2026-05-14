@@ -29,11 +29,17 @@ class BoostService
      * @throws InsufficientCreditsException    Not enough credits.
      * @throws RuntimeException                Post already has an active boost.
      */
+    /**
+     * @param string[]|null $targetCommunityIds Optional: nur an Mitglieder dieser
+     *                                          Communities ausspielen. NULL = alle
+     *                                          natürlich erreichbaren User (Default).
+     */
     public function boost(
         User $user,
         Post $post,
         string $tier,
         ?string $idempotencyKey = null,
+        ?array $targetCommunityIds = null,
     ): Boost {
         $config = config("credits.boosts.$tier");
         if (!$config) {
@@ -64,7 +70,7 @@ class BoostService
         $multiplier = (int) $config['multiplier'];
         $durationMinutes = (int) $config['duration_minutes'];
 
-        $boost = DB::transaction(function () use ($user, $post, $tier, $credits, $multiplier, $durationMinutes, $idempotencyKey) {
+        $boost = DB::transaction(function () use ($user, $post, $tier, $credits, $multiplier, $durationMinutes, $idempotencyKey, $targetCommunityIds) {
             $wallet = $this->wallets->getOrCreateWallet($user);
 
             $tx = $this->wallets->debit(
@@ -88,6 +94,7 @@ class BoostService
                 'tier'                 => $tier,
                 'credits_spent'        => $credits,
                 'multiplier'           => $multiplier,
+                'target_community_ids' => $targetCommunityIds ?: null,
                 'starts_at'            => $now,
                 'ends_at'              => $now->copy()->addMinutes($durationMinutes),
                 'status'               => Boost::STATUS_ACTIVE,

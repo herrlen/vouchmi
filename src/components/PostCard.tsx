@@ -7,7 +7,7 @@ import { colors } from "../constants/theme";
 import LinkEmbed from "./LinkEmbed";
 import CreatorBadge from "./CreatorBadge";
 import BoostSheet from "./BoostSheet";
-import { boost as boostApi, moderation, isCreator, type Post } from "../lib/api";
+import { boost as boostApi, feed, moderation, isCreator, type Post } from "../lib/api";
 import { useAuth } from "../lib/store";
 
 type Props = { post: Post; onLike: (id: string) => void; onPress?: () => void; onHide?: (id: string) => void };
@@ -29,33 +29,57 @@ export default function PostCard({ post, onLike, onPress, onHide }: Props) {
 
   const openMenu = () => {
     const ownOptions = promoted
-      ? ["Weiterleiten", "Boost abbrechen", "Abbrechen"]
-      : ["Weiterleiten", "Empfehlung bewerben", "Abbrechen"];
+      ? ["Weiterleiten", "Boost abbrechen", "Post löschen", "Abbrechen"]
+      : ["Weiterleiten", "Empfehlung bewerben", "Post löschen", "Abbrechen"];
     const options = isOwn
       ? ownOptions
       : ["Weiterleiten", "Post melden", "Nutzer blockieren", "Abbrechen"];
     const cancelIdx = options.length - 1;
+    const destructiveIdx = isOwn ? options.length - 2 : 1; // "Post löschen" (own) or "Post melden" (other)
 
     const handle = (idx: number) => {
       if (idx === 0) shareLink();
       else if (isOwn && idx === 1 && promoted) cancelBoost();
       else if (isOwn && idx === 1 && !promoted) setBoostSheetOpen(true);
+      else if (isOwn && idx === 2) deletePost();
       else if (!isOwn && idx === 1) reportPost();
       else if (!isOwn && idx === 2) blockUser();
     };
 
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
-        { options, cancelButtonIndex: cancelIdx, destructiveButtonIndex: !isOwn ? 1 : undefined },
+        { options, cancelButtonIndex: cancelIdx, destructiveButtonIndex: destructiveIdx },
         handle,
       );
     } else {
       Alert.alert("Aktionen", undefined, options.map((o, i) => ({
         text: o,
-        style: i === cancelIdx ? "cancel" : i === 1 && !isOwn ? "destructive" : "default",
+        style: i === cancelIdx ? "cancel" : i === destructiveIdx ? "destructive" : "default",
         onPress: () => handle(i),
       })));
     }
+  };
+
+  const deletePost = () => {
+    Alert.alert(
+      "Post löschen?",
+      "Dieser Post wird unwiderruflich gelöscht — inklusive Kommentare, Likes und Reposts.",
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Löschen",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await feed.delete(post.id);
+              onHide?.(post.id);
+            } catch (e: any) {
+              Alert.alert("Fehler", e?.message ?? "Konnte Post nicht löschen.");
+            }
+          },
+        },
+      ],
+    );
   };
 
   const cancelBoost = async () => {

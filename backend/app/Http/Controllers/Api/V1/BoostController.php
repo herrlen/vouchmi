@@ -33,9 +33,14 @@ class BoostController extends Controller
 
         $tier = (string) $request->input('tier', '');
         $idempotencyKey = $request->input('idempotency_key');
+        $targetCommunityIds = $request->input('target_community_ids'); // null or array of UUIDs
+
+        if ($targetCommunityIds !== null && !is_array($targetCommunityIds)) {
+            return response()->json(['error' => 'invalid_target_community_ids'], 422);
+        }
 
         try {
-            $boost = $this->boosts->boost($user, $post, $tier, $idempotencyKey);
+            $boost = $this->boosts->boost($user, $post, $tier, $idempotencyKey, $targetCommunityIds);
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => 'invalid_tier', 'message' => $e->getMessage()], 422);
         } catch (InsufficientCreditsException $e) {
