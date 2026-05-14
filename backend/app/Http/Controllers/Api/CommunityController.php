@@ -31,6 +31,7 @@ class CommunityController extends Controller
     public function discover(Request $request): JsonResponse
     {
         $meId = $request->user()->id;
+        $sort = (string) $request->query('sort', 'followers');
 
         $myIds = DB::table('community_members')
             ->where('user_id', $meId)
@@ -39,12 +40,29 @@ class CommunityController extends Controller
             ->where('user_id', $meId)
             ->pluck('community_id');
 
-        $communities = Community::where('is_private', false)
-            ->orderByDesc('member_count')
-            ->limit(50)
+        $query = Community::where('is_private', false)->withCount('followers');
+
+        switch ($sort) {
+            case 'new':
+                $query->orderByDesc('created_at');
+                break;
+            case 'random':
+                $query->inRandomOrder();
+                break;
+            case 'followers':
+            default:
+                // Primary: most followers. Tiebreaker: most members (so a
+                // brand-new community with 0 followers but 5 members ranks
+                // above an empty one).
+                $query->orderByDesc('followers_count')->orderByDesc('member_count');
+                break;
+        }
+
+        $communities = $query->limit(50)
             ->get(['id', 'name', 'slug', 'description', 'image_url', 'category', 'member_count'])
             ->map(fn ($c) => [
                 ...$c->only('id', 'name', 'slug', 'description', 'image_url', 'category', 'member_count'),
+                'follower_count' => (int) ($c->followers_count ?? 0),
                 'is_member' => $myIds->contains($c->id),
                 'is_followed' => $followedIds->contains($c->id),
             ]);
