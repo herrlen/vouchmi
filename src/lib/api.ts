@@ -382,6 +382,94 @@ export const subscription = {
     api.post<AppleIapValidationResult>("/v1/iap/validate", d),
 };
 
+// ── Wallet (Credits) ──
+export type WalletPackage = {
+  id: string;
+  credits: number;
+  price_cents: number;
+  currency: string;
+  apple_product: string;
+  label_key: string;
+};
+
+export type WalletTransaction = {
+  id: string;
+  type: "topup" | "boost_spend" | "refund" | "admin_adjust" | "migration_bonus" | "reversal";
+  credits_delta: number;
+  amount_cents: number | null;
+  currency: string | null;
+  provider: "paypal" | "apple_iap" | "admin" | "system" | null;
+  status: "pending" | "completed" | "failed" | "reversed";
+  created_at: string;
+};
+
+export type WalletState = {
+  wallet: { id: string; balance_credits: number; currency: string };
+  transactions: WalletTransaction[];
+};
+
+export type PaypalOrder = {
+  order_id: string;
+  approval_url: string;
+  status: string;
+  package: WalletPackage;
+  reference_id: string;
+};
+
+export type AppleTopupResult = {
+  ok: boolean;
+  transaction_id: string;
+  credits: number;
+  balance: number;
+};
+
+export const wallet = {
+  show: () => api.get<WalletState>("/v1/wallet"),
+  packages: () => api.get<{ enabled: boolean; packages: WalletPackage[] }>("/v1/wallet/packages"),
+  createPaypalOrder: (packageId: string, waiverAccepted: boolean) =>
+    api.post<PaypalOrder>("/v1/wallet/topup/paypal/create-order", {
+      package_id: packageId,
+      waiver_accepted: waiverAccepted,
+    }),
+  capturePaypalOrder: (orderId: string, packageId: string) =>
+    api.post<{ ok: boolean; transaction_id: string; balance: number }>(
+      "/v1/wallet/topup/paypal/capture",
+      { order_id: orderId, package_id: packageId },
+    ),
+  validateAppleTopup: (transactionId: string) =>
+    api.post<AppleTopupResult>("/v1/wallet/topup/apple/validate", { transaction_id: transactionId }),
+};
+
+// ── Boosts ──
+export type BoostTier = "mini" | "standard" | "pro" | "brand_push";
+export type BoostStatus = "active" | "expired" | "refunded" | "cancelled";
+
+export type Boost = {
+  id: string;
+  post_id: string;
+  tier: BoostTier;
+  multiplier: number;
+  credits_spent: number;
+  status: BoostStatus;
+  starts_at: string | null;
+  ends_at: string | null;
+  impressions: number;
+  clicks: number;
+};
+
+export const boost = {
+  show: (postId: string) => api.get<{ boost: Boost | null }>(`/v1/posts/${postId}/boost`),
+  create: (postId: string, tier: BoostTier, idempotencyKey?: string) =>
+    api.post<{ boost: Boost }>(`/v1/posts/${postId}/boost`, {
+      tier,
+      idempotency_key: idempotencyKey,
+    }),
+  cancel: (postId: string) =>
+    api.del<{ boost: Boost; refunded: boolean }>(`/v1/posts/${postId}/boost`),
+  promotedFeed: () => api.get<{ posts: Post[] }>("/v1/feed/promoted"),
+  discover: () => api.get<{ posts: Post[] }>("/v1/discover/boosted"),
+};
+
 // Influencer Analytics
 export type AnalyticsOverview = {
   clicks: { total: number; '7d': number; '30d': number };
@@ -473,7 +561,7 @@ export const drops = {
 export type User = { id: string; email: string; username: string; display_name: string | null; avatar_url: string | null; role: string; email_verified_at?: string | null; phone_verified_at?: string | null };
 export type Community = { id: string; name: string; slug: string; description: string | null; image_url: string | null; category: string | null; tags?: string[] | null; member_count: number; follower_count?: number; is_followed?: boolean; is_private: boolean; role?: string; is_member?: boolean; my_role?: string; owner_id?: string };
 export type CommunityMember = { id: string; username: string; display_name: string | null; avatar_url: string | null; role: string; muted_until?: string | null };
-export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; repost_count: number; click_count: number; is_liked?: boolean; is_reposted?: boolean; is_bookmarked?: boolean; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null; role?: string; tier?: string; tier_badge_opacity?: number }; community?: { id: string; name: string; slug: string } | null };
+export type Post = { id: string; community_id: string; content: string; post_type: string; link_url: string | null; link_affiliate_url: string | null; link_title: string | null; link_image: string | null; link_price: number | null; link_domain: string | null; like_count: number; comment_count: number; repost_count: number; click_count: number; is_liked?: boolean; is_reposted?: boolean; is_bookmarked?: boolean; is_promoted?: boolean; boost_multiplier?: number; boost_tier?: BoostTier | null; created_at: string; author: { id: string; username: string; display_name: string; avatar_url: string | null; role?: string; tier?: string; tier_badge_opacity?: number }; community?: { id: string; name: string; slug: string } | null };
 export type Comment = { id: string; content: string; created_at: string; parent_id?: string | null; like_count?: number; is_liked?: boolean; replies?: Comment[]; author: { id: string; username: string; display_name: string; avatar_url: string | null; role?: string; tier?: string } };
 
 /** Helper: Check if a user object represents a verified creator */

@@ -16,7 +16,19 @@ export const IAP_PRODUCTS = {
   brand: "com.vouchmi.app.brand.monthly",
 } as const;
 
+// Consumable credit packages. Must mirror config/credits.php on the backend
+// AND the products defined in App Store Connect.
+// Note: .1500.v2 — Apple locks deleted product IDs for 90 days, so the
+// 1500-pack got re-created with a suffixed ID.
+export const IAP_CREDIT_PACKAGES: Record<string, string> = {
+  pkg_500:   "com.vouchmi.credits.500",
+  pkg_1500:  "com.vouchmi.credits.1500.v2",
+  pkg_5000:  "com.vouchmi.credits.5000",
+  pkg_15000: "com.vouchmi.credits.15000",
+};
+
 const SKU_LIST = [IAP_PRODUCTS.influencer, IAP_PRODUCTS.brand];
+const CONSUMABLE_SKUS = Object.values(IAP_CREDIT_PACKAGES);
 
 export type IapPlanType = keyof typeof IAP_PRODUCTS;
 
@@ -122,6 +134,54 @@ export async function iapFinish(purchase: any): Promise<void> {
   const iap = getIap();
   if (!iap) return;
   await iap.finishTransaction({ purchase, isConsumable: false });
+}
+
+// ── Consumable credit packages (Wallet topup) ──
+
+export async function iapGetConsumableProducts(): Promise<any[]> {
+  if (!isIapAvailable()) return [];
+  if (!connected) await iapInit();
+  const iap = getIap();
+  const result = await iap.fetchProducts({ skus: CONSUMABLE_SKUS, type: "inapp" });
+  return (result as any[] | null) ?? [];
+}
+
+/**
+ * Buy a consumable credit package via Apple IAP.
+ * Returns the purchase object. Caller must:
+ *   1. POST it to the backend via api.wallet.validateAppleTopup()
+ *   2. Call iapFinishConsumable() to acknowledge the purchase to Apple
+ *
+ * Order matters: if Apple's transaction is not finished, StoreKit will keep
+ * replaying it on app restart — which is fine for crash safety, but means
+ * the user may see the buy-sheet again until we acknowledge.
+ */
+export async function iapBuyConsumable(productId: string): Promise<any> {
+  const iap = getIap();
+  if (!iap) throw { code: "E_NOT_AVAILABLE", message: "In-App-Kaeufe sind in dieser Umgebung nicht verfuegbar." };
+  if (!connected) await iapInit();
+
+  try {
+    const result = await iap.requestPurchase({
+      type: "inapp",
+      request: { apple: { sku: productId } },
+    });
+    const p = Array.isArray(result) ? result[0] : result;
+    if (!p) throw { code: "E_NO_PURCHASE", message: "Kein Kauf erhalten." };
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    return p;
+  } catch (err: any) {
+    if (err.code === "E_USER_CANCELLED" || err.message?.includes("cancelled")) {
+      throw { code: "E_USER_CANCELLED", message: "Der Kauf wurde abgebrochen." };
+    }
+    throw { code: err.code ?? "E_PURCHASE_FAILED", message: mapIapError(err) };
+  }
+}
+
+export async function iapFinishConsumable(purchase: any): Promise<void> {
+  const iap = getIap();
+  if (!iap) return;
+  await iap.finishTransaction({ purchase, isConsumable: true });
 }
 
 // ── Restore ──

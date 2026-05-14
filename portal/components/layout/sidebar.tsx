@@ -6,12 +6,13 @@ import {
   BarChart3,
   Bookmark,
   Box,
+  Coins,
   Compass,
-  CreditCard,
   Gauge,
   Inbox,
   Megaphone,
   MessageSquare,
+  Rocket,
   Send,
   Settings,
   Sparkles,
@@ -32,7 +33,8 @@ const brandNav: NavItem[] = [
   { href: "/brand/campaigns", label: "Drops", icon: Megaphone },
   { href: "/brand/seeding", label: "Seeding", icon: Send },
   { href: "/brand/products", label: "Produkte", icon: Box },
-  { href: "/brand/subscription", label: "Abo", icon: CreditCard },
+  { href: "/brand/wallet", label: "Wallet", icon: Coins },
+  { href: "/brand/boosts", label: "Boosts", icon: Rocket },
 ];
 
 const userNav: NavItem[] = [

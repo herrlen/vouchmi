@@ -49,3 +49,66 @@ export type SubscriptionStatus = {
   expires_at: string | null;
   paypal_status: string | null;
 };
+
+// ── Wallet & Boost ──
+
+export type WalletPackage = {
+  id: string;
+  credits: number;
+  price_cents: number;
+  currency: string;
+  apple_product: string;
+  label_key: string;
+};
+
+export type WalletTransaction = {
+  id: string;
+  type: "topup" | "boost_spend" | "refund" | "admin_adjust" | "migration_bonus" | "reversal";
+  credits_delta: number;
+  amount_cents: number | null;
+  currency: string | null;
+  provider: "paypal" | "apple_iap" | "admin" | "system" | null;
+  status: "pending" | "completed" | "failed" | "reversed";
+  created_at: string;
+};
+
+export type WalletState = {
+  wallet: { id: string; balance_credits: number; currency: string };
+  transactions: WalletTransaction[];
+};
+
+export type WalletPackagesResponse = {
+  enabled: boolean;
+  packages: WalletPackage[];
+};
+
+export type PaypalOrder = {
+  order_id: string;
+  approval_url: string;
+  status: string;
+  package: WalletPackage;
+  reference_id: string;
+};
+
+export type PaypalCaptureResult = {
+  ok: boolean;
+  transaction_id: string;
+  balance: number;
+};
+
+export type BoostTier = "mini" | "standard" | "pro" | "brand_push";
+export type BoostStatus = "active" | "expired" | "refunded" | "cancelled";
+
+export type BoostSummary = {
+  id: string;
+  post_id: string;
+  tier: BoostTier;
+  multiplier: number;
+  credits_spent: number;
+  status: BoostStatus;
+  starts_at: string | null;
+  ends_at: string | null;
+  impressions: number;
+  clicks: number;
+  post_preview: { content?: string; link_title?: string | null } | null;
+};

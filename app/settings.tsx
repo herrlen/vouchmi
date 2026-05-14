@@ -52,6 +52,7 @@ export default function SettingsScreen() {
             onPress={() => router.push("/phone-verify")}
           />
           <Button label="Galerie-Layout" onPress={() => router.push("/layout-settings")} />
+          <Button label="Wallet & Credits" onPress={() => router.push("/wallet" as any)} />
           <Button label="Abo verwalten" onPress={() => router.push("/subscription")} />
           <Row label="Username" value={user?.username ?? "-"} />
           <Row label="E-Mail" value={user?.email ?? "-"} />

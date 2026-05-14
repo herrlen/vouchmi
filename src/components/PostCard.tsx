@@ -1,10 +1,13 @@
 // src/components/PostCard.tsx
+import { useState } from "react";
 import { View, Text, Pressable, StyleSheet, Alert, ActionSheetIOS, Platform, Share } from "react-native";
 import { router } from "expo-router";
+import { Rocket } from "lucide-react-native";
 import { colors } from "../constants/theme";
 import LinkEmbed from "./LinkEmbed";
 import CreatorBadge from "./CreatorBadge";
-import { moderation, isCreator, type Post } from "../lib/api";
+import BoostSheet from "./BoostSheet";
+import { boost as boostApi, moderation, isCreator, type Post } from "../lib/api";
 import { useAuth } from "../lib/store";
 
 type Props = { post: Post; onLike: (id: string) => void; onPress?: () => void; onHide?: (id: string) => void };
@@ -21,15 +24,22 @@ function timeAgo(d: string) {
 export default function PostCard({ post, onLike, onPress, onHide }: Props) {
   const me = useAuth((s) => s.user);
   const isOwn = me?.id === post.author.id;
+  const [boostSheetOpen, setBoostSheetOpen] = useState(false);
+  const [promoted, setPromoted] = useState<boolean>(!!post.is_promoted);
 
   const openMenu = () => {
+    const ownOptions = promoted
+      ? ["Weiterleiten", "Boost abbrechen", "Abbrechen"]
+      : ["Weiterleiten", "Empfehlung bewerben", "Abbrechen"];
     const options = isOwn
-      ? ["Weiterleiten", "Abbrechen"]
+      ? ownOptions
       : ["Weiterleiten", "Post melden", "Nutzer blockieren", "Abbrechen"];
     const cancelIdx = options.length - 1;
 
     const handle = (idx: number) => {
       if (idx === 0) shareLink();
+      else if (isOwn && idx === 1 && promoted) cancelBoost();
+      else if (isOwn && idx === 1 && !promoted) setBoostSheetOpen(true);
       else if (!isOwn && idx === 1) reportPost();
       else if (!isOwn && idx === 2) blockUser();
     };
@@ -45,6 +55,19 @@ export default function PostCard({ post, onLike, onPress, onHide }: Props) {
         style: i === cancelIdx ? "cancel" : i === 1 && !isOwn ? "destructive" : "default",
         onPress: () => handle(i),
       })));
+    }
+  };
+
+  const cancelBoost = async () => {
+    try {
+      const res = await boostApi.cancel(post.id);
+      setPromoted(false);
+      Alert.alert(
+        "Boost beendet",
+        res.refunded ? "Credits wurden zurückerstattet." : "Boost wurde abgebrochen.",
+      );
+    } catch (e: any) {
+      Alert.alert("Fehler", e?.message ?? "Konnte Boost nicht abbrechen.");
     }
   };
 
@@ -116,6 +139,13 @@ export default function PostCard({ post, onLike, onPress, onHide }: Props) {
       accessibilityLabel={`Empfehlung von ${authorName}: ${post.content?.slice(0, 80)}${post.content?.length > 80 ? "..." : ""}. ${post.like_count} Likes, ${post.comment_count} Kommentare`}
       accessibilityHint="Oeffnet die Empfehlung"
     >
+      {promoted && (
+        <View style={s.promotedRow} accessibilityRole="text" accessibilityLabel="Beworbene Empfehlung">
+          <Rocket size={12} color={colors.accent} />
+          <Text style={s.promotedText}>Beworben</Text>
+        </View>
+      )}
+
       <View style={s.header}>
         <View style={[s.avatar, { backgroundColor: post.author.display_name ? stringColor(post.author.display_name) : colors.accent }]}>
           <Text style={s.avatarText}>{(post.author.display_name ?? post.author.username)[0].toUpperCase()}</Text>
@@ -154,10 +184,23 @@ export default function PostCard({ post, onLike, onPress, onHide }: Props) {
         <Pressable style={s.action} onPress={() => router.push(`/post/${post.id}`)} accessibilityRole="button" accessibilityLabel={`Kommentare${post.comment_count ? `, ${post.comment_count}` : ""}`}>
           <Text style={s.actionText}>💬 {post.comment_count || ""}</Text>
         </Pressable>
+        {isOwn && !promoted && (
+          <Pressable style={s.boostBtn} onPress={() => setBoostSheetOpen(true)} accessibilityRole="button" accessibilityLabel="Empfehlung bewerben">
+            <Rocket size={14} color={colors.accent} />
+            <Text style={s.boostBtnText}>Bewerben</Text>
+          </Pressable>
+        )}
         {post.click_count > 0 && (
           <Text style={[s.actionText, { marginLeft: "auto" }]}>🔗 {post.click_count} Klicks</Text>
         )}
       </View>
+
+      <BoostSheet
+        visible={boostSheetOpen}
+        postId={post.id}
+        onClose={() => setBoostSheetOpen(false)}
+        onSuccess={() => setPromoted(true)}
+      />
     </Pressable>
   );
 }
@@ -182,4 +225,26 @@ const s = StyleSheet.create({
   actionText: { color: colors.gray, fontSize: 14 },
   menuBtn: { padding: 4 },
   menuDots: { color: colors.gray, fontSize: 22, lineHeight: 22 },
+  promotedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    backgroundColor: colors.accentDim,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  promotedText: { color: colors.accent, fontSize: 11, fontWeight: "600", letterSpacing: 0.3 },
+  boostBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: colors.accentDim,
+  },
+  boostBtnText: { color: colors.accent, fontSize: 12, fontWeight: "600" },
 });
